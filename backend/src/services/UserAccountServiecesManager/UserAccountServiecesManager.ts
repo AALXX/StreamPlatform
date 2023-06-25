@@ -25,7 +25,6 @@ const GetUserAccountData = (req: Request, res: Response) => {
             query(connection, GetUserDataQueryString)
                 .then((results) => {
                     const data = JSON.parse(JSON.stringify(results));
-                    console.log("C");
 
                     if (Object.keys(data).length === 0) {
                         return res.status(200).json({
@@ -34,8 +33,6 @@ const GetUserAccountData = (req: Request, res: Response) => {
                             test: 'test',
                         });
                     }
-
-
 
                     return res.status(200).json({
                         error: false,
@@ -60,6 +57,38 @@ const GetUserAccountData = (req: Request, res: Response) => {
                 message: error,
             });
         });
+};
+
+const FollowAccount = async (req: Request, res: Response) => {
+    const itFollows = await UtilFunc.userFollowAccountCheck(req.body.userToken, req.body.accountToken);
+    const connection = await connect();
+    try {
+        if (itFollows) {
+            if (req.body.userToken !== undefined) {
+                const updateunfollwCountQueryString = `DELETE FROM user_follw_account_class WHERE userToken="${req.body.userToken}" accountToken="${
+                    req.body.accountPublicToken
+                }"; UPDATE users SET AccountFolowers = AccountFolowers-${1} WHERE UserPrivateToken="${req.body.accountToken}";`;
+                await query(connection, updateunfollwCountQueryString);
+            }
+        } else {
+            if (req.body.userToken !== undefined) {
+                const updatefollwCountQueryString = `INSERT INTO user_follw_account_class (userToken, accountToken) VALUES ('${req.body.userToken}','${
+                    req.body.accountToken
+                }'); UPDATE users SET AccountFolowers = AccountFolowers+${1} WHERE UserPrivateToken="${req.body.accountToken}";`;
+                await query(connection, updatefollwCountQueryString);
+            }
+        }
+
+        res.status(202).json({
+            error: false,
+            succes: true,
+        });
+    } catch (error: any) {
+        res.status(202).json({
+            error: true,
+            succes: false,
+        });
+    }
 };
 
 // -------------------------------------------------------------------------
@@ -177,5 +206,6 @@ const LoginUser = async (req: Request, res: Response) => {
 export default {
     GetUserAccountData,
     RegisterUser,
+    FollowAccount,
     LoginUser,
 };

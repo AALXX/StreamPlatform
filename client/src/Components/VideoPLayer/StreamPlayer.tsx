@@ -2,9 +2,13 @@
 import Hls from 'hls.js'
 import React, { useEffect, useRef } from 'react'
 
+/**
+ *
+ * @return {JSX}
+ */
 export default function StreamPlayer() {
-    var video = document.getElementById('video')
-    var videoSrc = '/hls/test.m3u8'
+    const video = document.getElementById('video')
+    const videoSrc = '/hls/test.m3u8'
 
     const mounted = useRef(false)
     const videoRef = useRef()
@@ -13,7 +17,7 @@ export default function StreamPlayer() {
     }, [])
 
     if (Hls.isSupported()) {
-        var hls = new Hls()
+        const hls = new Hls()
         hls.loadSource(videoSrc)
     }
     return <div></div>

@@ -26,15 +26,6 @@ public class VideoStreamApiRoutes {
         this.videoServices = videoServices;
     }
 
-    @GetMapping(value = "test")
-    public ResponseEntity<List<VideoData>> TEST() {
-
-        List<VideoData> data = videoServices.GetVideoData(
-                "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE2NzY4MjcwMDN9.xSV2tmoAkX5QyDRnQUHq_TH_G9FCQpxzPaAO_YsYHJU");
-        // System.out.println(data.get(0).getVideoTitle());
-        return new ResponseEntity<>(data, HttpStatus.OK);
-    }
-
     @GetMapping(value = "video-stream/{VideoToken}", produces = "video/mp4")
     public Mono<Resource> GetVideo(@PathVariable String VideoToken, @RequestHeader("Range") String range) {
 

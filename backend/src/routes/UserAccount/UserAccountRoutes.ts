@@ -11,4 +11,7 @@ router.post('/login-account', body('userEmail').isEmail().not().isEmpty(), body(
 //* Account data
 router.get('/get-account-data/:privateToken', UserAccountServices.GetUserAccountData);
 
+//*Cretor Account
+router.post('/follow', body('accounttoken').isEmail().not().isEmpty(), UserAccountServices.FollowAccount);
+
 export = router;
