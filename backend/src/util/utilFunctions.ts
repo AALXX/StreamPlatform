@@ -66,7 +66,7 @@ const UserNameAndEmailExistCheck = (UserName: string, Email: string, callback: a
         });
 };
 
-const userFollowAccountCheck = async (userToken: string | undefined, accountPublicToken: string | undefined) => {
+const userFollowAccountCheck = async (userToken: string, accountPublicToken: string) => {
     const NAMESPACE = 'USER_FOLLOW_CHECK_FUNCTION';
     const CheckIfUserFollwsAccountQuerryString = `SELECT * FROM user_follw_account_class WHERE userToken="${userToken}" AND accountToken="${accountPublicToken}";`;
 
@@ -82,6 +82,46 @@ const userFollowAccountCheck = async (userToken: string | undefined, accountPubl
             return true;
         } else {
             return false;
+        }
+    } catch (error: any) {
+        logging.error(NAMESPACE, error.message, error);
+        return false;
+    }
+};
+
+//* /////////////////////////////
+//*      Videos related        //
+//* /////////////////////////////
+
+/**
+ ** creates video token
+ */
+const CreateVideoToken = (): string => {
+    const NAMESPACE = 'CREATE_VIDEO_TOKEN_FUNCTION';
+
+    const secretExt = new Date().getTime().toString();
+
+    const jwtSecretKey = 'secret' + secretExt;
+
+    const userprivateToken = jwt.sign({}, jwtSecretKey);
+
+    return userprivateToken;
+};
+
+const getUserLikedOrDislikedVideo = async (userToken: string, VideoToken: string) => {
+    const NAMESPACE = 'USER_FOLLOW_CHECK_FUNCTION';
+    const CheckIfUserFollwsAccountQuerryString = `SELECT * FROM user_liked_or_disliked_video_class WHERE userToken="${userToken}" AND videoToken="${VideoToken}";`;
+
+    try {
+        if (userToken === 'undefined') {
+            return false;
+        }
+
+        const connection = await connect();
+        const checkfollowResponse = await query(connection, CheckIfUserFollwsAccountQuerryString);
+        let checkfollowdata = JSON.parse(JSON.stringify(checkfollowResponse));
+        if (Object.keys(checkfollowdata).length != 0) {
+            return checkfollowdata[0].like_dislike;
         }
     } catch (error: any) {
         logging.error(NAMESPACE, error.message, error);
@@ -111,46 +151,6 @@ const userLikedOrDislikedVideoCheck = async (userToken: string, VideoToken: stri
         logging.error(NAMESPACE, error.message, error);
         return false;
     }
-};
-
-const getUserLikedOrDislikedVideo = async (userToken: string, VideoToken: string) => {
-    const NAMESPACE = 'USER_FOLLOW_CHECK_FUNCTION';
-    const CheckIfUserFollwsAccountQuerryString = `SELECT * FROM user_liked_or_disliked_video_class WHERE userToken="${userToken}" AND videoToken="${VideoToken}";`;
-
-    try {
-        if (userToken === 'undefined') {
-            return false;
-        }
-
-        const connection = await connect();
-        const checkfollowResponse = await query(connection, CheckIfUserFollwsAccountQuerryString);
-        let checkfollowdata = JSON.parse(JSON.stringify(checkfollowResponse));
-        if (Object.keys(checkfollowdata).length != 0) {
-            return checkfollowdata[0].like_dislike;
-        }
-    } catch (error: any) {
-        logging.error(NAMESPACE, error.message, error);
-        return false;
-    }
-};
-
-//* /////////////////////////////
-//*      Videos related        //
-//* /////////////////////////////
-
-/**
- ** creates video token
- */
-const CreateVideoToken = (): string => {
-    const NAMESPACE = 'CREATE_VIDEO_TOKEN_FUNCTION';
-
-    const secretExt = new Date().getTime().toString();
-
-    const jwtSecretKey = 'secret' + secretExt;
-
-    const userprivateToken = jwt.sign({}, jwtSecretKey);
-
-    return userprivateToken;
 };
 
 export default { HashPassword, UserNameAndEmailExistCheck, CreateVideoToken, userFollowAccountCheck, getUserLikedOrDislikedVideo, userLikedOrDislikedVideoCheck };

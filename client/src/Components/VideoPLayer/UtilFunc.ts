@@ -1,7 +1,7 @@
 import axios from 'axios'
 import { BlobOptions } from 'buffer'
 import { CookieValueTypes } from 'cookies-next'
-import { RefObject } from 'react'
+import { Dispatch, RefObject, SetStateAction } from 'react'
 
 interface IVideoData {
     error: boolean
@@ -65,13 +65,20 @@ const followAccount = async (usrToken: CookieValueTypes, ownerToken: string, use
     return !userFollwsAccount
 }
 
-const likeVideo = async (usrToken: CookieValueTypes, videoToken: string | null, userLikedVideo: boolean, userDisLikedVideo: boolean) => {
+const likeVideo = async (
+    usrToken: CookieValueTypes,
+    videoToken: string | null,
+    userLikedVideo: boolean,
+    userDisLikedVideo: boolean,
+
+) => {
     if (videoToken == null) {
         return false
     }
 
     if ((!userLikedVideo && !userDisLikedVideo) || (!userLikedVideo && userDisLikedVideo)) {
         await axios.post(`${process.env.SERVER_BACKEND}/videos-manager/like-dislike-video`, { userToken: usrToken, videoToken: videoToken, likeOrDislike: 1 })
+
     } else if (userLikedVideo) {
         await axios.post(`${process.env.SERVER_BACKEND}/videos-manager/like-dislike-video`, { userToken: usrToken, videoToken: videoToken, likeOrDislike: 0 })
     }

@@ -16,18 +16,20 @@ const Profile = () => {
     }, [])
 
     return (
-        <div>
+        <>
             {userLoggedIn ? (
-                <AccountProfile />
+                <div className="flex">
+                    <AccountProfile />
+                </div>
             ) : (
-                <div>
-                    <h1>Not logged In</h1>
-                    <Link href={'/account/login-register'}>
-                        <h1>Go TO LOGIN</h1>
+                <div className="flex flex-col ">
+                    <h1 className="text-white self-center mt-[2rem]">Not logged In:</h1>
+                    <Link className="self-center" href={'/account/login-register'}>
+                        <h1 className="text-white">Login</h1>
                     </Link>
                 </div>
             )}
-        </div>
+        </>
     )
 }
 

@@ -14,6 +14,14 @@ const myValidationResult = validationResult.withDefaults({
     },
 });
 
+interface VideoCommentsToBeSendType {
+    id: number;
+    ownerToken: string;
+    videoToken: string;
+    comment: string;
+    ownerName: string;
+}
+
 /**
  ** Gets Data About Video from db
  * @param req
@@ -21,6 +29,15 @@ const myValidationResult = validationResult.withDefaults({
  */
 const GetVideoDataByToken = async (req: Request, res: Response) => {
     const GetVideoDataByTokenQueryString = `SELECT VideoTitle, VideoDescription, Likes, Dislikes, PublishDate, OwnerToken FROM videos WHERE VideoToken="${req.params.VideoToken}"`;
+
+    const errors = myValidationResult(req);
+    if (!errors.isEmpty()) {
+        errors.array().map((error) => {
+            logging.error('GET_VIDEO_DATA_BY_TOKEN_FUNC', error.errorMsg);
+        });
+
+        return res.status(200).json({ error: true, errors: errors.array() });
+    }
 
     try {
         const connection = await connect();
@@ -67,18 +84,19 @@ const GetVideoDataByToken = async (req: Request, res: Response) => {
  * @param res
  */
 const LikeDislikeVideoFunc = async (req: Request, res: Response) => {
+    const errors = myValidationResult(req);
+    if (!errors.isEmpty()) {
+        errors.array().map((error) => {
+            logging.error('LIKE_OR_DISLIKE_FUNC', error.errorMsg);
+        });
+
+        return res.status(200).json({ error: true, errors: errors.array() });
+    }
+
     const checkuserlikedordislike = await UtilFunc.userLikedOrDislikedVideoCheck(req.body.userToken, req.body.videoToken);
     const getkuserlikedordislike = await UtilFunc.getUserLikedOrDislikedVideo(req.body.userToken, req.body.videoToken);
 
     const connection = await connect();
-
-    if (req.body.likeOrDislike == undefined || req.body.likeOrDislike == null || req.body.userToken == undefined) {
-        logging.error(NAMESPACE, 'like or disLiked is undefine or null', 'body request');
-
-        return res.status(500).json({
-            error: true,
-        });
-    }
 
     try {
         if (checkuserlikedordislike) {
@@ -118,7 +136,7 @@ const LikeDislikeVideoFunc = async (req: Request, res: Response) => {
             }
 
             if (req.body.likeOrDislike === 2) {
-                    const updateLikeOrDislikeDataSql = `UPDATE videos SET Dislikes = Dislikes+1 WHERE VideoToken="${req.body.videoToken}";`;
+                const updateLikeOrDislikeDataSql = `UPDATE videos SET Dislikes = Dislikes+1 WHERE VideoToken="${req.body.videoToken}";`;
                 await query(connection, updateLikeOrDislikeDataSql);
             }
         }
@@ -133,4 +151,128 @@ const LikeDislikeVideoFunc = async (req: Request, res: Response) => {
     }
 };
 
-export default { GetVideoDataByToken, LikeDislikeVideoFunc };
+/**
+ * post comment to a video
+ * @param req
+ * @param res
+ */
+const PostCommentToVideo = async (req: Request, res: Response) => {
+    console.log('first');
+    const errors = myValidationResult(req);
+    if (!errors.isEmpty()) {
+        errors.array().map((error) => {
+            logging.error('POST_COMMENT_FUNC', error.errorMsg);
+        });
+
+        return res.status(200).json({ error: true, errors: errors.array() });
+    }
+
+    const connection = await connect();
+
+    try {
+        const PostCommentSQL = `INSERT INTO comments (ownerToken, videoToken, comment) VALUES ("${req.body.UserToken}","${req.body.VideoToken}","${req.body.Comment}"); SELECT UserName FROM users WHERE UserPrivateToken="${req.body.UserToken}";`;
+        const resData = await query(connection, PostCommentSQL);
+
+        let userName = JSON.parse(JSON.stringify(resData));
+        res.status(202).json({
+            error: false,
+            userName: userName[1][0].UserName,
+        });
+    } catch (error: any) {
+        logging.error('POST_COMMENT_FUNC', error.message);
+        res.status(202).json({
+            error: true,
+            errmsg: error.message,
+        });
+    }
+};
+
+/**
+ * delete comment to a video
+ * @param req
+ * @param res
+ */
+const DeleteComment = async (req: Request, res: Response) => {
+    const errors = myValidationResult(req);
+    if (!errors.isEmpty()) {
+        errors.array().map((error) => {
+            logging.error('DELETE_COMMENT_FUNC', error.errorMsg);
+        });
+
+        return res.status(200).json({ error: true, errors: errors.array() });
+    }
+
+    const connection = await connect();
+
+    try {
+        const PostCommentSQL = `DELETE FROM comments WHERE userToken="${req.body.UserToken}" AND videoToken="${req.body.VideoToken}"`;
+        await query(connection, PostCommentSQL);
+        res.status(202).json({
+            error: false,
+        });
+    } catch (error: any) {
+        res.status(202).json({
+            error: true,
+            errmsg: error.msg,
+        });
+    }
+};
+
+/**
+ * get comment from a video
+ * @param req
+ * @param res
+ */
+const GetVideoComments = async (req: Request, res: Response) => {
+    const errors = myValidationResult(req);
+    if (!errors.isEmpty()) {
+        errors.array().map((error) => {
+            logging.error('POST_COMMENT_FUNC', error.errorMsg);
+        });
+
+        return res.status(200).json({ error: true, errors: errors.array() });
+    }
+
+    const connection = await connect();
+
+    try {
+        const GetVideoCommentsSQL = `SELECT * FROM comments WHERE videoToken="${req.params.videoToken}"`;
+        const getVideoComments = await query(connection, GetVideoCommentsSQL);
+
+        let VideoComments = JSON.parse(JSON.stringify(getVideoComments));
+
+        let VideoCommentsToBeSend: Array<VideoCommentsToBeSendType> = [];
+
+        for (const comment in VideoComments) {
+            if (Object.prototype.hasOwnProperty.call(VideoComments, comment)) {
+                const GetOwnerNameSQL = `SELECT UserName FROM users WHERE UserPrivateToken="${VideoComments[comment].ownerToken}"`;
+                const ownerNameData = await query(connection, GetOwnerNameSQL);
+                let ownerName = JSON.parse(JSON.stringify(ownerNameData));
+
+                VideoCommentsToBeSend.push({
+                    id: VideoComments[comment].id,
+                    ownerToken: VideoComments[comment].ownerToken,
+                    videoToken: VideoComments[comment].videoToken,
+                    comment: VideoComments[comment].comment,
+                    ownerName: ownerName[0].UserName,
+                });
+            }
+        }
+
+        if (Object.keys(VideoCommentsToBeSend).length === 0) {
+            return res.status(202).json({ error: false, CommentsFound: false });
+        }
+        res.status(202).json({
+            error: false,
+            comments: VideoCommentsToBeSend,
+            CommentsFound: true,
+        });
+    } catch (error: any) {
+        res.status(202).json({
+            error: true,
+            errmsg: error.msg,
+        });
+    }
+};
+
+export default { GetVideoDataByToken, LikeDislikeVideoFunc, GetVideoComments, PostCommentToVideo, DeleteComment };

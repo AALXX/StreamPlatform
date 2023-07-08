@@ -39,6 +39,7 @@ client/*.tsbuildinfo
 client/next-env.d.ts
 
 backend/*.tsbuildinfo
+backend/.env
 backend/next-env.d.ts
 
 server/.mvn

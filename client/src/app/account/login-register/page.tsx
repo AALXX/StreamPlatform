@@ -24,7 +24,7 @@ export default function LoginRegisterScreen() {
     return (
         <div className="flex justify-center items-center flex-col">
             {!registerForm ? (
-                <div className="flex items-center bg-[#4A4A4A] w-[45%] h-[50vh] mt-[5rem] flex-col">
+                <div className="flex  flex-col w-[40%] 3xl:h-[57vh] 2xl:h-[60vh]  mt-[5%] self-center  bg-[#2b2b2b]">
                     <form
                         className="flex w-[100%] h-[100%] flex-col items-center"
                         onSubmit={async e => {
@@ -38,28 +38,37 @@ export default function LoginRegisterScreen() {
                         <h1 className="text-white text-[1.5rem] mt-[2rem]">Login</h1>
                         <div className="bg-white w-[100%] h-[.1rem] mt-8" />
                         <div className="flex items-center justify-center h-[60%] w-[100%] flex-col">
-                            <input
-                                value={loginEmail}
-                                placeholder="email-address"
-                                onChange={e => setLoginEmail(e.target.value)}
-                                type="email"
-                                className="text-white text-[1rem] text-center bg-[#575757] w-[90%] h-[1.8rem] border-none focus:bg-[#444444] focus:border-none"
-                            />
-                            <br />
-                            <br />
-                            <input
-                                value={loginPassword}
-                                placeholder="Enter password"
-                                onChange={e => setLoginPassword(e.target.value)}
-                                type="password"
-                                className="text-white text-[1rem] text-center bg-[#575757] w-[90%] h-[1.8rem] border-none focus:bg-[#444444]"
-                            />
+                            <div className="flex flex-col self-center w-[85%] mt-[1rem]">
+                                <h1 className="text-white">Email</h1>
+                                <input
+                                    className=" text-[#ffffff] mt-[1vh] bg-[#3b3b3b] h-[6vh] border-none w-full placeholder:text-white indent-3"
+                                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                                        setLoginEmail(e.target.value)
+                                    }}
+                                    value={loginEmail}
+                                    type="email"
+                                    placeholder="Email..."
+                                />
+                            </div>
+                            <div className="flex flex-col self-center w-[85%] mt-[1rem]">
+                                <h1 className="text-white">Password</h1>
+                                <input
+                                    className=" text-[#ffffff] mt-[1vh] bg-[#3b3b3b] h-[6vh] border-none w-full placeholder:text-white indent-3"
+                                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                                        setLoginPassword(e.target.value)
+                                    }}
+                                    value={loginPassword}
+                                    type="password"
+                                    placeholder="Password..."
+                                />
+                            </div>
                         </div>
                         <div className="bg-white w-[100%] h-[.1rem] mt-8" />
                         <input type="submit" value={'Log Into Account'} className="mt-5 text-white cursor-pointer" />
                     </form>
                     <button>
                         <h1
+                            className="text-[#9c9c9c]"
                             onClick={() => {
                                 setRegisterForm(true)
                             }}
@@ -69,7 +78,7 @@ export default function LoginRegisterScreen() {
                     </button>
                 </div>
             ) : (
-                <div className="flex items-center bg-[#4A4A4A] w-[45%] h-[50vh] mt-[5rem] flex-col">
+                <div className="flex  flex-col w-[40%] 3xl:h-[70vh] 2xl:h-[60vh]  mt-[5%] self-center  bg-[#2b2b2b]">
                     <form
                         className="flex w-[100%] h-[100%] flex-col items-center"
                         onSubmit={async e => {
@@ -83,39 +92,62 @@ export default function LoginRegisterScreen() {
                         <h1 className="text-white text-[1.5rem] mt-[2rem]">Register</h1>
                         <div className="bg-white w-[100%] h-[.1rem] mt-8" />
                         <div className="flex items-center h-[60%] w-[100%] flex-col">
-                            <input
-                                value={registerUserName}
-                                placeholder="Enter name"
-                                onChange={e => setRegisterUserName(e.target.value)}
-                                className="text-white text-[1rem] text-center bg-[#575757] w-[90%] h-[1.8rem] border-none focus:bg-[#444444] focus:border-none mt-[6%]"
-                            />
-                            <input
-                                value={registerEmail}
-                                placeholder="email-address"
-                                onChange={e => setRegisterEmail(e.target.value)}
-                                type="email"
-                                className="text-white text-[1rem] text-center bg-[#575757] w-[90%] h-[1.8rem] border-none focus:bg-[#444444] focus:border-none mt-[6%]"
-                            />
-                            <input
-                                value={registerPassword}
-                                placeholder="Enter password"
-                                onChange={e => setRegisterPassword(e.target.value)}
-                                type="password"
-                                className="text-white text-[1rem] text-center bg-[#575757] w-[90%] h-[1.8rem] border-none focus:bg-[#444444] mt-[6%]"
-                            />
-                            <input
-                                value={registerRepetedPassword}
-                                placeholder="Enter password"
-                                onChange={e => setRegisterRepeatedPassword(e.target.value)}
-                                type="password"
-                                className="text-white text-[1rem] text-center bg-[#575757] w-[90%] h-[1.8rem] border-none focus:bg-[#444444] mt-[6%]"
-                            />
+                            <div className="flex flex-col self-center w-[85%] mt-[1rem]">
+                                <h1 className="text-white">UserName</h1>
+                                <input
+                                    className=" text-[#ffffff] mt-[1vh] bg-[#3b3b3b] h-[6vh] border-none w-full placeholder:text-white indent-3"
+                                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                                        setRegisterUserName(e.target.value)
+                                    }}
+                                    value={registerUserName}
+                                    type="text"
+                                    placeholder="Enter name..."
+                                />
+                            </div>
+                            <div className="flex flex-col self-center w-[85%] mt-[1rem]">
+                                <h1 className="text-white">Email</h1>
+                                <input
+                                    className=" text-[#ffffff] mt-[1vh] bg-[#3b3b3b] h-[6vh] border-none w-full placeholder:text-white indent-3"
+                                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                                        setRegisterEmail(e.target.value)
+                                    }}
+                                    value={registerEmail}
+                                    type="email"
+                                    placeholder="Email..."
+                                />
+                            </div>
+                            <div className="flex flex-col self-center w-[85%] mt-[1rem]">
+                                <h1 className="text-white">Password</h1>
+                                <input
+                                    className=" text-[#ffffff] mt-[1vh] bg-[#3b3b3b] h-[6vh] border-none w-full placeholder:text-white indent-3"
+                                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                                        setRegisterPassword(e.target.value)
+                                    }}
+                                    value={registerEmail}
+                                    type="password"
+                                    placeholder="Password..."
+                                />
+                            </div>
+
+                            <div className="flex flex-col self-center w-[85%] mt-[1rem]">
+                                <h1 className="text-white">Repeat Password</h1>
+                                <input
+                                    className=" text-[#ffffff] mt-[1vh] bg-[#3b3b3b] h-[6vh] border-none w-full placeholder:text-white indent-3"
+                                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                                        setRegisterRepeatedPassword(e.target.value)
+                                    }}
+                                    value={registerRepetedPassword}
+                                    type="password"
+                                    placeholder="Repeat Password..."
+                                />
+                            </div>
                         </div>
-                        <div className="bg-white w-[100%] h-[.1rem] mt-8" />
-                        <input type="submit" value={'Log Into Account'} className="mt-5 text-white cursor-pointer" />
+                        <div className="bg-white w-[100%] h-[.1rem] mt-20" />
+                        <input type="submit" value={'Register Account'} className="mt-5 text-white cursor-pointer" />
                     </form>
                     <button>
                         <h1
+                            className="text-[#9c9c9c]"
                             onClick={() => {
                                 setRegisterForm(false)
                             }}

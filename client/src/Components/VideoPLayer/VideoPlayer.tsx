@@ -4,19 +4,22 @@ import { useSearchParams } from 'next/navigation'
 import Image from 'next/image'
 import Link from 'next/link'
 import { getVideoData, IVideoData, playOrPauseVideo, followAccount, likeVideo, dislikeVideo } from '@/Components/VideoPLayer/UtilFunc'
-import axios from 'axios'
 import { getCookie } from 'cookies-next'
 import PlayerOverlay from './PlayerOverlay'
 
+interface VideoPlayerProps {
+    VideoToken: string | null
+}
+
 /**
  * Main Video PLayer
+ * @param {VideoPlayerProps} props
  * @return {JSX}
  */
-function VideoPlayer() {
+const VideoPlayer = (props: VideoPlayerProps) => {
     const VideoRef = useRef<HTMLVideoElement>(null)
     const [showOverlay, setShowOverlay] = useState(false)
 
-    const urlParams = useSearchParams() //* vt = Video Token
     const [playing, setPlaying] = useState(false)
     const [Progress, setProgress] = useState(0)
     const [Volume, setVolume] = useState<number>(0.5)
@@ -41,17 +44,19 @@ function VideoPlayer() {
         UserLikedOrDislikedVideo: 0
     })
 
-    const [userFollwsAccount, setUserFollwsAccount] = useState(false)
-    const [userLikedVideo, setUserLikedVideo] = useState(false)
-    const [userDisLikedVideo, setUserDisLikedVideo] = useState(false)
+    const [userFollwsAccount, setUserFollwsAccount] = useState<boolean>(false)
+    const [userLikedVideo, setUserLikedVideo] = useState<boolean>(false)
+    const [userDisLikedVideo, setUserDisLikedVideo] = useState<boolean>(false)
+    const [videoLikes, setVideoLikes] = useState<number>(0)
+    const [videoDisLikes, setVideoDisLikes] = useState<number>(0)
 
     useEffect(() => {
-        if (urlParams.get('vt') == null) {
+        if (props.VideoToken == null) {
             console.log('CUM')
         }
 
         ;(async () => {
-            const videoData = await getVideoData(urlParams.get('vt'), getCookie('userToken') as string)
+            const videoData = await getVideoData(props.VideoToken, getCookie('userToken') as string)
             setVideoData(videoData)
             setUserFollwsAccount(videoData.UserFollwsAccount)
             setUserLikedVideo(videoData.UserLikedVideo)
@@ -60,6 +65,9 @@ function VideoPlayer() {
             } else if (videoData.UserLikedOrDislikedVideo === 2) {
                 setUserDisLikedVideo(true)
             }
+
+            setVideoLikes(videoData.VideoLikes)
+            setVideoDisLikes(videoData.VideoDislikes)
         })()
 
         const storageVolume = Number(localStorage.getItem('Volume'))
@@ -104,7 +112,7 @@ function VideoPlayer() {
 
     return (
         // * PLayer Outer Border
-        <div className="flex flex-col mt-[3rem] ml-[5rem] h-[100vh] ">
+        <div className="flex flex-col mt-[3rem] ml-[6rem] h-[100vh] ">
             {/*  VideoPlayer Border */}
 
             <div className=" w-[66.8vw] h-[73.8vh] ">
@@ -142,7 +150,7 @@ function VideoPlayer() {
                         setShowOverlay(false)
                     }}
                 >
-                    <source src={`${process.env.VIDEO_SERVER_BACKEND}/video-manager/video-stream/${urlParams.get('vt')}`} type="video/mp4" />
+                    <source src={`${process.env.VIDEO_SERVER_BACKEND}/video-manager/video-stream/${props.VideoToken}`} type="video/mp4" />
                     <p>Your user agent does not support the HTML5 Video element.</p>
                 </video>
             </div>
@@ -192,8 +200,10 @@ function VideoPlayer() {
                                 className="cursor-pointer w-[1.6rem] mr-[.5rem]"
                                 alt="not muted image"
                                 onClick={async () => {
-                                    setUserLikedVideo(await likeVideo(getCookie('userToken'), urlParams.get('vt'), userLikedVideo, userDisLikedVideo))
                                     setUserDisLikedVideo(false)
+                                    setVideoLikes(videoLikes - 1)
+
+                                    setUserLikedVideo(await likeVideo(getCookie('userToken'), props.VideoToken, userLikedVideo, userDisLikedVideo))
                                 }}
                             />
                         </>
@@ -204,14 +214,19 @@ function VideoPlayer() {
                                 className="cursor-pointer w-[1.6rem] ml-auto mr-[.5rem]"
                                 alt="not muted image"
                                 onClick={async () => {
-                                    setUserLikedVideo(await likeVideo(getCookie('userToken'), urlParams.get('vt'), userLikedVideo, userDisLikedVideo))
                                     setUserDisLikedVideo(false)
+                                    setVideoLikes(videoLikes + 1)
+                                    if (userDisLikedVideo) {
+                                        setVideoDisLikes(videoDisLikes - 1)
+                                    }
+
+                                    setUserLikedVideo(await likeVideo(getCookie('userToken'), props.VideoToken, userLikedVideo, userDisLikedVideo))
                                 }}
                             />
                         </>
                     )}
 
-                    <h1 className="text-white self-center mr-[1.5rem]">{VideoData.VideoLikes}</h1>
+                    <h1 className="text-white self-center mr-[1.5rem]">{videoLikes}</h1>
 
                     {userDisLikedVideo ? (
                         <>
@@ -220,8 +235,10 @@ function VideoPlayer() {
                                 className="cursor-pointer w-[1.6rem] ml-auto mr-[.5rem]"
                                 alt="not muted image"
                                 onClick={async () => {
-                                    setUserDisLikedVideo(await dislikeVideo(getCookie('userToken'), urlParams.get('vt'), userFollwsAccount, userDisLikedVideo))
                                     setUserLikedVideo(false)
+                                    setVideoDisLikes(videoDisLikes - 1)
+
+                                    setUserDisLikedVideo(await dislikeVideo(getCookie('userToken'), props.VideoToken, userFollwsAccount, userDisLikedVideo))
                                 }}
                             />
                         </>
@@ -232,13 +249,17 @@ function VideoPlayer() {
                                 className="cursor-pointer w-[1.6rem] ml-auto mr-[.5rem]"
                                 alt="not muted image"
                                 onClick={async () => {
-                                    setUserDisLikedVideo(await dislikeVideo(getCookie('userToken'), urlParams.get('vt'), userFollwsAccount, userDisLikedVideo))
                                     setUserLikedVideo(false)
+                                    setVideoDisLikes(videoDisLikes + 1)
+                                    if (userLikedVideo) {
+                                        setVideoLikes(videoLikes - 1)
+                                    }
+                                    setUserDisLikedVideo(await dislikeVideo(getCookie('userToken'), props.VideoToken, userFollwsAccount, userDisLikedVideo))
                                 }}
                             />
                         </>
                     )}
-                    <h1 className="text-white self-center mr-[4rem]">{VideoData.VideoDislikes}</h1>
+                    <h1 className="text-white self-center mr-[4rem]">{videoDisLikes}</h1>
                 </div>
             </div>
         </div>
