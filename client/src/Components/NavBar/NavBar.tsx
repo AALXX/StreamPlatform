@@ -21,6 +21,10 @@ const NavBar = () => {
                     <button className="w-full h-full bg-[#3a3a3a] text-white">HOME</button>
                 </Link>
 
+                <Link href={'/account/upload'} className="self-center w-[90%] h-[2rem] mt-[1rem]">
+                    <button className="w-full h-full bg-[#3a3a3a] text-white">UPLOAD</button>
+                </Link>
+
                 <Link href={'/'} className="self-center w-[90%] h-[2rem] mt-[1rem]">
                     <button className="w-full h-full bg-[#3a3a3a] text-white">FOLLOWING</button>
                 </Link>
