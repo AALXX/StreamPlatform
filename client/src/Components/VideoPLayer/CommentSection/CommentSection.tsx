@@ -24,7 +24,7 @@ const CommentSection = (props: VideoPlayerProps) => {
     const [hasComments, setHasComments] = useState<boolean>(false)
 
     const postComment = async () => {
-        const res: any = await axios.post(`${process.env.SERVER_BACKEND}/videos-manager/post-comment`, { UserToken: props.UserToken, VideoToken: props.VideoToken, Comment: commentInput })
+        const res = await axios.post(`${process.env.SERVER_BACKEND}/videos-manager/post-comment`, { UserToken: props.UserToken, VideoToken: props.VideoToken, Comment: commentInput })
         setVideoComments(videoComments => [...videoComments, { ownerToken: props.UserToken!, videoToken: props.VideoToken!, comment: commentInput, ownerName: res.data.userName }])
     }
 
@@ -52,7 +52,7 @@ const CommentSection = (props: VideoPlayerProps) => {
                 )}
             </div>
             <div className="flex h-[12%] bg-[#292929]">
-                <input type="text" className="h-9 self-center ml-7 w-[75%] bg-[#373737] text-white indent-3" placeholder="Search" onChange={e => setCommentInput(e.currentTarget.value)} />
+                <input type="text" className="h-9 self-center ml-7 w-[75%] bg-[#373737] text-white indent-3" placeholder="Comment" onChange={e => setCommentInput(e.currentTarget.value)} />
                 <div
                     className="flex bg-[#373737] ml-3 w-10  h-9 self-center cursor-pointer hover:bg-[#444444]"
                     onClick={() => {

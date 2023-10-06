@@ -66,6 +66,51 @@ const UserNameAndEmailExistCheck = (UserName: string, Email: string, callback: a
         });
 };
 
+const getUserPrivateTokenFromPublicToken = async (userToken: string): Promise<string | null> => {
+    const NAMESPACE = 'GET_USER_PRIVATE_TOKEN_FUNC';
+    const CheckIfUserFollwsAccountQuerryString = `SELECT UserPrivateToken FROM users WHERE UserPublicToken="${userToken}";`;
+
+    try {
+        if (userToken === 'undefined') {
+            return null;
+        }
+        const connection = await connect();
+        const checkfollowResponse = await query(connection, CheckIfUserFollwsAccountQuerryString);
+        let userData = JSON.parse(JSON.stringify(checkfollowResponse));
+        console.log(userData);
+        if (Object.keys(userData).length != 0) {
+            return '';
+        } else {
+            return '';
+        }
+    } catch (error: any) {
+        logging.error(NAMESPACE, error.message, error);
+        return null;
+    }
+};
+
+const getUserPublicTokenFromPrivateToken = async (userPrivateToken: string): Promise<string | null> => {
+    const NAMESPACE = 'GET_USER_PRIVATE_TOKEN_FUNC';
+    const CheckIfUserFollwsAccountQuerryString = `SELECT UserPublicToken FROM users WHERE UserPrivateToken="${userPrivateToken}" ;`;
+
+    try {
+        if (userPrivateToken === 'undefined') {
+            return null;
+        }
+        const connection = await connect();
+        const checkfollowResponse = await query(connection, CheckIfUserFollwsAccountQuerryString);
+        let userData = JSON.parse(JSON.stringify(checkfollowResponse));
+        if (Object.keys(userData).length != 0) {
+            return userData[0].UserPublicToken;
+        } else {
+            return null;
+        }
+    } catch (error: any) {
+        logging.error(NAMESPACE, error.message, error);
+        return null;
+    }
+};
+
 const userFollowAccountCheck = async (userToken: string, accountPublicToken: string) => {
     const NAMESPACE = 'USER_FOLLOW_CHECK_FUNCTION';
     const CheckIfUserFollwsAccountQuerryString = `SELECT * FROM user_follw_account_class WHERE userToken="${userToken}" AND accountToken="${accountPublicToken}";`;
@@ -153,4 +198,13 @@ const userLikedOrDislikedVideoCheck = async (userToken: string, VideoToken: stri
     }
 };
 
-export default { HashPassword, UserNameAndEmailExistCheck, CreateVideoToken, userFollowAccountCheck, getUserLikedOrDislikedVideo, userLikedOrDislikedVideoCheck };
+export default {
+    HashPassword,
+    UserNameAndEmailExistCheck,
+    CreateVideoToken,
+    userFollowAccountCheck,
+    getUserLikedOrDislikedVideo,
+    userLikedOrDislikedVideoCheck,
+    getUserPublicTokenFromPrivateToken,
+    getUserPrivateTokenFromPublicToken,
+};

@@ -6,6 +6,9 @@ import logging from '../../config/logging';
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcrypt';
 import nodemailer from 'nodemailer';
+import multer from 'multer';
+import fs from 'fs';
+import utilFunctions from '../../util/utilFunctions';
 
 const NAMESPACE = 'UserAccountService';
 
@@ -65,8 +68,15 @@ const GetAccountVideos = async (req: Request, res: Response) => {
     }
 
     try {
+        let ownerToken = await utilFunctions.getUserPublicTokenFromPrivateToken(req.params.accountToken);
+        if (ownerToken == null) {
+            return res.status(200).json({
+                error: true,
+            });
+        }
+
         const connection = await connect();
-        const GetAccountVideosSQL = `SELECT * FROM videos WHERE OwnerToken="${req.params.accountToken}"`;
+        const GetAccountVideosSQL = `SELECT * FROM videos WHERE OwnerToken="${ownerToken}"`;
         const accountVideosDB = await query(connection, GetAccountVideosSQL);
 
         let accountVideos = JSON.parse(JSON.stringify(accountVideosDB));
@@ -86,8 +96,17 @@ const GetAccountVideos = async (req: Request, res: Response) => {
 const FollowAccount = async (req: Request, res: Response) => {
     const errors = myValidationResult(req);
     if (!errors.isEmpty()) {
-        logging.error('FOLLOW_ACCOUNT_FUNC', errors.array.name);
+        errors.array().map((error) => {
+            logging.error('FOLLOW_ACCOUNT_FUNC', error.errorMsg);
+        });
         return res.status(200).json({ error: true, errors: errors.array() });
+    }
+
+    if (req.body.userToken == req.body.accountToken) {
+        return res.status(202).json({
+            error: true,
+            succes: false,
+        });
     }
 
     const itFollows = await UtilFunc.userFollowAccountCheck(req.body.userToken, req.body.accountToken);
@@ -95,8 +114,8 @@ const FollowAccount = async (req: Request, res: Response) => {
     try {
         if (itFollows) {
             if (req.body.userToken !== undefined) {
-                const updateunfollwCountQueryString = `DELETE FROM user_follw_account_class WHERE userToken="${req.body.userToken}" accountToken="${
-                    req.body.accountPublicToken
+                const updateunfollwCountQueryString = `DELETE FROM user_follw_account_class WHERE userToken="${req.body.userToken}" AND accountToken="${
+                    req.body.accountToken
                 }"; UPDATE users SET AccountFolowers = AccountFolowers-${1} WHERE UserPrivateToken="${req.body.accountToken}";`;
                 await query(connection, updateunfollwCountQueryString);
             }
@@ -151,6 +170,86 @@ const ChangeUserData = async (req: Request, res: Response) => {
     }
 };
 
+const storage = multer.diskStorage({
+    destination: (req: Request, file: any, callback: any) => {
+        callback(null, '../server/accounts/IconTmp');
+    },
+
+    filename: (req: Request, file, cb: any) => {
+        cb(null, `${file.originalname}`);
+    },
+});
+
+const fileFilter = (req: Request, file: any, cb: any) => {
+    // reject all files except jpeg
+    if (file.mimetype === 'image/jpeg') {
+        cb(null, true);
+    } else {
+        cb(null, false);
+    }
+};
+
+let upload = multer({
+    storage: storage,
+    // fileFilter: fileFilter,
+}).single('iconFile');
+
+const ChangeUserIcon = async (req: Request, res: Response) => {
+    upload(req, res, async (err: any) => {
+        if (err) {
+            return res.status(200).json({
+                msg: 'falied to upload',
+                error: true,
+            });
+        }
+
+        let userPublicToken = await utilFunctions.getUserPublicTokenFromPrivateToken(req.body.userToken);
+        if (userPublicToken == null) {
+            return res.status(200).json({
+                error: true,
+            });
+        }
+
+        fs.stat(`../server/accounts/${userPublicToken}/Main_Icon.png`, (err, stats) => {
+            if (stats !== undefined) {
+                fs.unlink(`../server/accounts/${userPublicToken}/Main_Icon.png`, (err) => {
+                    if (err) {
+                        return res.status(200).json({
+                            error: true,
+                            msg: err.message,
+                        });
+                    }
+                    console.log('file deleted successfully');
+
+                    fs.rename(`../server/accounts/IconTmp/${req.file?.originalname}`, `../server/accounts/${userPublicToken}/Main_Icon.png`, async (err) => {
+                        if (err) {
+                            return res.status(200).json({
+                                error: true,
+                            });
+                        }
+
+                        return res.status(200).json({
+                            error: false,
+                        });
+                    });
+                });
+            } else {
+                fs.rename(`../server/accounts/IconTmp/${req.file?.originalname}`, `../server/accounts/${userPublicToken}/Main_Icon.png`, async (err) => {
+                    if (err) {
+                        return res.status(200).json({
+                            error: true,
+                        });
+                    }
+
+                    return res.status(200).json({
+                        error: false,
+                    });
+                });
+            }
+        });
+    });
+};
+
 // -------------------------------------------------------------------------
 //                              Account Auth
 // -------------------------------------------------------------------------
@@ -178,34 +277,27 @@ const RegisterUser = async (req: Request, res: Response) => {
     const InsertUserQueryString = `INSERT INTO users (UserName, UserEmail, UserPwd, UserPrivateToken, UserPublicToken) VALUES 
         ('${req.body.userName}', '${req.body.userEmail}', '${hashedpwd}','${userPrivateToken}','${userPublicToken}');`;
 
-    connect()
-        .then((connection) => {
-            //* deepcode ignore Sqli: <please specify a reason of ignoring this>
-            query(connection, InsertUserQueryString)
-                .then((results) => {
-                    return res.status(200).json({
-                        error: false,
-                        userprivateToken: userPrivateToken,
-                    });
-                })
-                .catch((error) => {
-                    logging.error(NAMESPACE, error.message, error);
-                    return res.status(500).json({
-                        error: true,
-                        message: error,
-                    });
-                })
-                .finally(() => {
-                    connection.end();
+    try {
+        const connection = await connect();
+        await query(connection, InsertUserQueryString);
+        fs.mkdir(`../server/accounts/${userPublicToken}/`, (err) => {
+            if (err) {
+                return res.status(200).json({
+                    error: true,
                 });
-        })
-        .catch((error) => {
-            logging.error(NAMESPACE, error.message, error);
-            return res.status(500).json({
-                error: true,
-                message: error,
+            }
+
+            res.status(202).json({
+                error: false,
+                userprivateToken: userPrivateToken,
             });
         });
+    } catch (error: any) {
+        return res.status(500).json({
+            message: error.message,
+            error: true,
+        });
+    }
 };
 
 const LoginUser = async (req: Request, res: Response) => {
@@ -356,7 +448,7 @@ const ChangeUserPasswod = async (req: Request, res: Response) => {
         let DbData = JSON.parse(JSON.stringify(DBDataRaw));
 
         const pwdMatch = await bcrypt.compare(req.body.oldPassword, DbData[0].UserPwd);
-        
+
         if (pwdMatch) {
             const saltRounds = 10;
             bcrypt.hash(req.body.newPassword, saltRounds, async (err, hashedPwd) => {
@@ -402,6 +494,7 @@ export default {
     GetUserAccountData,
     GetAccountVideos,
     ChangeUserData,
+    ChangeUserIcon,
     SendPwdLinkToEmail,
     CheckResetPasswordLinkValability,
     ChangeUserPasswod,

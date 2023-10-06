@@ -22,8 +22,10 @@ router.get('/get-account-data/:privateToken', UserAccountServices.GetUserAccount
 router.get('/get-account-videos/:accountToken', param('accountToken').not().isEmpty(), UserAccountServices.GetAccountVideos);
 
 router.post('/change-user-data', body('userName').not().isEmpty(), body('userEmail').not().isEmpty(), body('userDescription').not().isEmpty(), body('userVisibility').not().isEmpty(), UserAccountServices.ChangeUserData);
+    
+router.post('/change-user-icon', UserAccountServices.ChangeUserIcon);
 
 //*Cretor Account
-router.post('/follow', body('accounttoken').isEmail().not().isEmpty(), UserAccountServices.FollowAccount);
+router.post('/follow', body('accountToken').not().isEmpty(), UserAccountServices.FollowAccount);
 
 export = router;

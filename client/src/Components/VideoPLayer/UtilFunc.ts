@@ -61,24 +61,20 @@ const changeVolume = (videoRef: RefObject<HTMLVideoElement>, e: any) => {
 }
 
 const followAccount = async (usrToken: CookieValueTypes, ownerToken: string, userFollwsAccount: boolean) => {
+    if (usrToken === ownerToken || usrToken == undefined || ownerToken == undefined) {
+        return false
+    }
     await axios.post(`${process.env.SERVER_BACKEND}/user-account/follow`, { userToken: usrToken, accountToken: ownerToken })
     return !userFollwsAccount
 }
 
-const likeVideo = async (
-    usrToken: CookieValueTypes,
-    videoToken: string | null,
-    userLikedVideo: boolean,
-    userDisLikedVideo: boolean,
-
-) => {
+const likeVideo = async (usrToken: CookieValueTypes, videoToken: string | null, userLikedVideo: boolean, userDisLikedVideo: boolean) => {
     if (videoToken == null) {
         return false
     }
 
     if ((!userLikedVideo && !userDisLikedVideo) || (!userLikedVideo && userDisLikedVideo)) {
         await axios.post(`${process.env.SERVER_BACKEND}/videos-manager/like-dislike-video`, { userToken: usrToken, videoToken: videoToken, likeOrDislike: 1 })
-
     } else if (userLikedVideo) {
         await axios.post(`${process.env.SERVER_BACKEND}/videos-manager/like-dislike-video`, { userToken: usrToken, videoToken: videoToken, likeOrDislike: 0 })
     }

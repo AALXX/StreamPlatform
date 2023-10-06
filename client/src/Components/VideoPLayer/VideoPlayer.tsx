@@ -1,6 +1,5 @@
 'use client'
 import React, { useEffect, useRef, useState } from 'react'
-import { useSearchParams } from 'next/navigation'
 import Image from 'next/image'
 import Link from 'next/link'
 import { getVideoData, IVideoData, playOrPauseVideo, followAccount, likeVideo, dislikeVideo } from '@/Components/VideoPLayer/UtilFunc'
@@ -52,7 +51,7 @@ const VideoPlayer = (props: VideoPlayerProps) => {
 
     useEffect(() => {
         if (props.VideoToken == null) {
-            console.log('CUM')
+            window.location.href = 'http://localhost:3000/'
         }
 
         ;(async () => {
@@ -151,7 +150,7 @@ const VideoPlayer = (props: VideoPlayerProps) => {
                     }}
                 >
                     <source src={`${process.env.VIDEO_SERVER_BACKEND}/video-manager/video-stream/${props.VideoToken}`} type="video/mp4" />
-                    <p>Your user agent does not support the HTML5 Video element.</p>
+                    <p>Your browser does not support the HTML5 Video element.</p>
                 </video>
             </div>
 

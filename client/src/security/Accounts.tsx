@@ -7,7 +7,7 @@ const accRegisterFunc = async (userName: string, userEmail: string, password: st
         return false
     }
 
-    const res: any = await axios.post(`http://192.168.72.81:7000/api/user-account/register-account`, {
+    const res = await axios.post(`http://192.168.72.81:7000/api/user-account/register-account`, {
         userName,
         userEmail,
         password
@@ -22,7 +22,7 @@ const accRegisterFunc = async (userName: string, userEmail: string, password: st
 }
 
 const accLoginFunc = async (userEmail: string, password: string) => {
-    const res: any = await axios.post(`${process.env.SERVER_BACKEND}/user-account/login-account`, {
+    const res = await axios.post(`${process.env.SERVER_BACKEND}/user-account/login-account`, {
         userEmail,
         password
     })

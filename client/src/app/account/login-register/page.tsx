@@ -123,7 +123,7 @@ export default function LoginRegisterScreen() {
                                     onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                                         setRegisterPassword(e.target.value)
                                     }}
-                                    value={registerEmail}
+                                    value={registerPassword}
                                     type="password"
                                     placeholder="Password..."
                                 />

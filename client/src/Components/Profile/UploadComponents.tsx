@@ -66,7 +66,7 @@ const UploadComopnents = () => {
         formData.append('UserPrivateToken', userToken)
 
         const config = {
-            header: { 'content-type': 'multipart/formdata' },
+            headers: { 'content-type': 'multipart/formdata' },
             onUploadProgress: (progressEvent: any) => {
                 let percent = 0
                 const { loaded, total } = progressEvent

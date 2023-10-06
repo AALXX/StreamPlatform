@@ -7,6 +7,8 @@ import FFmpeg from 'fluent-ffmpeg';
 import logging from '../../config/logging';
 import { connect, query } from '../../config/mysql';
 import UtilFunc from '../../util/utilFunctions';
+import axios from 'axios';
+import utilFunctions from '../../util/utilFunctions';
 
 const NAMESPACE = 'AccountUploadServiceManager';
 
@@ -39,6 +41,7 @@ let upload = multer({
 //---------------------------------------------------------------------------------
 const UploadVideoFileToServer = async (req: Request, res: Response) => {
     logging.info(NAMESPACE, 'Posting Video service called');
+
     upload(req, res, async (err: any) => {
         if (err) {
             return res.status(200).json({
@@ -56,16 +59,62 @@ const UploadVideoFileToServer = async (req: Request, res: Response) => {
             }
 
             //* Directory Created Succesfully
-            fs.rename(`../server/accounts/VideosTmp/${req.file?.originalname}`, `../server/accounts/${req.body.UserPrivateToken}/${VideoToken}/${req.body.VideoTitle}_Source.mp4`, (err) => {
+            fs.rename(`../server/accounts/VideosTmp/${req.file?.originalname}`, `../server/accounts/${req.body.UserPrivateToken}/${VideoToken}/${req.body.VideoTitle}_Source.mp4`, async (err) => {
                 if (err) {
                     return res.status(200).json({
                         error: true,
                     });
                 }
 
-                //*File Moved succesfully
-                SendVideoDataToDb(req.body.UserPrivateToken, VideoToken, req.body.VideoTitle, req.body.VideoVisibility, async (err: boolean) => {
+                let ownerToken = await utilFunctions.getUserPublicTokenFromPrivateToken(req.body.UserPrivateToken);
+
+                if (ownerToken == null) {
+                    return res.status(200).json({
+                        error: true,
+                    });
+                }
+
+                //*Save video data to db
+                SendVideoDataToDb(ownerToken as string, VideoToken, req.body.VideoTitle, req.body.VideoVisibility, async (err: boolean) => {
                     if (err) {
+                        return res.status(200).json({
+                            error: true,
+                        });
+                    }
+
+                    const file = fs.readFileSync(`../server/accounts/${req.body.UserPrivateToken}/${VideoToken}/${req.body.VideoTitle}_Source.mp4`);
+
+                    // Encode the binary data as Base64
+                    const base64Video = Buffer.from(file).toString('base64');
+
+                    const formData = new FormData();
+                    formData.append('file', base64Video);
+                    formData.append('video_name', `${req.body.VideoTitle}.mp4`);
+
+                    const video_category_server_resp = await axios.post(`http://localhost:6200/api/get-video-category`, formData, {
+                        headers: {
+                            'Content-Type': 'multipart/form-data',
+                        },
+                    });
+
+                    if (video_category_server_resp.data.error == true) {
+                        return res.status(200).json({
+                            error: true,
+                        });
+                    }
+
+                    const vide_index_server_resp = await axios.post(`http://localhost:7300/api/index-video`, {
+                        VideoTitle: req.body.VideoTitle,
+                        VideoToken: VideoToken,
+                    });
+
+                    if (vide_index_server_resp.data.error == true) {
+                        return res.status(200).json({
+                            error: true,
+                        });
+                    }
+
+                    if ((await SendVideoCategoryToDb(VideoToken, video_category_server_resp.data.video_type)) == false) {
                         return res.status(200).json({
                             error: true,
                         });
@@ -87,16 +136,16 @@ const UploadVideoFileToServer = async (req: Request, res: Response) => {
 
 /**
  * Sends Video Data to Database
- * @param {string} userPrivateToken
+ * @param {string} userPublicToken
  * @param {string} videoToken
  * @param {string} VideoTitle
  * @param {string} VideoVisibility
  * @param {any} callback
  */
-const SendVideoDataToDb = (userPrivateToken: string, videoToken: string, VideoTitle: string, VideoVisibility: string, callback: any) => {
+const SendVideoDataToDb = (userPublicToken: string, videoToken: string, VideoTitle: string, VideoVisibility: string, callback: any) => {
     let today = new Date().toISOString().slice(0, 10);
     const SendVidsDatasSqlQuery = `INSERT INTO videos (VideoTitle, Likes, PublishDate, VideoToken, OwnerToken, Visibility)
-  VALUES("${VideoTitle}", "0", "${today}","${videoToken}", "${userPrivateToken}", "${VideoVisibility}")`;
+  VALUES("${VideoTitle}", "0", "${today}","${videoToken}", "${userPublicToken}", "${VideoVisibility}")`;
 
     connect()
         .then((connection) => {
@@ -114,6 +163,33 @@ const SendVideoDataToDb = (userPrivateToken: string, videoToken: string, VideoTi
         .catch((error) => {
             logging.error(NAMESPACE, error.message, error);
         });
+};
+
+/**
+ * Sends Video Category to Database
+ * @param {string} userPrivateToken
+ * @param {string} videoToken
+ * @param {string} VideoTitle
+ * @param {string} VideoVisibility
+ * @param {any} callback
+ */
+const SendVideoCategoryToDb = async (videoToken: string, CategoryId: string) => {
+    try {
+        const connection = await connect();
+
+        const sendVideoCategoryToDbSQl = `INSERT INTO videos_categoriy_alloc (videoToken, CategoryId) VALUES ('${videoToken}','${CategoryId}')`;
+        const data = await query(connection, sendVideoCategoryToDbSQl);
+
+        let accData = JSON.parse(JSON.stringify(data));
+
+        if (Object.keys(accData).length === 0) {
+            return false;
+        }
+
+        return true;
+    } catch (error: any) {
+        return false;
+    }
 };
 
 const VideoProceesor = async (Title: string, path: string, VideoSize: string) =>

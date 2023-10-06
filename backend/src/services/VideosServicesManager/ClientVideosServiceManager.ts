@@ -3,6 +3,7 @@ import { validationResult } from 'express-validator';
 import logging from '../../config/logging';
 import { connect, query } from '../../config/mysql';
 import UtilFunc from '../../util/utilFunctions';
+import utilFunctions from '../../util/utilFunctions';
 
 const NAMESPACE = 'ClientVideosServiceManager';
 
@@ -29,7 +30,6 @@ interface VideoCommentsToBeSendType {
  */
 const GetVideoDataByToken = async (req: Request, res: Response) => {
     const GetVideoDataByTokenQueryString = `SELECT VideoTitle, VideoDescription, Likes, Dislikes, PublishDate, OwnerToken FROM videos WHERE VideoToken="${req.params.VideoToken}"`;
-
     const errors = myValidationResult(req);
     if (!errors.isEmpty()) {
         errors.array().map((error) => {
@@ -45,17 +45,16 @@ const GetVideoDataByToken = async (req: Request, res: Response) => {
 
         let Videodata = JSON.parse(JSON.stringify(getVideoResponse));
 
-        const GetOwnerrDataQueryString = `SELECT UserName, AccountFolowers FROM users WHERE UserPrivateToken="${Videodata[0].OwnerToken}"`;
+        const GetOwnerrDataQueryString = `SELECT UserName, AccountFolowers FROM users WHERE UserPublicToken="${Videodata[0].OwnerToken}"`;
 
         const getUserDataResponse = await query(connection, GetOwnerrDataQueryString);
         let UserData = JSON.parse(JSON.stringify(getUserDataResponse));
-
         if (Object.keys(Videodata).length === 0) {
             return res.status(202).json({ error: false, VideoFound: false });
         }
-
         const itFollows = await UtilFunc.userFollowAccountCheck(req.params.UserToken, Videodata[0].OwnerToken);
         const getuserlikedordislike = await UtilFunc.getUserLikedOrDislikedVideo(req.params.UserToken, req.params.VideoToken);
+
         res.status(202).json({
             error: false,
             VideoFound: true,
@@ -157,7 +156,6 @@ const LikeDislikeVideoFunc = async (req: Request, res: Response) => {
  * @param res
  */
 const PostCommentToVideo = async (req: Request, res: Response) => {
-    console.log('first');
     const errors = myValidationResult(req);
     if (!errors.isEmpty()) {
         errors.array().map((error) => {

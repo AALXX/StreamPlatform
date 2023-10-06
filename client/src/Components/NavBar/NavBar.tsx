@@ -2,8 +2,14 @@
 import React, { useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
+
 const NavBar = () => {
-    const [isOpen, setIsOpen] = useState(false)
+    const [isOpen, setIsOpen] = useState<boolean>(false)
+    const [searchInput, setSearchInput] = useState<string>('')
+
+    const postSearch = () => {
+        window.location.href = `http://localhost:3000/search?q=${searchInput}`
+    }
 
     return (
         <div className="flex bg-navbar-grey w-[100%] h-[4rem]">
@@ -41,6 +47,24 @@ const NavBar = () => {
             >
                 LOGO
             </h1>
+            <form
+                className="flex w-[20vw] ml-[40vw] h-full self-center"
+                onSubmit={e => {
+                    e.preventDefault()
+
+                    postSearch()
+                }}
+            >
+                <input type="text" className="h-9 self-center  w-[75%] bg-[#373737] text-white indent-3" placeholder="Search" onChange={e => setSearchInput(e.currentTarget.value)} />
+                <div
+                    className="flex bg-[#373737] ml-3 w-10  h-9 self-center cursor-pointer hover:bg-[#444444]"
+                    onClick={() => {
+                        postSearch()
+                    }}
+                >
+                    <Image className="ml-1 self-center" src="/assets/CommentsIcons/SendComment_icon.svg" width={30} height={30} alt="Send image" />
+                </div>
+            </form>
             <Link className="ml-auto mr-16 " href={'/account'}>
                 <Image src="/AccountIcon.svg" width={50} height={30} alt="Picture of the author" />
             </Link>
