@@ -27,5 +27,7 @@ router.post('/change-user-icon', UserAccountServices.ChangeUserIcon);
 
 //*Cretor Account
 router.post('/follow', body('accountToken').not().isEmpty(), UserAccountServices.FollowAccount);
+router.get('/get-creator-data/:publicToken/:accountToken', UserAccountServices.GetCreatorAccountData);
+router.get('/get-creator-videos/:ownerToken', param('ownerToken').not().isEmpty(), UserAccountServices.GetCreatorVideos);
 
 export = router;

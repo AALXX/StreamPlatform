@@ -77,11 +77,10 @@ const getUserPrivateTokenFromPublicToken = async (userToken: string): Promise<st
         const connection = await connect();
         const checkfollowResponse = await query(connection, CheckIfUserFollwsAccountQuerryString);
         let userData = JSON.parse(JSON.stringify(checkfollowResponse));
-        console.log(userData);
         if (Object.keys(userData).length != 0) {
-            return '';
+            return userData[0].UserPrivateToken;
         } else {
-            return '';
+            return null;
         }
     } catch (error: any) {
         logging.error(NAMESPACE, error.message, error);

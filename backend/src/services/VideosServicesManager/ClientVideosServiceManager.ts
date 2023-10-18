@@ -168,7 +168,14 @@ const PostCommentToVideo = async (req: Request, res: Response) => {
     const connection = await connect();
 
     try {
-        const PostCommentSQL = `INSERT INTO comments (ownerToken, videoToken, comment) VALUES ("${req.body.UserToken}","${req.body.VideoToken}","${req.body.Comment}"); SELECT UserName FROM users WHERE UserPrivateToken="${req.body.UserToken}";`;
+        let ownerToken = await utilFunctions.getUserPublicTokenFromPrivateToken(req.body.UserToken);
+        if (ownerToken == null) {
+            return res.status(200).json({
+                error: true,
+            });
+        }
+
+        const PostCommentSQL = `INSERT INTO comments (ownerToken, videoToken, comment) VALUES ("${ownerToken}","${req.body.VideoToken}","${req.body.Comment}"); SELECT UserName FROM users WHERE UserPublicToken="${ownerToken}";`;
         const resData = await query(connection, PostCommentSQL);
 
         let userName = JSON.parse(JSON.stringify(resData));
@@ -238,12 +245,11 @@ const GetVideoComments = async (req: Request, res: Response) => {
         const getVideoComments = await query(connection, GetVideoCommentsSQL);
 
         let VideoComments = JSON.parse(JSON.stringify(getVideoComments));
-
         let VideoCommentsToBeSend: Array<VideoCommentsToBeSendType> = [];
 
         for (const comment in VideoComments) {
             if (Object.prototype.hasOwnProperty.call(VideoComments, comment)) {
-                const GetOwnerNameSQL = `SELECT UserName FROM users WHERE UserPrivateToken="${VideoComments[comment].ownerToken}"`;
+                const GetOwnerNameSQL = `SELECT UserName FROM users WHERE UserPublicToken="${VideoComments[comment].ownerToken}"`;
                 const ownerNameData = await query(connection, GetOwnerNameSQL);
                 let ownerName = JSON.parse(JSON.stringify(ownerNameData));
 
@@ -256,11 +262,11 @@ const GetVideoComments = async (req: Request, res: Response) => {
                 });
             }
         }
-
         if (Object.keys(VideoCommentsToBeSend).length === 0) {
             return res.status(202).json({ error: false, CommentsFound: false });
         }
-        res.status(202).json({
+
+        return res.status(202).json({
             error: false,
             comments: VideoCommentsToBeSend,
             CommentsFound: true,

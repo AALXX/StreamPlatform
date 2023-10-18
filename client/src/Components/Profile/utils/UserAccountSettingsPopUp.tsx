@@ -3,7 +3,7 @@ import axios from 'axios'
 import { useState, useEffect } from 'react'
 import React from 'react'
 import { getCookie } from 'cookies-next'
-import { deleteCookie } from 'cookies-next'
+import { accLogout } from '@/security/Accounts'
 
 interface AccoutSettingsPopupProps {
     UserName: string
@@ -21,7 +21,6 @@ const AccoutSettingsPopup = (props: AccoutSettingsPopupProps) => {
     const [description, setDescription] = useState('')
     const userToken: string = getCookie('userToken') as string
 
-
     const [sure, setSure] = useState(false)
 
     useEffect(() => {
@@ -32,17 +31,19 @@ const AccoutSettingsPopup = (props: AccoutSettingsPopupProps) => {
     }, [])
 
     const changeUserData = () => {
-        axios.post(`${process.env.SERVER_BACKEND}/user-account/change-user-data`, { userName: userName, userEmail: email, userDescription: description, userVisibility: Visibility, userToken: userToken }).then(res => {
-            if (res.data.error) {
-                window.alert('error')
-            }
-            window.location.reload()
-        })
-    }
-
-    const logOut = () => {
-        deleteCookie('userToken')
-        window.location.reload()
+        axios
+            .post(`${process.env.SERVER_BACKEND}/user-account/change-user-data`, { userName: userName, userEmail: email, userDescription: description, userVisibility: Visibility, userToken: userToken })
+            .then(res => {
+                if (res.data.error) {
+                    window.alert('error')
+                }
+                window.location.reload()
+            })
+            .catch(err => {
+                if (err) {
+                    window.alert(`error, ${err.message}`)
+                }
+            })
     }
 
     const deleteAccount = () => {
@@ -148,7 +149,7 @@ const AccoutSettingsPopup = (props: AccoutSettingsPopupProps) => {
                     <button
                         className="bg-[#575757] border-none text-white mt-[1.5rem] h-[2.5rem] w-full cursor-pointer hover:bg-[#525252] active:bg-[#2b2b2b]"
                         onClick={() => {
-                            logOut()
+                            accLogout()
                         }}
                     >
                         Log Out

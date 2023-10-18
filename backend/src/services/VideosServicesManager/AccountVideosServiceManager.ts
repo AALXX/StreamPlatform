@@ -34,12 +34,21 @@ const fileFilter = (req: Request, file: any, cb: any) => {
 let upload = multer({
     storage: storage,
     // fileFilter: fileFilter,
-}).single('VideoFile');
+}).fields([
+    {
+        name: 'VideoFile',
+        maxCount: 1,
+    },
+    {
+        name: 'VideoThumbnail',
+        maxCount: 1,
+    },
+]);
 
 //---------------------------------------------------------------------------------
 //                                  Account Videos                                |
 //---------------------------------------------------------------------------------
-const UploadVideoFileToServer = async (req: Request, res: Response) => {
+const UploadVideoFileToServer = async (req: any, res: Response) => {
     logging.info(NAMESPACE, 'Posting Video service called');
 
     upload(req, res, async (err: any) => {
@@ -49,84 +58,92 @@ const UploadVideoFileToServer = async (req: Request, res: Response) => {
             });
         }
 
+        let userPublicToken = await utilFunctions.getUserPublicTokenFromPrivateToken(req.body.UserPrivateToken);
+        if (userPublicToken == null) {
+            return res.status(200).json({
+                error: true,
+            });
+        }
+
         const VideoToken = UtilFunc.CreateVideoToken();
         //* video file does not exist
-        fs.mkdir(`../server/accounts/${req.body.UserPrivateToken}/${VideoToken}`, (err) => {
+        fs.mkdir(`../server/accounts/${userPublicToken}/${VideoToken}`, (err) => {
             if (err) {
                 return res.status(200).json({
                     error: true,
                 });
             }
-
+            
             //* Directory Created Succesfully
-            fs.rename(`../server/accounts/VideosTmp/${req.file?.originalname}`, `../server/accounts/${req.body.UserPrivateToken}/${VideoToken}/${req.body.VideoTitle}_Source.mp4`, async (err) => {
+            fs.rename(`../server/accounts/VideosTmp/${req.files['VideoFile'][0].originalname}`, `../server/accounts/${userPublicToken}/${VideoToken}/${req.body.VideoTitle}_Source.mp4`, async (err) => {
                 if (err) {
                     return res.status(200).json({
                         error: true,
                     });
                 }
 
-                let ownerToken = await utilFunctions.getUserPublicTokenFromPrivateToken(req.body.UserPrivateToken);
-
-                if (ownerToken == null) {
-                    return res.status(200).json({
-                        error: true,
-                    });
-                }
-
-                //*Save video data to db
-                SendVideoDataToDb(ownerToken as string, VideoToken, req.body.VideoTitle, req.body.VideoVisibility, async (err: boolean) => {
+                fs.rename(`../server/accounts/VideosTmp/${req.files['VideoThumbnail'][0].originalname}`, `../server/accounts/${userPublicToken}/${VideoToken}/Thumbnail_image.jpg`, async (err) => {
                     if (err) {
                         return res.status(200).json({
                             error: true,
                         });
                     }
+                    //*Save video data to db
+                    SendVideoDataToDb(userPublicToken as string, VideoToken, req.body.VideoTitle, req.body.VideoVisibility, async (err: boolean) => {
+                        if (err) {
+                            return res.status(200).json({
+                                error: true,
+                            });
+                        }
 
-                    const file = fs.readFileSync(`../server/accounts/${req.body.UserPrivateToken}/${VideoToken}/${req.body.VideoTitle}_Source.mp4`);
+                        await ThumbnailProceesor(`../server/accounts/${userPublicToken}/${VideoToken}/Thumbnail_image.jpg`);
 
-                    // Encode the binary data as Base64
-                    const base64Video = Buffer.from(file).toString('base64');
+                        const file = fs.readFileSync(`../server/accounts/${userPublicToken}/${VideoToken}/${req.body.VideoTitle}_Source.mp4`);
 
-                    const formData = new FormData();
-                    formData.append('file', base64Video);
-                    formData.append('video_name', `${req.body.VideoTitle}.mp4`);
+                        // Encode the binary data as Base64
+                        const base64Video = Buffer.from(file).toString('base64');
 
-                    const video_category_server_resp = await axios.post(`http://localhost:6200/api/get-video-category`, formData, {
-                        headers: {
-                            'Content-Type': 'multipart/form-data',
-                        },
-                    });
+                        const formData = new FormData();
+                        formData.append('file', base64Video);
+                        formData.append('video_name', `${req.body.VideoTitle}.mp4`);
 
-                    if (video_category_server_resp.data.error == true) {
-                        return res.status(200).json({
-                            error: true,
+                        const video_category_server_resp = await axios.post(`http://localhost:6200/api/get-video-category`, formData, {
+                            headers: {
+                                'Content-Type': 'multipart/form-data',
+                            },
                         });
-                    }
 
-                    const vide_index_server_resp = await axios.post(`http://localhost:7300/api/index-video`, {
-                        VideoTitle: req.body.VideoTitle,
-                        VideoToken: VideoToken,
-                    });
+                        if (video_category_server_resp.data.error == true) {
+                            return res.status(200).json({
+                                error: true,
+                            });
+                        }
 
-                    if (vide_index_server_resp.data.error == true) {
-                        return res.status(200).json({
-                            error: true,
+                        const vide_index_server_resp = await axios.post(`http://localhost:7300/api/index-video`, {
+                            VideoTitle: req.body.VideoTitle,
+                            VideoToken: VideoToken,
                         });
-                    }
 
-                    if ((await SendVideoCategoryToDb(VideoToken, video_category_server_resp.data.video_type)) == false) {
+                        if (vide_index_server_resp.data.error == true) {
+                            return res.status(200).json({
+                                error: true,
+                            });
+                        }
+
+                        if ((await SendVideoCategoryToDb(VideoToken, video_category_server_resp.data.video_type)) == false) {
+                            return res.status(200).json({
+                                error: true,
+                            });
+                        }
+                        
+                        // * Creates a 720p and 480p variant of the video
+                        // await VideoProceesor(`${req.body.VideoTitle}`, `../server/accounts/${req.body.UserPrivateToken}/${VideoToken}/${req.body.VideoTitle}_Source.mp4`, '1280x720').then(async () => {
+                        //     await VideoProceesor(`${req.body.VideoTitle}`, `../videos/${VideoToken}/${req.body.VideoTitle}_Source.mp4`, '480x360').then(() => {});
+                        // });
+
                         return res.status(200).json({
-                            error: true,
+                            error: false,
                         });
-                    }
-
-                    // * Creates a 720p and 480p variant of the video
-                    // await VideoProceesor(`${req.body.VideoTitle}`, `../server/accounts/${req.body.UserPrivateToken}/${VideoToken}/${req.body.VideoTitle}_Source.mp4`, '1280x720').then(async () => {
-                    //     await VideoProceesor(`${req.body.VideoTitle}`, `../videos/${VideoToken}/${req.body.VideoTitle}_Source.mp4`, '480x360').then(() => {});
-                    // });
-
-                    return res.status(200).json({
-                        error: false,
                     });
                 });
             });
@@ -191,6 +208,22 @@ const SendVideoCategoryToDb = async (videoToken: string, CategoryId: string) => 
         return false;
     }
 };
+
+const ThumbnailProceesor = async (path: string) =>
+    new Promise((resolve, reject) => {
+        FFmpeg(path)
+            .size(`626x352`)
+            .on('end', () => {
+                console.log('Image resizing complete');
+                resolve({ error: false });
+            })
+            .on('error', (err) => {
+                console.error('Error:', err);
+                reject(err);
+            })
+            .save(path)
+            .run();
+    });
 
 const VideoProceesor = async (Title: string, path: string, VideoSize: string) =>
     new Promise((resolve, reject) => {

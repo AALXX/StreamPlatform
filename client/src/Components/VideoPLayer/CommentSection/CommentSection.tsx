@@ -31,6 +31,7 @@ const CommentSection = (props: VideoPlayerProps) => {
     useEffect(() => {
         ;(async () => {
             const getCommentsForVideo = await axios.get(`${process.env.SERVER_BACKEND}/videos-manager/get-video-comments/${props.VideoToken}`)
+            console.log(getCommentsForVideo)
             if (getCommentsForVideo.data.CommentsFound === true) {
                 setHasComments(true)
                 setVideoComments(getCommentsForVideo.data.comments)

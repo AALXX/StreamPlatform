@@ -57,9 +57,55 @@ const GetUserAccountData = async (req: Request, res: Response) => {
     }
 };
 
+const GetCreatorAccountData = async (req: Request, res: Response) => {
+    const errors = myValidationResult(req);
+    if (!errors.isEmpty()) {
+        errors.array().map((error) => {
+            logging.error('GET_ACCOUNT_DATA', error.errorMsg);
+        });
+
+        return res.status(200).json({ error: true, errors: errors.array() });
+    }
+
+    try {
+        const connection = await connect();
+
+        const GetUserDataQueryString = `SELECT UserName, UserDescription, AccountFolowers, userVisibility FROM users WHERE UserPublicToken='${req.params.accountToken}';`;
+        const data = await query(connection, GetUserDataQueryString);
+
+        let accData = JSON.parse(JSON.stringify(data));
+
+        const privateToken = await UtilFunc.getUserPrivateTokenFromPublicToken(req.params.publicToken);
+        let itFollows = false;
+        if (privateToken != null) {
+            itFollows = await UtilFunc.userFollowAccountCheck(privateToken as string, req.params.accountToken);
+        }
+
+        if (Object.keys(accData).length === 0) {
+            return res.status(200).json({
+                error: false,
+                userData: null,
+                userFollowsCreator: false,
+            });
+        }
+
+        return res.status(200).json({
+            error: false,
+            userData: accData[0],
+            userFollowsCreator: itFollows,
+        });
+    } catch (error: any) {
+        res.status(202).json({
+            error: true,
+            errmsg: error.message,
+        });
+    }
+};
+
 const GetAccountVideos = async (req: Request, res: Response) => {
     const errors = myValidationResult(req);
     if (!errors.isEmpty()) {
+        // deepcode ignore CallbackShouldReturn: <please specify a reason of ignoring this>
         errors.array().map((error) => {
             logging.error('GET_ACCOUNT_VIDEOS', error.errorMsg);
         });
@@ -77,6 +123,36 @@ const GetAccountVideos = async (req: Request, res: Response) => {
 
         const connection = await connect();
         const GetAccountVideosSQL = `SELECT * FROM videos WHERE OwnerToken="${ownerToken}"`;
+        const accountVideosDB = await query(connection, GetAccountVideosSQL);
+
+        let accountVideos = JSON.parse(JSON.stringify(accountVideosDB));
+
+        res.status(202).json({
+            error: false,
+            videos: accountVideos,
+        });
+    } catch (error: any) {
+        res.status(202).json({
+            error: true,
+            errmsg: error.message,
+        });
+    }
+};
+
+const GetCreatorVideos = async (req: Request, res: Response) => {
+    const errors = myValidationResult(req);
+    if (!errors.isEmpty()) {
+        // deepcode ignore CallbackShouldReturn: <please specify a reason of ignoring this>
+        errors.array().map((error) => {
+            logging.error('GET_CREATOR_VIDEOS', error.errorMsg);
+        });
+
+        return res.status(200).json({ error: true, errors: errors.array() });
+    }
+
+    try {
+        const connection = await connect();
+        const GetAccountVideosSQL = `SELECT VideoTitle, VideoDescription, Likes, Dislikes, PublishDate, VideoToken, OwnerToken FROM videos WHERE OwnerToken="${req.params.ownerToken}" AND Visibility="public"`;
         const accountVideosDB = await query(connection, GetAccountVideosSQL);
 
         let accountVideos = JSON.parse(JSON.stringify(accountVideosDB));
@@ -116,14 +192,14 @@ const FollowAccount = async (req: Request, res: Response) => {
             if (req.body.userToken !== undefined) {
                 const updateunfollwCountQueryString = `DELETE FROM user_follw_account_class WHERE userToken="${req.body.userToken}" AND accountToken="${
                     req.body.accountToken
-                }"; UPDATE users SET AccountFolowers = AccountFolowers-${1} WHERE UserPrivateToken="${req.body.accountToken}";`;
+                }"; UPDATE users SET AccountFolowers = AccountFolowers-${1} WHERE UserPublicToken="${req.body.accountToken}";`;
                 await query(connection, updateunfollwCountQueryString);
             }
         } else {
             if (req.body.userToken !== undefined) {
                 const updatefollwCountQueryString = `INSERT INTO user_follw_account_class (userToken, accountToken) VALUES ('${req.body.userToken}','${
                     req.body.accountToken
-                }'); UPDATE users SET AccountFolowers = AccountFolowers+${1} WHERE UserPrivateToken="${req.body.accountToken}";`;
+                }'); UPDATE users SET AccountFolowers = AccountFolowers+${1} WHERE UserPublicToken="${req.body.accountToken}";`;
                 await query(connection, updatefollwCountQueryString);
             }
         }
@@ -212,6 +288,7 @@ const ChangeUserIcon = async (req: Request, res: Response) => {
 
         fs.stat(`../server/accounts/${userPublicToken}/Main_Icon.png`, (err, stats) => {
             if (stats !== undefined) {
+                // deepcode ignore PT: <please specify a reason of ignoring this>
                 fs.unlink(`../server/accounts/${userPublicToken}/Main_Icon.png`, (err) => {
                     if (err) {
                         return res.status(200).json({
@@ -290,6 +367,7 @@ const RegisterUser = async (req: Request, res: Response) => {
             res.status(202).json({
                 error: false,
                 userprivateToken: userPrivateToken,
+                userpublictoken: userPublicToken,
             });
         });
     } catch (error: any) {
@@ -312,7 +390,7 @@ const LoginUser = async (req: Request, res: Response) => {
 
     try {
         const connection = await connect();
-        const LoginQueryString = `SELECT UserPrivateToken, UserPwd FROM users WHERE UserEmail='${req.body.userEmail}';`;
+        const LoginQueryString = `SELECT UserPrivateToken, UserPublicToken, UserPwd FROM users WHERE UserEmail='${req.body.userEmail}';`;
 
         const accountVideosDB = await query(connection, LoginQueryString);
 
@@ -339,6 +417,7 @@ const LoginUser = async (req: Request, res: Response) => {
                 return res.status(200).json({
                     error: false,
                     userprivateToken: data[0].UserPrivateToken,
+                    userpublicToken: data[0].UserPublicToken,
                 });
             }
         });
@@ -493,6 +572,7 @@ const ChangeUserPasswod = async (req: Request, res: Response) => {
 export default {
     GetUserAccountData,
     GetAccountVideos,
+    GetCreatorVideos,
     ChangeUserData,
     ChangeUserIcon,
     SendPwdLinkToEmail,
@@ -501,4 +581,5 @@ export default {
     RegisterUser,
     FollowAccount,
     LoginUser,
+    GetCreatorAccountData,
 };

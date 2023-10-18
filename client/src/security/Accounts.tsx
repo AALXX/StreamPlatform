@@ -1,5 +1,5 @@
 import axios from 'axios'
-import { setCookie, getCookie } from 'cookies-next'
+import { setCookie, getCookie, deleteCookie } from 'cookies-next'
 
 const accRegisterFunc = async (userName: string, userEmail: string, password: string, repeatedPassword: string) => {
     if (password !== repeatedPassword) {
@@ -15,6 +15,7 @@ const accRegisterFunc = async (userName: string, userEmail: string, password: st
 
     if (!res.data.error && res.data.userprivateToken != null) {
         setCookie('userToken', res.data.userprivateToken, { maxAge: 60 * 6 * 24 })
+        setCookie('userPublicToken', res.data.userpublictoken, { maxAge: 60 * 6 * 24 })
         return true
     }
 
@@ -29,6 +30,7 @@ const accLoginFunc = async (userEmail: string, password: string) => {
     console.log(res.data)
     if (!res.data.error && res.data.userprivateToken != null) {
         setCookie('userToken', res.data.userprivateToken, { maxAge: 60 * 6 * 24 })
+        setCookie('userPublicToken', res.data.userpublicToken, { maxAge: 60 * 6 * 24 })
         return true
     }
 
@@ -39,8 +41,11 @@ const accLoginFunc = async (userEmail: string, password: string) => {
     return false
 }
 
-const AccLogout = () => {
+const accLogout = () => {
     try {
+        deleteCookie('userToken')
+        deleteCookie('userPublicToken')
+        window.location.reload()
     } catch (e) {
         console.log(`is logged in error ${e}`)
     }
@@ -71,4 +76,4 @@ const isLoggedIn = async () => {
     }
 }
 
-export { accRegisterFunc, accLoginFunc, AccLogout, isLoggedIn }
+export { accRegisterFunc, accLoginFunc, accLogout, isLoggedIn }

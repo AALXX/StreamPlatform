@@ -27,7 +27,6 @@ router.use((req: any, res: any, next: NextFunction) => {
     next();
 });
 
-
 //* Routes
 router.use('/api/user-account/', UserAccountRoutes);
 router.use('/api/live-stream/', LiveStreamRoutes);

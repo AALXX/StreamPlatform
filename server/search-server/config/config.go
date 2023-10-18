@@ -51,7 +51,7 @@ func InitializeIndex() (bleve.Index, error) {
 
 func RetrieveDataFromMySQL(db *sql.DB) ([]models.Video, error) {
 	// Replace this with your SQL query to retrieve data from the MySQL database
-	rows, err := db.Query("SELECT OwnerToken, VideoTitle, VideoToken FROM videos")
+	rows, err := db.Query("SELECT OwnerToken, VideoTitle, VideoToken, Visibility FROM videos")
 	if err != nil {
 		return nil, err
 	}
@@ -62,7 +62,7 @@ func RetrieveDataFromMySQL(db *sql.DB) ([]models.Video, error) {
 	for rows.Next() {
 		var video models.Video
 
-		if err := rows.Scan(&video.OwnerToken, &video.VideoTitle, &video.VideoToken); err != nil {
+		if err := rows.Scan(&video.OwnerToken, &video.VideoTitle, &video.VideoToken, &video.VideoVisibility); err != nil {
 			return nil, err
 		}
 
@@ -99,6 +99,7 @@ func IndexData(index bleve.Index, videos []models.Video) error {
 			"VideoTitle": videos[i].VideoTitle,
 			"OwnerToken": videos[i].OwnerToken,
 			"OwnerName":  videos[i].OwnerName,
+			"VideoVisibility":  videos[i].VideoVisibility,
 		}
 		// Index the document
 		if err := index.Index(videos[i].VideoToken, bleveDoc); err != nil {

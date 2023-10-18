@@ -1,6 +1,5 @@
 'use client'
 import React, { useEffect, useRef, useState } from 'react'
-import Image from 'next/image'
 import Link from 'next/link'
 import { getVideoData, IVideoData, playOrPauseVideo, followAccount, likeVideo, dislikeVideo } from '@/Components/VideoPLayer/UtilFunc'
 import { getCookie } from 'cookies-next'
@@ -155,8 +154,8 @@ const VideoPlayer = (props: VideoPlayerProps) => {
             </div>
 
             <div className="flex mt-[.5vh] h-[10vh] w-[66.8vw] bg-[#292929]">
-                <Link className="ml-4 self-center" href={'/account'}>
-                    <Image src="/AccountIcon.svg" width={70} height={50} alt="Picture of the author" />
+                <Link className="ml-4 self-center" href={`/user?id=${VideoData.OwnerToken}`}>
+                    <img className="z-10 rounded-full" src={`${process.env.FILE_SERVER}/${VideoData.OwnerToken}/Main_icon.png`} width={50} height={50} alt="Picture of the author" />
                 </Link>
                 <div className="flex flex-col ml-4">
                     <h1 className="text-white mt-2 text-lg">{VideoData.VideoTitle}</h1>

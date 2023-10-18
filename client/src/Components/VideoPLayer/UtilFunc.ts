@@ -21,7 +21,6 @@ interface IVideoData {
 
 const getVideoData = async (VideoToken: string | null, userToken: string) => {
     const videoData = await axios.get(`${process.env.SERVER_BACKEND}/videos-manager/get-video-data/${VideoToken}/${userToken}`)
-    console.log(videoData.data)
     return {
         error: false,
         VideoFound: true,

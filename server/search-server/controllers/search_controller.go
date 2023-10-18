@@ -51,9 +51,10 @@ func GetRecomandedVideo(c *gin.Context, db *sql.DB, index bleve.Index) {
 			Target    *string
 		}{
 			{"VideoTitle", &result.VideoTitle},
-			{"VideoToken", &result.VideoToken}, // Add more fields as needed
-			{"OwnerToken", &result.OwnerToken}, // Add more fields as needed
-			{"OwnerName", &result.OwnerName},   // Add more fields as needed
+			{"VideoToken", &result.VideoToken},           // Add more fields as needed
+			{"OwnerToken", &result.OwnerToken},           // Add more fields as needed
+			{"OwnerName", &result.OwnerName},             // Add more fields as needed
+			{"VideoVisibility", &result.VideoVisibility}, // Add more fields as needed
 		}
 
 		for _, fieldInfo := range fieldsToConvert {
@@ -71,12 +72,17 @@ func GetRecomandedVideo(c *gin.Context, db *sql.DB, index bleve.Index) {
 
 			*fieldInfo.Target = title
 		}
-		// Assuming SearchResult struct includes the fields you want to convert
-		mappedResults = append(mappedResults, result)
+
+		if result.VideoVisibility == "public" {
+
+			// Assuming SearchResult struct includes the fields you want to convert
+			mappedResults = append(mappedResults, result)
+		}
+
 	}
 
 	// Return the user data in the response
-	c.JSON(http.StatusCreated, gin.H{"videoSearchedREsults": mappedResults})
+	c.JSON(http.StatusCreated, gin.H{"videoSearchedResults": mappedResults})
 }
 
 func AddToIndex(c *gin.Context, db *sql.DB, index bleve.Index) {

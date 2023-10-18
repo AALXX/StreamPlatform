@@ -2,14 +2,14 @@
 import React, { useState } from 'react'
 import Link from 'next/link'
 
-export interface VideTemplateProps {
+export interface VideoTemplateProps {
     VideoTitle: string
     VideoToken: string
     OwnerName: string
     OwnerToken: string
 }
 
-export const VideoTamplate = (props: VideTemplateProps) => {
+export const VideoTamplate = (props: VideoTemplateProps) => {
     const [isHovered, setIsHovered] = useState(false)
 
     return (
@@ -24,14 +24,16 @@ export const VideoTamplate = (props: VideTemplateProps) => {
                         setIsHovered(false)
                     }}
                 >
+                    <img src={`${process.env.FILE_SERVER}/${props.OwnerToken}/${props.VideoToken}/Thumbnail_image.jpg`} className="fixed w-[15vw] h-[20vh]" />
+
                     {isHovered ? (
-                        <div className="flex flex-row mt-auto bg-[#00000088] h-[30%]">
+                        <div className="flex flex-row mt-auto bg-[#00000088] h-[30%] z-10">
                             <img src={`${process.env.FILE_SERVER}/${props.OwnerToken}/Main_Icon.png`} alt="" className="z-10 rounded-full w-[2vw] h-[4vh] self-center ml-[0.5rem]" />
-                            <div className="flex flex-col ml-4 self-center w-[3vw]">
-                                <h1 className="text-white text-base  ">{props.OwnerName}</h1>
+                            <div className="flex flex-col ml-4 self-center w-[6vw] ">
+                                <h1 className="text-white text-base">{props.OwnerName}</h1>
                                 <hr className="w-full self-center" />
 
-                                <h1 className="text-white text-sm  ">{props.VideoTitle}</h1>
+                                <h1 className="text-white text-sm truncate ">{props.VideoTitle}</h1>
                             </div>
                         </div>
                     ) : null}

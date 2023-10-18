@@ -45,6 +45,7 @@ backend/next-env.d.ts
 server/.mvn
 server/.vscode
 
-server/video-categorize-server/model
-server/video-categorize-server/data_images
+server/video-categorize-server/src/model
+server/video-categorize-server/src/data_images
+server/accounts/
 .svn/
