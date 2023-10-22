@@ -75,7 +75,7 @@ const UploadVideoFileToServer = async (req: any, res: Response) => {
             }
             
             //* Directory Created Succesfully
-            fs.rename(`../server/accounts/VideosTmp/${req.files['VideoFile'][0].originalname}`, `../server/accounts/${userPublicToken}/${VideoToken}/${req.body.VideoTitle}_Source.mp4`, async (err) => {
+            fs.rename(`../server/accounts/VideosTmp/${req.files['VideoFile'][0].originalname}`, `../server/accounts/${userPublicToken}/${VideoToken}/Source.mp4`, async (err) => {
                 if (err) {
                     return res.status(200).json({
                         error: true,
@@ -98,7 +98,7 @@ const UploadVideoFileToServer = async (req: any, res: Response) => {
 
                         await ThumbnailProceesor(`../server/accounts/${userPublicToken}/${VideoToken}/Thumbnail_image.jpg`);
 
-                        const file = fs.readFileSync(`../server/accounts/${userPublicToken}/${VideoToken}/${req.body.VideoTitle}_Source.mp4`);
+                        const file = fs.readFileSync(`../server/accounts/${userPublicToken}/${VideoToken}/Source.mp4`);
 
                         // Encode the binary data as Base64
                         const base64Video = Buffer.from(file).toString('base64');

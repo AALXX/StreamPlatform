@@ -5,14 +5,14 @@ import Link from 'next/link'
 import { abbreviateNumber } from './utils/NumberAbrev'
 import { getCookie } from 'cookies-next'
 
-export interface VideoTemplateProps {
+export interface IVideoTemplateProps {
     VideoTitle: string
     Likes: number
     Dislikes: number
     VideoToken: string
 }
 
-export const VideoTamplate = (props: VideoTemplateProps) => {
+export const VideoTamplate = (props: IVideoTemplateProps) => {
     const [isHovered, setIsHovered] = useState(false)
 
     return (

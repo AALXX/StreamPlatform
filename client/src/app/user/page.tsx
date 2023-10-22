@@ -5,7 +5,7 @@ import { useEffect, useState } from 'react'
 import axios from 'axios'
 import { followAccount } from '@/Components/VideoPLayer/UtilFunc'
 import { getCookie } from 'cookies-next'
-import VideoTamplate, { VideoTemplateProps } from '@/Components/VideoTemplate/VideoTemplate'
+import VideoTamplate, { IVideoTemplateProps } from '@/Components/VideoTemplate/VideoTemplate'
 import AboutChanelTab from '@/Components/Profile/AboutChanelTab'
 import ProfileCards from '@/Components/Profile/utils/ProfileCards'
 
@@ -24,7 +24,7 @@ export default function WatchVideoPage() {
     const [userData, setUserData] = useState<UserData>({ UserName: '', UserDescription: '', AccountFolowers: 0 })
     const [userFollwsAccount, setUserFollwsAccount] = useState<boolean>(false)
     const [hasVideos, setHasVideos] = useState<boolean>(false)
-    const [videosData, setVideosData] = useState<Array<VideoTemplateProps>>([])
+    const [videosData, setVideosData] = useState<Array<IVideoTemplateProps>>([])
     const [componentToShow, setComponentToShow] = useState<string>('LandingPage')
 
     let component
@@ -44,15 +44,15 @@ export default function WatchVideoPage() {
 
     switch (componentToShow) {
         case 'LandingPage':
-            component = <div className="grid xl:grid-cols-6 lg:grid-cols-5 gap-4 "></div>
+            component = <div className="grid xl:grid-cols-6 lg:grid-cols-5 gap-4"></div>
             break
         case 'Videos':
             component = (
                 <div className="grid xl:grid-cols-6 lg:grid-cols-5 gap-4">
                     {hasVideos ? (
                         <>
-                            {videosData.map((video: VideoTemplateProps, index: number) => (
-                                <VideoTamplate key={index} VideoTitle={video.VideoTitle} VideoToken={video.VideoToken} OwnerName={userData.UserName} OwnerToken={video.OwnerToken}  />
+                            {videosData.map((video: IVideoTemplateProps, index: number) => (
+                                <VideoTamplate key={index} VideoTitle={video.VideoTitle} VideoToken={video.VideoToken} OwnerName={userData.UserName} OwnerToken={video.OwnerToken} />
                             ))}
                         </>
                     ) : (

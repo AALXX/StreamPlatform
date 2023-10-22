@@ -5,7 +5,6 @@ import (
 
 	"fmt"
 	"search-server/models"
-	"strconv"
 
 	"github.com/blevesearch/bleve"
 	_ "github.com/go-sql-driver/mysql"
@@ -51,7 +50,7 @@ func InitializeIndex() (bleve.Index, error) {
 
 func RetrieveDataFromMySQL(db *sql.DB) ([]models.Video, error) {
 	// Replace this with your SQL query to retrieve data from the MySQL database
-	rows, err := db.Query("SELECT OwnerToken, VideoTitle, VideoToken, Visibility FROM videos")
+	rows, err := db.Query("SELECT  VideoTitle, VideoToken, Visibility FROM videos")
 	if err != nil {
 		return nil, err
 	}
@@ -62,23 +61,10 @@ func RetrieveDataFromMySQL(db *sql.DB) ([]models.Video, error) {
 	for rows.Next() {
 		var video models.Video
 
-		if err := rows.Scan(&video.OwnerToken, &video.VideoTitle, &video.VideoToken, &video.VideoVisibility); err != nil {
+		if err := rows.Scan(&video.VideoTitle, &video.VideoToken, &video.VideoVisibility); err != nil {
 			return nil, err
 		}
 
-		rows2, err := db.Query("SELECT UserName FROM users WHERE UserPublicToken = ?", video.OwnerToken)
-		if err != nil {
-			return nil, err
-		}
-		defer rows2.Close()
-
-		for rows2.Next() {
-
-			if err := rows2.Scan(&video.OwnerName); err != nil {
-				return nil, err
-			}
-		}
-		
 		videos = append(videos, video)
 	}
 
@@ -95,11 +81,9 @@ func IndexData(index bleve.Index, videos []models.Video) error {
 
 		// Create a Bleve document as a map
 		bleveDoc := map[string]interface{}{
-			"VideoToken": videos[i].VideoToken,
-			"VideoTitle": videos[i].VideoTitle,
-			"OwnerToken": videos[i].OwnerToken,
-			"OwnerName":  videos[i].OwnerName,
-			"VideoVisibility":  videos[i].VideoVisibility,
+			"VideoToken":      videos[i].VideoToken,
+			"VideoTitle":      videos[i].VideoTitle,
+			"VideoVisibility": videos[i].VideoVisibility,
 		}
 		// Index the document
 		if err := index.Index(videos[i].VideoToken, bleveDoc); err != nil {
@@ -107,36 +91,6 @@ func IndexData(index bleve.Index, videos []models.Video) error {
 		}
 	}
 	return nil
-}
-
-// Function to get the last video ID from the index
-func GetLastVideoID(index bleve.Index) (int, error) {
-	// Define a query to retrieve all documents sorted by ID in descending order
-	query := bleve.NewMatchAllQuery()
-	searchRequest := bleve.NewSearchRequest(query)
-
-	// Sort the results by the "ID" field in descending order
-	searchRequest.SortBy([]string{"ID"})
-
-	// Perform the search
-	searchResults, err := index.Search(searchRequest)
-	if err != nil {
-		return 0, err
-	}
-
-	// Check if there are any search results
-	if len(searchResults.Hits) == 0 {
-		return 0, fmt.Errorf("no documents found in the index")
-	}
-
-	// Convert the last document's ID (string) to an integer
-	lastDocumentID := searchResults.Hits[0].ID
-	lastVideoID, err := strconv.Atoi(lastDocumentID)
-	if err != nil {
-		return 0, err
-	}
-
-	return lastVideoID, nil
 }
 
 // Function to open or create an index

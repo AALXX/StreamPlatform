@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from 'react'
 import React from 'react'
 import { getCookie } from 'cookies-next';
 
-interface ChangeAccountIconPopUpProps {
+interface IChangeAccountIconPopUpProps {
     UserPrivateToken: string
     closePopup: () => void
 }
@@ -36,7 +36,7 @@ const Icon = ({ url }: IconProps) => {
     return <img src={url} alt="" className="rounded-full" />
 }
 
-const ChangeAccountIconPopUp = (props: ChangeAccountIconPopUpProps) => {
+const ChangeAccountIconPopUp = (props: IChangeAccountIconPopUpProps) => {
     //* Video object states
     const [iconFile, setIconFile] = useState<FileList | null>(null)
     const [ObjectUrl, setObjectUrl] = useState<string>('')

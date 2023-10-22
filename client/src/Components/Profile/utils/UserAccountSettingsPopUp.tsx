@@ -5,7 +5,7 @@ import React from 'react'
 import { getCookie } from 'cookies-next'
 import { accLogout } from '@/security/Accounts'
 
-interface AccoutSettingsPopupProps {
+interface IAccoutSettingsPopupProps {
     UserName: string
     UserEmail: string
     UserVisibility: string
@@ -14,7 +14,7 @@ interface AccoutSettingsPopupProps {
     closePopup: () => void
 }
 
-const AccoutSettingsPopup = (props: AccoutSettingsPopupProps) => {
+const AccoutSettingsPopup = (props: IAccoutSettingsPopupProps) => {
     const [userName, setUserName] = useState('')
     const [email, setEmail] = useState('')
     const [Visibility, setVisibility] = useState('')

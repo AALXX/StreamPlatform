@@ -52,8 +52,6 @@ func GetRecomandedVideo(c *gin.Context, db *sql.DB, index bleve.Index) {
 		}{
 			{"VideoTitle", &result.VideoTitle},
 			{"VideoToken", &result.VideoToken},           // Add more fields as needed
-			{"OwnerToken", &result.OwnerToken},           // Add more fields as needed
-			{"OwnerName", &result.OwnerName},             // Add more fields as needed
 			{"VideoVisibility", &result.VideoVisibility}, // Add more fields as needed
 		}
 
@@ -94,8 +92,40 @@ func AddToIndex(c *gin.Context, db *sql.DB, index bleve.Index) {
 	}
 
 	newVideo := models.Video{
-		VideoTitle: video.VideoTitle,
-		VideoToken: video.VideoToken,
+		VideoTitle:      video.VideoTitle,
+		VideoToken:      video.VideoToken,
+		VideoVisibility: video.VideoVisibility,
+	}
+
+	if err := index.Index(video.VideoToken, newVideo); err != nil {
+		log.Fatal(err)
+		c.JSON(http.StatusCreated, gin.H{"error": true})
+		return
+	}
+
+	c.JSON(http.StatusCreated, gin.H{"error": false})
+}
+
+func UpdateIndexedVideo(c *gin.Context, db *sql.DB, index bleve.Index) {
+
+	var video models.Video
+	if err := c.ShouldBindJSON(&video); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": true, "msg": err.Error()})
+		return
+	}
+
+	newVideo := models.Video{
+		VideoTitle:      video.VideoTitle,
+		VideoToken:      video.VideoToken,
+		VideoVisibility: video.VideoVisibility,
+	}
+
+
+	// First, remove the old document from the index.
+	if err := index.Delete(video.VideoToken); err != nil {
+		log.Fatal(err)
+		c.JSON(http.StatusCreated, gin.H{"error": true})
+		return
 	}
 
 	if err := index.Index(video.VideoToken, newVideo); err != nil {

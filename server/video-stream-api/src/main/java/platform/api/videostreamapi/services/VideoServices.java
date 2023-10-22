@@ -17,16 +17,16 @@ import reactor.core.publisher.Mono;
 public class VideoServices implements IVideoServices {
 
     // private static final String VideoPathFormat = "file:../../../videos/%s";
-    private static final String VideoPathFormat = "file:../accounts/%s/%s/%s_Source.mp4";
+    private static final String VideoPathFormat = "file:../accounts/%s/%s/Source.mp4";
 
     // * it loads video from file system
     @Autowired
     public ResourceLoader VideoLoader;
 
-    public Mono<Resource> GetVideo(String OwnerToken, String VideoToken, String VideoTitle) {
+    public Mono<Resource> GetVideo(String OwnerToken, String VideoToken) {
 
         return Mono.fromSupplier(
-                () -> VideoLoader.getResource(String.format(VideoPathFormat, OwnerToken, VideoToken, VideoTitle)));
+                () -> VideoLoader.getResource(String.format(VideoPathFormat, OwnerToken, VideoToken)));
         // return null;
     }
 

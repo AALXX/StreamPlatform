@@ -3,12 +3,12 @@ import axios from 'axios'
 import React, { useEffect, useRef, useState } from 'react'
 import { getCookie } from 'cookies-next'
 
-interface ClipProps {
+interface IClipProps {
     url: string
 }
 
 //* Video PriviewComponent
-const Clip = ({ url }: ClipProps) => {
+const Clip = ({ url }: IClipProps) => {
     const videoRef = useRef<HTMLVideoElement>(null)
     const previousUrl = useRef(url)
 

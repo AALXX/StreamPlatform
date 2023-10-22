@@ -5,7 +5,7 @@ import { getVideoData, IVideoData, playOrPauseVideo, followAccount, likeVideo, d
 import { getCookie } from 'cookies-next'
 import PlayerOverlay from './PlayerOverlay'
 
-interface VideoPlayerProps {
+interface IVideoPlayerProps {
     VideoToken: string | null
 }
 
@@ -14,7 +14,7 @@ interface VideoPlayerProps {
  * @param {VideoPlayerProps} props
  * @return {JSX}
  */
-const VideoPlayer = (props: VideoPlayerProps) => {
+const VideoPlayer = (props: IVideoPlayerProps) => {
     const VideoRef = useRef<HTMLVideoElement>(null)
     const [showOverlay, setShowOverlay] = useState(false)
 

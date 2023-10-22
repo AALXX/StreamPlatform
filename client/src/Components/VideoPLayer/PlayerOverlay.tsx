@@ -1,7 +1,7 @@
 import React, { Dispatch, RefObject, SetStateAction } from 'react'
 import { changeVolume } from '@/Components/VideoPLayer/UtilFunc'
 
-interface OverlayProps {
+interface IOverlayProps {
     VideoRef: RefObject<HTMLVideoElement>
     Progress: number
     Playing: boolean
@@ -10,7 +10,7 @@ interface OverlayProps {
     DurationMinutes: number
     DurationSeconds: number
     Volume: number
-    playOrPauseVideo: any
+    playOrPauseVideo: boo
     setPlaying: Dispatch<SetStateAction<boolean>>
     setVolume: Dispatch<SetStateAction<number>>
     setShowOverlay: Dispatch<SetStateAction<boolean>>
@@ -21,7 +21,7 @@ interface OverlayProps {
  * @param {OverlayProps} props
  * @return {JSX}
  */
-export default function PlayerOverlay(props: OverlayProps) {
+export default function PlayerOverlay(props: IOverlayProps) {
     return (
         <div
             className="flex  absolute w-[66.8vw] h-[74%] "

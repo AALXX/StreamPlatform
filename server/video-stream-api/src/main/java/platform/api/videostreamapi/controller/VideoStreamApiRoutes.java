@@ -32,7 +32,7 @@ public class VideoStreamApiRoutes {
         List<VideoData> data = videoServices.GetVideoData(VideoToken);
         if (!data.isEmpty()) {
 
-            return videoServices.GetVideo(data.get(0).getOwnerToken(), VideoToken, data.get(0).getVideoTitle());
+            return videoServices.GetVideo(data.get(0).getOwnerToken(), VideoToken);
         }
         return null;
     }

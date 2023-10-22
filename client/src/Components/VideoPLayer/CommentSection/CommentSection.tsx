@@ -6,21 +6,21 @@ import Comment from './Comment'
 import { useEffect } from 'react'
 import axios from 'axios'
 
-interface VideoPlayerProps {
+interface IVideoPlayerProps {
     VideoToken: string | null
     UserToken: string | null
 }
 
-interface CommentProps {
+interface ICommentProps {
     ownerToken: string
     videoToken: string
     comment: string
     ownerName: string
 }
 
-const CommentSection = (props: VideoPlayerProps) => {
+const CommentSection = (props: IVideoPlayerProps) => {
     const [commentInput, setCommentInput] = useState<string>('')
-    const [videoComments, setVideoComments] = useState<Array<CommentProps>>([])
+    const [videoComments, setVideoComments] = useState<Array<ICommentProps>>([])
     const [hasComments, setHasComments] = useState<boolean>(false)
 
     const postComment = async () => {
@@ -44,7 +44,7 @@ const CommentSection = (props: VideoPlayerProps) => {
             <div className="flex flex-col h-[88%] overflow-y-scroll">
                 {hasComments ? (
                     <>
-                        {videoComments.map((comment: CommentProps, index: number) => (
+                        {videoComments.map((comment: ICommentProps, index: number) => (
                             <Comment key={index} ownerToken={comment.ownerToken} comment={comment.comment} ownerName={comment.ownerName} />
                         ))}
                     </>

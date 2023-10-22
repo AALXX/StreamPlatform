@@ -2,14 +2,14 @@
 import React, { useState } from 'react'
 import Link from 'next/link'
 
-export interface VideoTemplateProps {
+export interface IVideoTemplateProps {
     VideoTitle: string
     VideoToken: string
     OwnerName: string
     OwnerToken: string
 }
 
-export const VideoTamplate = (props: VideoTemplateProps) => {
+export const VideoTamplate = (props: IVideoTemplateProps) => {
     const [isHovered, setIsHovered] = useState(false)
 
     return (

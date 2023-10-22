@@ -1,13 +1,13 @@
 import Link from 'next/link'
 import React from 'react'
 
-interface CommentProps {
+interface ICommentProps {
     ownerToken: string
     comment: string
     ownerName: string
 }
 
-const Comment = (props: CommentProps) => {
+const Comment = (props: ICommentProps) => {
     return (
         <div className="flex flex-col bg-[#494949] h-[8.5rem] w-[95%] mt-[1rem] self-center">
             <div className="flex  w-full h-[4rem]">

@@ -1,7 +1,7 @@
 'use client'
 import Image from 'next/image'
 import React, { useEffect, useState } from 'react'
-import { VideoTemplateProps, VideoTamplate } from './AccountVideoTamplate'
+import { IVideoTemplateProps, VideoTamplate } from './AccountVideoTamplate'
 import { CookieValueTypes, getCookie } from 'cookies-next'
 import axios from 'axios'
 import AccoutSettingsPopup from './utils/UserAccountSettingsPopUp'
@@ -9,7 +9,7 @@ import ChangeAccountIconPopUp from './utils/ChangeAccountIconPopUp'
 import ProfileCards from './utils/ProfileCards'
 import AboutChanelTab from './AboutChanelTab'
 
-interface UserDataProps {
+interface IUserDataProps {
     UserName: string
     UserDescription: string
     UserEmail: string
@@ -19,9 +19,9 @@ interface UserDataProps {
 const AccountProfile = () => {
     const userToken: string = getCookie('userToken') as string
 
-    const [userData, setUserData] = useState<UserDataProps>({ UserName: '', UserDescription: '', UserEmail: '', AccountFolowers: '' })
+    const [userData, setUserData] = useState<IUserDataProps>({ UserName: '', UserDescription: '', UserEmail: '', AccountFolowers: '' })
     const [hasVideos, setHasVideos] = useState<boolean>(false)
-    const [videosData, setVideosData] = useState<Array<VideoTemplateProps>>([])
+    const [videosData, setVideosData] = useState<Array<IVideoTemplateProps>>([])
 
     const [ToggledSettingsPopUp, setToggledSettingsPopUp] = useState(false)
     const [ToggledIconChangePopUp, setToggledIconChangePopUp] = useState(false)
@@ -79,7 +79,7 @@ const AccountProfile = () => {
                 <div className="grid xl:grid-cols-6 lg:grid-cols-5 gap-4">
                     {hasVideos ? (
                         <>
-                            {videosData.map((video: VideoTemplateProps, index: number) => (
+                            {videosData.map((video: IVideoTemplateProps, index: number) => (
                                 <VideoTamplate key={index} VideoTitle={video.VideoTitle} VideoToken={video.VideoToken} Likes={video.Likes} Dislikes={video.Dislikes} />
                             ))}
                         </>

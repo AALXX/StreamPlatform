@@ -1,10 +1,10 @@
 import React from 'react'
 
-interface AboutChanelProps {
+interface IAboutChanelProps {
     userDescription: string
 }
 
-const AboutChanelTab = (props: AboutChanelProps) => {
+const AboutChanelTab = (props: IAboutChanelProps) => {
     return (
         <div className="flex w-full h-full">
             <div className="flex flex-col bg-[#4B4B4B] w-[35rem] h-[30vh]">

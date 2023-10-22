@@ -1,12 +1,12 @@
 import React, { Dispatch, SetStateAction } from 'react'
 
-interface ProfileCardsProps {
+interface IProfileCardsProps {
     Title: string
     TabName: string
     setComponentToShow: Dispatch<SetStateAction<string>>
 }
 
-const ProfileCards = (props: ProfileCardsProps) => {
+const ProfileCards = (props: IProfileCardsProps) => {
     return (
         <div
             className="flex flex-col bg-[#6b6b6b62] w-[10rem] h-[3rem] justify-center ml-1 cursor-pointer"
