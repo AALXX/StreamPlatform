@@ -3,3 +3,4 @@ opencv-python
 numpy
 keras
 git+https://github.com/tensorflow/docs
+werkzeug>=3.0.1 # not directly required, pinned by Snyk to avoid a vulnerability
