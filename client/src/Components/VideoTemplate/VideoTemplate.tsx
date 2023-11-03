@@ -24,7 +24,7 @@ export const VideoTamplate = (props: IVideoTemplateProps) => {
                         setIsHovered(false)
                     }}
                 >
-                    <img src={`${process.env.FILE_SERVER}/${props.OwnerToken}/${props.VideoToken}/Thumbnail_image.jpg`} className="fixed w-[15vw] h-[20vh]" />
+                    <img src={`${process.env.FILE_SERVER}/${props.OwnerToken}/${props.VideoToken}/Thumbnail_image.jpg`} className="absolute w-[15vw] h-[20vh]" />
 
                     {isHovered ? (
                         <div className="flex flex-row mt-auto bg-[#00000088] h-[30%] z-10">

@@ -13,7 +13,7 @@ func InitRoutes(router *gin.Engine, db *sql.DB, index bleve.Index) {
 	userGroup := router.Group("/api")
 	{
 		userGroup.GET("/search/:search_query", func(c *gin.Context) {
-			controllers.GetRecomandedVideo(c, db, index)
+			controllers.GetSerchedVideos(c, db, index)
 		})
 
 		userGroup.POST("/index-video", func(c *gin.Context) {
@@ -22,6 +22,10 @@ func InitRoutes(router *gin.Engine, db *sql.DB, index bleve.Index) {
 
 		userGroup.POST("/update-indexed-video", func(c *gin.Context) {
 			controllers.UpdateIndexedVideo(c, db, index)
+		})
+
+		userGroup.POST("/delete-indexed-video", func(c *gin.Context) {
+			controllers.DeleteIndexedVideo(c, db, index)
 		})
 	}
 }

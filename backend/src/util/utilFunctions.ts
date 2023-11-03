@@ -2,6 +2,7 @@ import bcrypt from 'bcrypt';
 import logging from '../config/logging';
 import { connect, query } from '../config/mysql';
 import jwt from 'jsonwebtoken';
+import fs from 'fs';
 
 //* /////////////////////////////
 //*      Account related       //
@@ -197,6 +198,21 @@ const userLikedOrDislikedVideoCheck = async (userToken: string, VideoToken: stri
     }
 };
 
+const RemoveDirectory = (dirPath: string) => {
+    if (fs.existsSync(dirPath)) {
+        fs.readdirSync(dirPath).forEach((file) => {
+            if (fs.lstatSync(dirPath).isDirectory()) {
+                // If it's a directory, recursively remove it
+                RemoveDirectory(dirPath);
+            } else {
+                // If it's a file, delete it
+                fs.unlinkSync(dirPath);
+            }
+        });
+        fs.rmdirSync(dirPath); // Remove the empty directory
+    }
+};
+
 export default {
     HashPassword,
     UserNameAndEmailExistCheck,
@@ -206,4 +222,5 @@ export default {
     userLikedOrDislikedVideoCheck,
     getUserPublicTokenFromPrivateToken,
     getUserPrivateTokenFromPublicToken,
+    RemoveDirectory,
 };

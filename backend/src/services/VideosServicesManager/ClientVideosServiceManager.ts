@@ -24,10 +24,10 @@ interface IVideoCommentsToBeSendType {
     ownerName: string;
 }
 interface ISearchVideoCards {
-    VideoTitle: string
-    VideoToken: string
-    OwnerName: string
-    OwnerToken: string
+    VideoTitle: string;
+    VideoToken: string;
+    OwnerName: string;
+    OwnerToken: string;
 }
 
 /**
@@ -77,112 +77,6 @@ const GetVideoDataByToken = async (req: Request, res: Response) => {
             UserLikedOrDislikedVideo: getuserlikedordislike,
         });
     } catch (error: any) {
-        return res.status(500).json({
-            message: error.message,
-            error: true,
-        });
-    }
-};
-
-/**
- * get creator video data
- * @param req
- * @param res
- */
-const GetCreatorVideoData = async (req: Request, res: Response) => {
-    const errors = myValidationResult(req);
-    if (!errors.isEmpty()) {
-        errors.array().map((error) => {
-            logging.error('GET_CREATOR_VIDEO_DATA_BY_TOKEN_FUNC', error.errorMsg);
-        });
-
-        return res.status(200).json({ error: true, errors: errors.array() });
-    }
-
-    const GetVideoDataQueryString = `SELECT VideoTitle, OwnerToken, Likes, Dislikes, PublishDate, Visibility, ShowComments, Show_LikesDislikes FROM videos WHERE VideoToken="${req.params.VideoToken}"`;
-    try {
-        const connection = await connect();
-        const getVideoResponse = await query(connection, GetVideoDataQueryString);
-
-        let Videodata = JSON.parse(JSON.stringify(getVideoResponse));
-        if (Object.keys(Videodata).length === 0) {
-            return res.status(202).json({
-                error: true,
-            });
-        }
-
-        return res.status(202).json({
-            error: false,
-            VideoTitle: Videodata[0].VideoTitle,
-            PublishDate: Videodata[0].PublishDate,
-            VideoVisibility: Videodata[0].Visibility,
-            VideoLikes: Videodata[0].Likes,
-            OwnerToken: Videodata[0].OwnerToken,
-            VideoDislikes: Videodata[0].Dislikes,
-            ShowComments: Videodata[0].ShowComments === 0 ? false : Videodata[0].ShowComments === 1 ? true : undefined,
-            ShowLikesDislikes: Videodata[0].Show_LikesDislikes === 0 ? false : Videodata[0].Show_LikesDislikes === 1 ? true : undefined,
-        });
-    } catch (error: any) {
-        return res.status(500).json({
-            message: error.message,
-            error: true,
-        });
-    }
-};
-
-/*
- * update creator video data
- * @param req
- * @param res
- */
-const UpdateCreatorVideoData = async (req: Request, res: Response) => {
-    const errors = myValidationResult(req);
-    if (!errors.isEmpty()) {
-        errors.array().map((error) => {
-            logging.error('GET_CREATOR_VIDEO_DATA_BY_TOKEN_FUNC', error.errorMsg);
-        });
-
-        return res.status(200).json({ error: true, errors: errors.array() });
-    }
-    try {
-        const UserPublicToken = await UtilFunc.getUserPublicTokenFromPrivateToken(req.body.UserPrivateToken);
-
-        const showCommentsConversion = req.body.ShowComments === true ? 1 : 0;
-        const showLikesDislikesConversion = req.body.ShowLikesDislikes === true ? 1 : 0;
-
-        const connection = await connect();
-        const GetVideoDataQueryString = `UPDATE videos SET VideoTitle="${req.body.VideoTitle}", Visibility="${req.body.VideoVisibility}", ShowComments="${showCommentsConversion}", Show_LikesDislikes="${showLikesDislikesConversion}" WHERE VideoToken="${req.body.VideoToken}" AND  OwnerToken="${UserPublicToken}";`;
-        const GetUserNameQueryString = `SELECT UserName FROM users WHERE UserPublicToken="${UserPublicToken}";`;
-        const getVideoResponse = await query(connection, GetVideoDataQueryString);
-        const userNameResp = await query(connection, GetUserNameQueryString);
-
-        let Videodata = JSON.parse(JSON.stringify(getVideoResponse));
-        let UsernameRespJson = JSON.parse(JSON.stringify(userNameResp));
-        const video_index_server_resp = await axios.post(`http://localhost:7300/api/update-indexed-video`, {
-            VideoTitle: req.body.VideoTitle,
-            VideoToken: req.body.VideoToken,
-            OwnerToken: UserPublicToken,
-            UserName: UsernameRespJson[0].UserName,
-            VideoVisibility: req.body.VideoVisibility,
-        });
-
-        if (video_index_server_resp.data.error === true) {
-            res.status(202).json({
-                error: true,
-            });
-        }
-
-        if (Videodata.affectedRows === 0) {
-            res.status(202).json({
-                error: true,
-            });
-        }
-
-        res.status(202).json({
-            error: false,
-        });
-    } catch (error: any) {
-        console.log(error.message);
         return res.status(500).json({
             message: error.message,
             error: true,
@@ -409,6 +303,7 @@ const SearchVideo = async (req: Request, res: Response) => {
                 error: true,
             });
         }
+
         let videos: ISearchVideoCards[] = [];
         for (const video in video_search_server_resp.data.videoSearchedResults) {
             if (Object.prototype.hasOwnProperty.call(video_search_server_resp.data.videoSearchedResults, video)) {
@@ -425,6 +320,8 @@ const SearchVideo = async (req: Request, res: Response) => {
             Videos: videos,
         });
     } catch (error: any) {
+        console.log(error);
+
         res.status(202).json({
             error: true,
             errmsg: error.msg,
@@ -432,4 +329,4 @@ const SearchVideo = async (req: Request, res: Response) => {
     }
 };
 
-export default { GetVideoDataByToken, LikeDislikeVideoFunc, GetVideoComments, PostCommentToVideo, DeleteComment, GetCreatorVideoData, UpdateCreatorVideoData, SearchVideo };
+export default { GetVideoDataByToken, LikeDislikeVideoFunc, GetVideoComments, PostCommentToVideo, DeleteComment, SearchVideo };

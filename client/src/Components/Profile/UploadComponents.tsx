@@ -1,15 +1,16 @@
 'use client'
 import axios from 'axios'
-import React, { useEffect, useRef, useState } from 'react'
 import { getCookie } from 'cookies-next'
+import React, { SetStateAction, useEffect, useRef, useState } from 'react'
+import UtilFunctions from '../Util/UtilFunctions'
 
 interface IClipProps {
     url: string
+    videoRef: React.RefObject<HTMLVideoElement>
 }
 
 //* Video PriviewComponent
-const Clip = ({ url }: IClipProps) => {
-    const videoRef = useRef<HTMLVideoElement>(null)
+const Clip = ({ url, videoRef }: IClipProps) => {
     const previousUrl = useRef(url)
 
     useEffect(() => {
@@ -17,7 +18,7 @@ const Clip = ({ url }: IClipProps) => {
             return
         }
 
-        if (videoRef.current) {
+        if (videoRef.current != null) {
             videoRef.current.load()
         }
 
@@ -41,13 +42,20 @@ const Clip = ({ url }: IClipProps) => {
 
 const UploadComopnents = () => {
     //* Video attributes states
-    const [videoTitle, setvideoTitle] = useState('')
-    const [videoVisibility, setvideoVisibility] = useState('public')
+    const [videoTitle, setvideoTitle] = useState<string>('')
+    const [videoVisibility, setvideoVisibility] = useState<string>('public')
 
     //* Video object states
     const [videoFile, setvideoFile] = useState<FileList | null>(null)
-    const [thumbnalFile, setThumbnalFile] = useState<FileList | null>(null)
+    const [thumbnalFile, setThumbnalFile] = useState<File | null>(null)
     const [ObjectUrl, setObjectUrl] = useState<string>('')
+
+    const videoRef = useRef<HTMLVideoElement>(null)
+    const canvasRef = useRef<HTMLCanvasElement>(null)
+
+    const [capturedFrame, setCapturedFrame] = useState<string>('')
+
+    const [isHovered, setIsHovered] = useState<boolean>(false)
 
     let ThumbnaiComponent
 
@@ -63,8 +71,8 @@ const UploadComopnents = () => {
         const userToken: string = getCookie('userToken') as string
 
         const formData = new FormData()
-        formData.append('VideoFile', videoFile![0]) 
-        formData.append('VideoThumbnail', thumbnalFile![0])
+        formData.append('VideoFile', videoFile![0])
+        formData.append('VideoThumbnail', thumbnalFile!)
         formData.append('VideoTitle', videoTitle)
         formData.append('VideoVisibility', videoVisibility)
         formData.append('UserPrivateToken', userToken)
@@ -93,6 +101,28 @@ const UploadComopnents = () => {
             })
     }
 
+    const captureFrame = () => {
+        // Ensure the video and canvas elements are loaded
+        if (!videoRef.current || !canvasRef.current) return
+
+        const maxFrame = videoRef.current?.duration // Maximum time in the video
+        const scale = 0.21
+
+        // Generate a random time in the video
+        const randomTime = Math.random() * maxFrame
+        videoRef.current.currentTime = randomTime
+        const context = canvasRef.current.getContext('2d')
+
+        // Draw the frame on the canvas
+        context?.drawImage(videoRef.current, 0, 0, videoRef.current.videoWidth * scale * 1.12, videoRef.current.videoHeight * scale)
+        // Convert the frame to a data URL (base64 image)
+        const frameData = canvasRef.current.toDataURL('image/jpeg')
+        const thumbnailImage: SetStateAction<File | null> = UtilFunctions.dataURLtoFile(frameData, 'DefaultThumbnail.jpg')
+        // Set the captured frames in the state
+        setCapturedFrame(frameData)
+        setThumbnalFile(thumbnailImage)
+    }
+
     // *Creates a Url for preview video
     const previewVideo = (e: any) => {
         e.preventDefault()
@@ -103,31 +133,60 @@ const UploadComopnents = () => {
 
     if (thumbnalFile !== null) {
         ThumbnaiComponent = (
-            <label htmlFor="thumbnailFile" className="flex flex-col border-2 border-white border-solid w-[15rem] h-[9rem] mt-auto ml-[10rem] cursor-pointer ">
-                <input
-                    type="file"
-                    className="hidden"
-                    id="thumbnailFile"
-                    onChange={e => {
-                        setThumbnalFile(e.target.files)
-                    }}
-                />
-                <img src={URL.createObjectURL(thumbnalFile[0])} alt="AccountImageButton" className=" w-full h-full " />
+            <label
+                htmlFor="thumbnailFile"
+                className="flex flex-col border-2 border-white border-solid w-[15rem] h-[9rem] mt-auto  cursor-pointer "
+                onMouseEnter={() => {
+                    setIsHovered(true)
+                }}
+                onMouseLeave={() => {
+                    setIsHovered(false)
+                }}
+            >
+                {isHovered ? (
+                    <div className="flex flex-col absolute h-[8.5rem]  w-[14.5rem]">
+                        <input
+                            type="file"
+                            className="hidden"
+                            id="thumbnailFile"
+                            onChange={e => {
+                                setThumbnalFile(e.target.files![0])
+                            }}
+                        />
+                        <img src="/assets/UploadPageIcons/VideoUploadIcon.svg" alt="AccountImageButton" className="self-center mt-11 w-[7rem] h-[2rem]" />
+                        <h1 className="text-white text-[1rem] self-center">upload thumbnail</h1>
+                    </div>
+                ) : null}
+                <img src={URL.createObjectURL(thumbnalFile)} alt="AccountImageButton" className=" w-full h-full " />
             </label>
         )
     } else {
         ThumbnaiComponent = (
-            <label htmlFor="thumbnailFile" className="flex flex-col border-2 border-white border-solid w-[15rem] h-[9rem] mt-auto ml-[10rem] cursor-pointer ">
-                <input
-                    type="file"
-                    className="hidden"
-                    id="thumbnailFile"
-                    onChange={e => {
-                        setThumbnalFile(e.target.files)
-                    }}
-                />
-                <img src="/assets/UploadPageIcons/VideoUploadIcon.svg" alt="AccountImageButton" className="self-center mt-11 w-[7rem] h-[2rem]" />
-                <h1 className="text-white text-[1rem] self-center">upload thumbnail</h1>
+            <label
+                htmlFor="thumbnailFile"
+                className="flex flex-col border-2 border-white border-solid w-[15rem] h-[9rem]  cursor-pointer "
+                onMouseEnter={() => {
+                    setIsHovered(true)
+                }}
+                onMouseLeave={() => {
+                    setIsHovered(false)
+                }}
+            >
+                <img src={capturedFrame} alt={`Frame`} className="border-2 border-white border-solid w-[15rem] h-[9rem] mt-auto cursor-pointer" />
+                {isHovered ? (
+                    <div className="flex flex-col absolute bg-[#0000005b] h-[8.3rem]  w-[14.5rem] mt-1 ml-[0.12rem]">
+                        <input
+                            type="file"
+                            className="hidden"
+                            id="thumbnailFile"
+                            onChange={e => {
+                                setThumbnalFile(e.target.files![0])
+                            }}
+                        />
+                        <img src="/assets/UploadPageIcons/VideoUploadIcon.svg" alt="AccountImageButton" className="self-center mt-11 w-[7rem] h-[2rem]" />
+                        <h1 className="text-white text-[1rem] self-center">upload thumbnail</h1>
+                    </div>
+                ) : null}
             </label>
         )
     }
@@ -144,6 +203,9 @@ const UploadComopnents = () => {
                             setvideoFile(e.target.files)
                             previewVideo(e)
                             setProgress(0)
+                            setTimeout(() => {
+                                captureFrame()
+                            }, 300)
                         }}
                         accept=".mov,.mp4"
                     />
@@ -163,7 +225,7 @@ const UploadComopnents = () => {
                             }}
                         />
 
-                        <select name="videoVisibility" onChange={e => setvideoVisibility(e.target.value)} className="w-[20rem] mt-[2vh] bg-[#414141] text-white border-hidden">
+                        <select name="videoVisibility" onChange={e => setvideoVisibility(e.target.value)} value={videoVisibility} className="w-[20rem] mt-[2vh] bg-[#414141] text-white border-hidden">
                             <option value="public">Public</option>
                             <option value="private">Private</option>
                         </select>
@@ -185,9 +247,17 @@ const UploadComopnents = () => {
             <div className="flex w-[95%]">
                 <div className="flex flex-col ">
                     <h1 className="text-white text-[1.3rem] mt-4">Preview:</h1>
-                    <Clip url={ObjectUrl} />
+                    <Clip url={ObjectUrl} videoRef={videoRef} />
                 </div>
-                {ThumbnaiComponent}
+
+                {videoFile == null ? null : (
+                    <div className="mt-auto ml-[10rem]">
+                        <h1 className="text-white text-[1.3rem] mt-4">Thumbnail:</h1>
+                        {ThumbnaiComponent}
+                    </div>
+                )}
+
+                <canvas ref={canvasRef} style={{ display: 'none' }} />
             </div>
         </div>
     )

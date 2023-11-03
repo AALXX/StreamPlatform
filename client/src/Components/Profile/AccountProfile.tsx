@@ -69,10 +69,7 @@ const AccountProfile = () => {
 
     switch (componentToShow) {
         case 'LandingPage':
-            component = (
-                <div className="grid xl:grid-cols-6 lg:grid-cols-5 gap-4 ">
-                </div>
-            )
+            component = <div className="grid xl:grid-cols-6 lg:grid-cols-5 gap-4 "></div>
             break
         case 'Videos':
             component = (
@@ -125,7 +122,7 @@ const AccountProfile = () => {
                             setIsAccIconHovered(false)
                         }}
                         className="z-10 rounded-full"
-                        src={`${process.env.FILE_SERVER}/${getCookie('userPublicToken')}/Main_icon.png`}
+                        src={`${process.env.FILE_SERVER}/${getCookie('userPublicToken')}/Main_Icon.png`}
                         width={120}
                         height={120}
                         alt="Picture of the author"
@@ -176,7 +173,7 @@ const AccountProfile = () => {
                 <ProfileCards Title="ABOUT ME" TabName="About" setComponentToShow={setComponentToShow} />
             </div>
             <hr className="" />
-            <div className="flex w-[95%] mt-[2vh] self-center h-[100vh] ">{component}</div>
+            <div className="flex w-[95%] mt-[2vh] self-center h-[100vh]">{component}</div>
         </div>
     )
 }

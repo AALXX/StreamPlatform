@@ -8,14 +8,18 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"sync"
+
+	"github.com/fsnotify/fsnotify"
+)
+
+var (
+	cacheLock sync.Mutex
+	fileCache = make(map[string][]byte)
 )
 
 func safeFileServer(dir string, db *sql.DB) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-
-        // userPublicToken := r.URL.Query().Get("ut")
-
-        // privateToken := GetUserPrivateTokenFromPublicToken(userPublicToken, db)
 
 		// Ensure the requested path is safe.
 		// requestedPath := filepath.Join(dir, filepath.Clean(privateToken + r.URL.Query().Get("vt") + r.URL.Query().Get("f")))
@@ -45,6 +49,12 @@ func safeFileServer(dir string, db *sql.DB) http.Handler {
 	})
 }
 
+func resetCache() {
+	cacheLock.Lock()
+	defer cacheLock.Unlock()
+	fileCache = make(map[string][]byte)
+}
+
 func restrictIP(next http.Handler, allowedIP string) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		remoteAddr := r.RemoteAddr
@@ -58,22 +68,42 @@ func restrictIP(next http.Handler, allowedIP string) http.Handler {
 	})
 }
 
-func GetUserPrivateTokenFromPublicToken(userToken string, db *sql.DB) (string) {
-	// Insert the user data into the database
-	rows, err := db.Query("SELECT UserPrivateToken FROM users WHERE UserPublicToken=?;", userToken)
+func watchFiles(dir string) {
+	watcher, err := fsnotify.NewWatcher()
 	if err != nil {
-		log.Printf(err.Error())
-        return ""
+		log.Fatal(err)
+	}
+	defer watcher.Close()
+
+	// Watch for changes in the directory.
+	err = filepath.Walk(dir, func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+		return watcher.Add(path)
+	})
+	if err != nil {
+		log.Fatal(err)
 	}
 
-	var userPrivateToken string
+	for {
+		select {
+		case event, ok := <-watcher.Events:
+			if !ok {
+				return
+			}
+			if event.Op&fsnotify.Write == fsnotify.Write {
+				log.Println("File modified:", event.Name)
+				resetCache() // Reset the cache when a file is modified.
 
-	for rows.Next() {
-		if err := rows.Scan(&userPrivateToken); err != nil {
-			log.Fatal(err)
+			}
+		case err, ok := <-watcher.Errors:
+			if !ok {
+				return
+			}
+			log.Println("Error:", err)
 		}
 	}
-    return userPrivateToken
 }
 
 func main() {
@@ -90,6 +120,10 @@ func main() {
 
 	// Create a file server handler.
 	fileServer := safeFileServer(dir, db)
+
+	// Start a goroutine to watch for changes in the served directory.
+	// go watchFiles(dir)
+
 
 	// Create a router and register the file server.
 	// mux := http.NewServeMux()

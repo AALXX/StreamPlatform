@@ -2,6 +2,7 @@ package config
 
 import (
 	"database/sql"
+	"log"
 
 	"fmt"
 	"search-server/models"
@@ -49,7 +50,6 @@ func InitializeIndex() (bleve.Index, error) {
 }
 
 func RetrieveDataFromMySQL(db *sql.DB) ([]models.Video, error) {
-	// Replace this with your SQL query to retrieve data from the MySQL database
 	rows, err := db.Query("SELECT  VideoTitle, VideoToken, Visibility FROM videos")
 	if err != nil {
 		return nil, err
@@ -102,4 +102,55 @@ func openOrCreateIndex(indexName string) (bleve.Index, error) {
 		index, err = bleve.New(indexName, indexMapping)
 	}
 	return index, err
+}
+
+func GetPublicTokenByPrivateToken(PrivateToken string, db *sql.DB) string {
+	rows, err := db.Query("SELECT UserPublicToken FROM users WHERE UserPrivateToken=?;", PrivateToken)
+	if err != nil {
+		return "error"
+	}
+	defer rows.Close()
+
+	var userPublicToken string
+
+	for rows.Next() {
+		if err := rows.Scan(&userPublicToken); err != nil {
+			return "error"
+		}
+	}
+
+	if err := rows.Err(); err != nil {
+		return "error"
+	}
+
+	return userPublicToken
+}
+
+func VideoOwnerTokenCheck(UserPublicToken string, VideoToken string, db *sql.DB) bool {
+	log.Printf(UserPublicToken)
+	log.Printf(VideoToken)
+	rows, err := db.Query("SELECT OwnerToken FROM videos WHERE VideoToken=?;", VideoToken)
+	if err != nil {
+		return false
+	}
+	defer rows.Close()
+
+	var OwnerToken string
+
+	for rows.Next() {
+		if err := rows.Scan(&OwnerToken); err != nil {
+			return false
+		}
+	}
+	log.Printf(OwnerToken)
+
+	if err := rows.Err(); err != nil {
+		return false
+	}
+
+	if OwnerToken == UserPublicToken {
+		return true
+	}
+
+	return false
 }

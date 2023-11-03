@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"net/http"
+	"search-server/config"
 	"search-server/models"
 
 	"github.com/blevesearch/bleve"
@@ -15,7 +16,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func GetRecomandedVideo(c *gin.Context, db *sql.DB, index bleve.Index) {
+func GetSerchedVideos(c *gin.Context, db *sql.DB, index bleve.Index) {
 	search_query := c.Param("search_query")
 
 	// Split the search query into terms
@@ -70,6 +71,7 @@ func GetRecomandedVideo(c *gin.Context, db *sql.DB, index bleve.Index) {
 
 			*fieldInfo.Target = title
 		}
+		log.Println(result)
 
 		if result.VideoVisibility == "public" {
 
@@ -91,6 +93,8 @@ func AddToIndex(c *gin.Context, db *sql.DB, index bleve.Index) {
 		return
 	}
 
+	// var UserPublicToken = GetPublicTokenByPrivateToken(video.OwnerPrivateToken, db)
+
 	newVideo := models.Video{
 		VideoTitle:      video.VideoTitle,
 		VideoToken:      video.VideoToken,
@@ -108,9 +112,16 @@ func AddToIndex(c *gin.Context, db *sql.DB, index bleve.Index) {
 
 func UpdateIndexedVideo(c *gin.Context, db *sql.DB, index bleve.Index) {
 
-	var video models.Video
+	var video models.VideoReq
 	if err := c.ShouldBindJSON(&video); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": true, "msg": err.Error()})
+		return
+	}
+
+	var UserPublicToken = config.GetPublicTokenByPrivateToken(video.UserPrivateToken, db)
+	if !config.VideoOwnerTokenCheck(UserPublicToken, video.VideoToken, db) {
+
+		c.JSON(http.StatusCreated, gin.H{"error": true})
 		return
 	}
 
@@ -119,7 +130,6 @@ func UpdateIndexedVideo(c *gin.Context, db *sql.DB, index bleve.Index) {
 		VideoToken:      video.VideoToken,
 		VideoVisibility: video.VideoVisibility,
 	}
-
 
 	// First, remove the old document from the index.
 	if err := index.Delete(video.VideoToken); err != nil {
@@ -134,5 +144,29 @@ func UpdateIndexedVideo(c *gin.Context, db *sql.DB, index bleve.Index) {
 		return
 	}
 
+	c.JSON(http.StatusCreated, gin.H{"error": false})
+}
+
+func DeleteIndexedVideo(c *gin.Context, db *sql.DB, index bleve.Index) {
+
+	var video models.VideoReq
+	if err := c.ShouldBindJSON(&video); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": true, "msg": err.Error()})
+		return
+	}
+
+	var UserPublicToken = config.GetPublicTokenByPrivateToken(video.UserPrivateToken, db)
+	if config.VideoOwnerTokenCheck(UserPublicToken, video.VideoToken, db) == false {
+		log.Println("ERROR")
+		c.JSON(http.StatusCreated, gin.H{"error": true})
+		return
+	}
+
+	// First, remove the old document from the index.
+	if err := index.Delete(video.VideoToken); err != nil {
+		log.Fatal(err)
+		c.JSON(http.StatusCreated, gin.H{"error": true})
+		return
+	}
 	c.JSON(http.StatusCreated, gin.H{"error": false})
 }

@@ -23,7 +23,7 @@ export default function WatchVideoPage() {
                 </Suspense>
                 <CommentSection VideoToken={urlParams.get('vt')} UserToken={userToken} />
             </div>
-            <div className=' w-full'>
+            <div className=" w-full">
                 <VideosList />
             </div>
         </div>
