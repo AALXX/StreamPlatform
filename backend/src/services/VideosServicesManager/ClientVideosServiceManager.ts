@@ -106,6 +106,7 @@ const LikeDislikeVideoFunc = async (req: Request, res: Response) => {
 
     try {
         if (checkuserlikedordislike) {
+            console.log(req.body.likeOrDislike);
             if (req.body.likeOrDislike === 0) {
                 const DeleteSql = `DELETE FROM user_liked_or_disliked_video_class WHERE userToken="${req.body.userToken}" AND videoToken="${req.body.videoToken}";`;
                 await query(connection, DeleteSql);

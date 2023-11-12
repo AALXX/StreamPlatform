@@ -3,6 +3,7 @@ import logging from '../config/logging';
 import { connect, query } from '../config/mysql';
 import jwt from 'jsonwebtoken';
 import fs from 'fs';
+import utilFunctions from '../util/utilFunctions';
 
 //* /////////////////////////////
 //*      Account related       //
@@ -67,6 +68,11 @@ const UserNameAndEmailExistCheck = (UserName: string, Email: string, callback: a
         });
 };
 
+/**
+ * Get User Private token by provided public Token
+ * @param {string} userToken
+ * @return {Promise<string | null>}
+ */
 const getUserPrivateTokenFromPublicToken = async (userToken: string): Promise<string | null> => {
     const NAMESPACE = 'GET_USER_PRIVATE_TOKEN_FUNC';
     const CheckIfUserFollwsAccountQuerryString = `SELECT UserPrivateToken FROM users WHERE UserPublicToken="${userToken}";`;
@@ -89,6 +95,11 @@ const getUserPrivateTokenFromPublicToken = async (userToken: string): Promise<st
     }
 };
 
+/**
+ * Get User Public token by provided private Token
+ * @param {string} userPrivateToken
+ * @return {Promise<string | null>}
+ */
 const getUserPublicTokenFromPrivateToken = async (userPrivateToken: string): Promise<string | null> => {
     const NAMESPACE = 'GET_USER_PRIVATE_TOKEN_FUNC';
     const CheckIfUserFollwsAccountQuerryString = `SELECT UserPublicToken FROM users WHERE UserPrivateToken="${userPrivateToken}" ;`;
@@ -111,7 +122,13 @@ const getUserPublicTokenFromPrivateToken = async (userPrivateToken: string): Pro
     }
 };
 
-const userFollowAccountCheck = async (userToken: string, accountPublicToken: string) => {
+/**
+ * Checks if user is following the account
+ * @param {string} userToken
+ * @param {string} accountPublicToken
+ * @return {Promise<boolean>}
+ */
+const userFollowAccountCheck = async (userToken: string, accountPublicToken: string): Promise<boolean> => {
     const NAMESPACE = 'USER_FOLLOW_CHECK_FUNCTION';
     const CheckIfUserFollwsAccountQuerryString = `SELECT * FROM user_follw_account_class WHERE userToken="${userToken}" AND accountToken="${accountPublicToken}";`;
 
@@ -140,6 +157,7 @@ const userFollowAccountCheck = async (userToken: string, accountPublicToken: str
 
 /**
  ** creates video token
+ * @return {string}
  */
 const CreateVideoToken = (): string => {
     const NAMESPACE = 'CREATE_VIDEO_TOKEN_FUNCTION';
@@ -153,8 +171,14 @@ const CreateVideoToken = (): string => {
     return userprivateToken;
 };
 
+/**
+ * It gets the video that user liked
+ * @param {string} userToken
+ * @param {string} VideoToken
+ * @returns
+ */
 const getUserLikedOrDislikedVideo = async (userToken: string, VideoToken: string) => {
-    const NAMESPACE = 'USER_FOLLOW_CHECK_FUNCTION';
+    const NAMESPACE = 'USER_LIKED_OR_DISLIKED_FUNCTION';
     const CheckIfUserFollwsAccountQuerryString = `SELECT * FROM user_liked_or_disliked_video_class WHERE userToken="${userToken}" AND videoToken="${VideoToken}";`;
 
     try {
@@ -175,7 +199,8 @@ const getUserLikedOrDislikedVideo = async (userToken: string, VideoToken: string
 };
 
 const userLikedOrDislikedVideoCheck = async (userToken: string, VideoToken: string) => {
-    const NAMESPACE = 'USER_FOLLOW_CHECK_FUNCTION';
+    const NAMESPACE = 'USER_LIKED_OR_DISLIKED_CHECK_FUNCTION';
+
     const CheckIfUserFollwsAccountQuerryString = `SELECT * FROM user_liked_or_disliked_video_class WHERE userToken="${userToken}" AND videoToken="${VideoToken}";`;
 
     try {
@@ -198,6 +223,10 @@ const userLikedOrDislikedVideoCheck = async (userToken: string, VideoToken: stri
     }
 };
 
+/**
+ * Removes a directory
+ * @param {string} dirPath
+ */
 const RemoveDirectory = (dirPath: string) => {
     if (fs.existsSync(dirPath)) {
         fs.readdirSync(dirPath).forEach((file) => {
@@ -213,6 +242,99 @@ const RemoveDirectory = (dirPath: string) => {
     }
 };
 
+//* /////////////////////////////
+//*        Live related        //
+//* /////////////////////////////
+
+/**
+ * Start a live
+ * @param {string} userPrivateToken
+ * @return {}
+ */
+const CheckIfLive = async (userPrivateToken: string): Promise<{ isLive: boolean; error: boolean }> => {
+    const NAMESPACE = 'CHECK_IF_IS_LIVE_FUNCTION';
+
+    try {
+        const UserPublicToken = await utilFunctions.getUserPublicTokenFromPrivateToken(userPrivateToken);
+        const connection = await connect();
+        if (UserPublicToken == null) {
+            return { isLive: false, error: true };
+        }
+        const StatALiveQueryString = `SELECT id FROM streams WHERE UserPublicToken="${UserPublicToken}"`;
+
+        const results = await query(connection, StatALiveQueryString);
+        const data = JSON.parse(JSON.stringify(results));
+        if (Object.keys(data).length == 0) {
+            return { isLive: false, error: false };
+        }
+        return { isLive: true, error: false };
+    } catch (error: any) {
+        logging.error(NAMESPACE, error.message);
+        return { isLive: false, error: true };
+    }
+};
+
+/**
+ * Start a live
+ * @param {string} userPrivateToken
+ * @return {}
+ */
+const StartLive = async (LiveTitle: string, AccountFolowers: string, userPrivateToken: string): Promise<boolean> => {
+    const NAMESPACE = 'START_LIVE_FUNCTION';
+    logging.info(NAMESPACE, 'USed THE FUNCTION');
+
+    try {
+        const UserPublicToken = await utilFunctions.getUserPublicTokenFromPrivateToken(userPrivateToken);
+        const connection = await connect();
+        if (UserPublicToken == null) {
+            return true;
+        }
+        const StatALiveQueryString = `INSERT INTO streams(StreamTitle, AccountFolowers, UserPublicToken) VALUES ("${LiveTitle}","${AccountFolowers}","${UserPublicToken}")`;
+
+        const results = await query(connection, StatALiveQueryString);
+
+        const data = JSON.parse(JSON.stringify(results));
+        if (data.affectedRows == 0) {
+            return true;
+        }
+
+        return false;
+    } catch (error: any) {
+        logging.error(NAMESPACE, error.message);
+        return true;
+    }
+};
+
+/**
+ * End a live
+ * @param {string} userPrivateToken
+ * @return {}
+ */
+const EndLive = async (userPrivateToken: string): Promise<boolean> => {
+    const NAMESPACE = 'END_LIVE_FUNCTION';
+
+    try {
+        const UserPublicToken = await utilFunctions.getUserPublicTokenFromPrivateToken(userPrivateToken);
+        const connection = await connect();
+        if (UserPublicToken == null) {
+            return true;
+        }
+        const StatALiveQueryString = `DELETE FROM streams WHERE UserPublicToken="${UserPublicToken}"`;
+
+        const results = await query(connection, StatALiveQueryString);
+
+        const data = JSON.parse(JSON.stringify(results));
+        if (data.affectedRows == 0) {
+            return true;
+        }
+
+        return false;
+    } catch (error: any) {
+        logging.error(NAMESPACE, error.message);
+        return true;
+    }
+};
+
 export default {
     HashPassword,
     UserNameAndEmailExistCheck,
@@ -223,4 +345,7 @@ export default {
     getUserPublicTokenFromPrivateToken,
     getUserPrivateTokenFromPublicToken,
     RemoveDirectory,
+    CheckIfLive,
+    StartLive,
+    EndLive,
 };

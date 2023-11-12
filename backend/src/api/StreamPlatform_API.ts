@@ -29,8 +29,8 @@ router.use((req: any, res: any, next: NextFunction) => {
 
 //* Routes
 router.use('/api/user-account/', UserAccountRoutes);
-router.use('/api/live-stream/', LiveStreamRoutes);
 router.use('/api/videos-manager/', VideosRoutes);
+router.use('/api/live-manager/', LiveStreamRoutes);
 
 //* Error Handleling
 router.use((req: any, res: any, next: NextFunction) => {
