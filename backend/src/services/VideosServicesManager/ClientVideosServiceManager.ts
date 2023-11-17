@@ -99,55 +99,54 @@ const LikeDislikeVideoFunc = async (req: Request, res: Response) => {
         return res.status(200).json({ error: true, errors: errors.array() });
     }
 
-    const checkuserlikedordislike = await UtilFunc.userLikedOrDislikedVideoCheck(req.body.userToken, req.body.videoToken);
     const getkuserlikedordislike = await UtilFunc.getUserLikedOrDislikedVideo(req.body.userToken, req.body.videoToken);
 
-    const connection = await connect();
-
     try {
-        if (checkuserlikedordislike) {
-            console.log(req.body.likeOrDislike);
+        const connection = await connect();
+        if (getkuserlikedordislike.userLiked) {
             if (req.body.likeOrDislike === 0) {
-                const DeleteSql = `DELETE FROM user_liked_or_disliked_video_class WHERE userToken="${req.body.userToken}" AND videoToken="${req.body.videoToken}";`;
-                await query(connection, DeleteSql);
+                const deleteAndUpdateSql = `
+    DELETE FROM user_liked_or_disliked_video_class
+    WHERE userToken="${req.body.userToken}" AND videoToken="${req.body.videoToken}";
 
-                if (getkuserlikedordislike === 1) {
-                    const DeleteLikeDislikeSql = `UPDATE videos SET Likes = Likes-1 WHERE VideoToken="${req.body.videoToken}";`;
-                    await query(connection, DeleteLikeDislikeSql);
-                }
+    UPDATE videos
+    SET
+        Likes = Likes - (CASE WHEN ${getkuserlikedordislike.like_or_dislike} = 1 THEN 1 ELSE 0 END),
+        Dislikes = Dislikes - (CASE WHEN ${getkuserlikedordislike.like_or_dislike} = 2 THEN 1 ELSE 0 END)
+    WHERE VideoToken = "${req.body.videoToken}";
+`;
 
-                if (getkuserlikedordislike === 2) {
-                    const DeleteLikeDislikeSql = `UPDATE videos SET Dislikes = Dislikes-1 WHERE VideoToken="${req.body.videoToken}";`;
-                    await query(connection, DeleteLikeDislikeSql);
-                }
+                await query(connection, deleteAndUpdateSql);
             } else {
-                const updateLikeDislikeSql = `UPDATE user_liked_or_disliked_video_class SET like_dislike=${req.body.likeOrDislike} WHERE userToken="${req.body.userToken}" AND videoToken="${req.body.videoToken}";`;
-                await query(connection, updateLikeDislikeSql);
+                const updateSql = `
+    UPDATE user_liked_or_disliked_video_class
+    SET like_dislike=${req.body.likeOrDislike}
+    WHERE userToken="${req.body.userToken}" AND videoToken="${req.body.videoToken}";
 
-                if (req.body.likeOrDislike === 1) {
-                    const updateLikeOrDislikeDataSql = `UPDATE videos SET Likes = Likes+1, Dislikes = Dislikes-1 WHERE VideoToken="${req.body.videoToken}";`;
-                    await query(connection, updateLikeOrDislikeDataSql);
-                }
+    UPDATE videos
+    SET
+        Likes = Likes + (CASE WHEN ${req.body.likeOrDislike} = 1 THEN 1 ELSE -1 END),
+        Dislikes = Dislikes + (CASE WHEN ${req.body.likeOrDislike} = 2 THEN 1 ELSE -1 END)
+    WHERE VideoToken="${req.body.videoToken}";
+`;
 
-                if (req.body.likeOrDislike === 2) {
-                    const updateLikeOrDislikeDataSql = `UPDATE videos SET Likes = Likes-1, Dislikes = Dislikes+1 WHERE VideoToken="${req.body.videoToken}";`;
-                    await query(connection, updateLikeOrDislikeDataSql);
-                }
+                await query(connection, updateSql);
             }
         } else {
-            const insertDataSql = `INSERT INTO user_liked_or_disliked_video_class (userToken, videoToken, like_dislike) VALUES ('${req.body.userToken}','${req.body.videoToken}', '${req.body.likeOrDislike}');`;
-            await query(connection, insertDataSql);
-            if (req.body.likeOrDislike === 1) {
-                const updateLikeOrDislikeDataSql = `UPDATE videos SET Likes = Likes+1 WHERE VideoToken="${req.body.videoToken}";`;
-                await query(connection, updateLikeOrDislikeDataSql);
-            }
+            const insertOrUpdateDataSql = `
+    INSERT INTO user_liked_or_disliked_video_class (userToken, videoToken, like_dislike)
+    VALUES ('${req.body.userToken}', '${req.body.videoToken}', '${req.body.likeOrDislike}')
+    ON DUPLICATE KEY UPDATE
+    like_dislike = VALUES(like_dislike);
 
-            if (req.body.likeOrDislike === 2) {
-                const updateLikeOrDislikeDataSql = `UPDATE videos SET Dislikes = Dislikes+1 WHERE VideoToken="${req.body.videoToken}";`;
-                await query(connection, updateLikeOrDislikeDataSql);
-            }
+    UPDATE videos
+    SET Likes = Likes + (CASE WHEN ${req.body.likeOrDislike} = 1 THEN 1 ELSE 0 END),
+    Dislikes = Dislikes + (CASE WHEN ${req.body.likeOrDislike} = 2 THEN 1 ELSE 0 END)
+    WHERE VideoToken = "${req.body.videoToken}";
+`;
+
+            await query(connection, insertOrUpdateDataSql);
         }
-
         res.status(202).json({
             error: false,
         });

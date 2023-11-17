@@ -2,7 +2,8 @@ import React, { useEffect, useRef, useState } from 'react'
 import Hls from 'hls.js'
 import Link from 'next/link'
 import { ILiveData, ILivePlayerProps } from './ILivePlayer'
-
+import { dislikeVideo, followAccount, getLiveData, likeVideo } from './UtilFunc'
+import { getCookie } from 'cookies-next'
 
 const LivePlayer = (props: ILivePlayerProps) => {
     const VideoRef = useRef<HTMLVideoElement>(null)
@@ -11,20 +12,18 @@ const LivePlayer = (props: ILivePlayerProps) => {
     const hls = useRef<Hls | null>(null)
     const [isOnline, setIsOline] = useState<boolean>(true)
 
-    const [VideoData, setVideoData] = useState<ILiveData>({
+    const [liveData, setLiveData] = useState<ILiveData>({
         error: false,
-        VideoFound: false,
-        OwnerToken: '',
-        PublishDate: '',
-        VideoDescription: '',
-        VideoTitle: '',
+        IsLive: false,
+        LiveTitle: '',
         AccountName: '',
-        AccountFolowers: '',
+        AccountFolowers: 0,
         UserFollwsAccount: false,
-        VideoLikes: 0,
-        VideoDislikes: 0,
+        LiveLikes: 0,
+        LiveDislikes: 0,
         UserLikedVideo: false,
-        UserLikedOrDislikedVideo: 0
+        OwnerToken: '',
+        UserLikedOrDislikedVideo: { like_or_dislike: 0, userLiked: false }
     })
 
     const [playing, setPlaying] = useState(false)
@@ -38,8 +37,8 @@ const LivePlayer = (props: ILivePlayerProps) => {
     const [userFollwsAccount, setUserFollwsAccount] = useState<boolean>(false)
     const [userLikedVideo, setUserLikedVideo] = useState<boolean>(false)
     const [userDisLikedVideo, setUserDisLikedVideo] = useState<boolean>(false)
-    const [videoLikes, setVideoLikes] = useState<number>(0)
-    const [videoDisLikes, setVideoDisLikes] = useState<number>(0)
+    const [liveLikes, setLiveLikes] = useState<number>(0)
+    const [liveDisLikes, setLiveDisLikes] = useState<number>(0)
 
     useEffect(() => {
         if (VideoRef.current) {
@@ -47,7 +46,7 @@ const LivePlayer = (props: ILivePlayerProps) => {
 
             if (Hls.isSupported()) {
                 hls.current = new Hls()
-                hls.current.loadSource(`${process.env.VIDEO_SERVER_BACKEND}/video-manager/live-stream/${props.userToken}/`)
+                hls.current.loadSource(`${process.env.VIDEO_SERVER_BACKEND}/video-manager/live-stream/${props.userStreamToken}/`)
                 hls.current.attachMedia(video)
                 // Add an error event listener to capture and handle HLS errors
                 hls.current.on(Hls.Events.ERROR, (event, data) => {
@@ -77,7 +76,7 @@ const LivePlayer = (props: ILivePlayerProps) => {
                     })
                 })
             } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
-                video.src = `${process.env.VIDEO_SERVER_BACKEND}/video-manager/live-stream/${props.userToken}/`
+                video.src = `${process.env.VIDEO_SERVER_BACKEND}/video-manager/live-stream/${props.userStreamToken}/`
                 video.addEventListener('loadedmetadata', function () {
                     video.play()
                 })
@@ -85,18 +84,19 @@ const LivePlayer = (props: ILivePlayerProps) => {
         }
 
         ;(async () => {
-            const videoData = await getLiveData(props.VideoToken, getCookie('userToken') as string)
-            setVideoData(videoData)
-            setUserFollwsAccount(videoData.UserFollwsAccount)
-            setUserLikedVideo(videoData.UserLikedVideo)
-            if (videoData.UserLikedOrDislikedVideo === 1) {
+            console.log(props.userStreamToken)
+            const LiveData = await getLiveData(getCookie('userToken') as string, props.userStreamToken)
+            setLiveData(LiveData)
+            setUserFollwsAccount(LiveData.UserFollwsAccount)
+            setUserLikedVideo(LiveData.UserLikedVideo)
+            if (LiveData.UserLikedOrDislikedVideo.like_or_dislike === 1) {
                 setUserLikedVideo(true)
-            } else if (videoData.UserLikedOrDislikedVideo === 2) {
+            } else if (LiveData.UserLikedOrDislikedVideo.like_or_dislike === 2) {
                 setUserDisLikedVideo(true)
             }
 
-            setVideoLikes(videoData.VideoLikes)
-            setVideoDisLikes(videoData.VideoDislikes)
+            setLiveLikes(LiveData.LiveLikes)
+            setLiveDisLikes(LiveData.LiveDislikes)
         })()
 
         return () => {
@@ -132,24 +132,24 @@ const LivePlayer = (props: ILivePlayerProps) => {
                         <h1>USer is offline</h1>
                     </div>
                 )}
-                <div className="flex mt-[.5vh] h-[10vh] w-[66.8vw] bg-[#292929]">
-                    <Link className="ml-4 self-center" href={`/user?id=${VideoData.OwnerToken}`}>
-                        <img className="z-10 rounded-full" src={`${process.env.FILE_SERVER}/${VideoData.OwnerToken}/Main_icon.png`} width={50} height={50} alt="Picture of the author" />
+                <div className="flex mt-[.5vh] h-[11vh] w-[66.8vw] bg-[#292929]">
+                    <Link className="ml-4 self-center" href={`/user?id=${props.userStreamToken}`}>
+                        <img className="z-10 rounded-full" src={`${process.env.FILE_SERVER}/${liveData.OwnerToken}/Main_icon.png`} width={50} height={50} alt="Picture of the author" />
                     </Link>
-                    <div className="flex flex-col ml-4">
-                        <h1 className="text-white mt-2 text-lg">{VideoData.VideoTitle}</h1>
+                    <div className="flex flex-col ml-4 self-center">
+                        <h1 className="text-white mt-2 text-lg">{liveData.LiveTitle}</h1>
                         <hr className="w-full" />
                         <div className="flex  ">
                             <div className="flex flex-col">
-                                <h1 className="text-white text-base">{VideoData.AccountName}</h1>
-                                <h1 className="text-white text-xs">{VideoData.AccountFolowers} followers</h1>
+                                <h1 className="text-white text-base">{liveData.AccountName}</h1>
+                                <h1 className="text-white text-xs">{liveData.AccountFolowers} followers</h1>
                             </div>
                             {userFollwsAccount ? (
                                 <>
                                     <button
                                         className="text-white text-bg mt-2 ml-20 bg-[#727272] h-[2.5rem] w-[4.5rem]"
                                         onClick={async () => {
-                                            setUserFollwsAccount(await followAccount(getCookie('userToken'), VideoData.OwnerToken, userFollwsAccount))
+                                            setUserFollwsAccount(await followAccount(getCookie('userToken'), props.userStreamToken, userFollwsAccount))
                                         }}
                                     >
                                         UnFollow
@@ -160,7 +160,7 @@ const LivePlayer = (props: ILivePlayerProps) => {
                                     <button
                                         className="text-white text-bg mt-2 ml-20 bg-[#494949] h-[2.5rem] w-[4.5rem]"
                                         onClick={async () => {
-                                            setUserFollwsAccount(await followAccount(getCookie('userToken'), VideoData.OwnerToken, userFollwsAccount))
+                                            setUserFollwsAccount(await followAccount(getCookie('userToken'), props.userStreamToken, userFollwsAccount))
                                         }}
                                     >
                                         Follow
@@ -178,9 +178,9 @@ const LivePlayer = (props: ILivePlayerProps) => {
                                     alt="not muted image"
                                     onClick={async () => {
                                         setUserDisLikedVideo(false)
-                                        setVideoLikes(videoLikes - 1)
+                                        setLiveLikes(liveLikes - 1)
 
-                                        setUserLikedVideo(await likeVideo(getCookie('userToken'), props.VideoToken, userLikedVideo, userDisLikedVideo))
+                                        setUserLikedVideo(await likeVideo(getCookie('userToken'), props.userStreamToken, userLikedVideo, userDisLikedVideo))
                                     }}
                                 />
                             </>
@@ -192,18 +192,18 @@ const LivePlayer = (props: ILivePlayerProps) => {
                                     alt="not muted image"
                                     onClick={async () => {
                                         setUserDisLikedVideo(false)
-                                        setVideoLikes(videoLikes + 1)
+                                        setLiveLikes(liveLikes + 1)
                                         if (userDisLikedVideo) {
-                                            setVideoDisLikes(videoDisLikes - 1)
+                                            setLiveDisLikes(liveDisLikes - 1)
                                         }
 
-                                        setUserLikedVideo(await likeVideo(getCookie('userToken'), props.VideoToken, userLikedVideo, userDisLikedVideo))
+                                        setUserLikedVideo(await likeVideo(getCookie('userToken'), props.userStreamToken, userLikedVideo, userDisLikedVideo))
                                     }}
                                 />
                             </>
                         )}
 
-                        <h1 className="text-white self-center mr-[1.5rem]">{videoLikes}</h1>
+                        <h1 className="text-white self-center mr-[1.5rem]">{liveLikes}</h1>
 
                         {userDisLikedVideo ? (
                             <>
@@ -213,9 +213,9 @@ const LivePlayer = (props: ILivePlayerProps) => {
                                     alt="not muted image"
                                     onClick={async () => {
                                         setUserLikedVideo(false)
-                                        setVideoDisLikes(videoDisLikes - 1)
+                                        setLiveDisLikes(liveDisLikes - 1)
 
-                                        setUserDisLikedVideo(await dislikeVideo(getCookie('userToken'), props.VideoToken, userFollwsAccount, userDisLikedVideo))
+                                        setUserDisLikedVideo(await dislikeVideo(getCookie('userToken'), props.userStreamToken, userLikedVideo, userDisLikedVideo))
                                     }}
                                 />
                             </>
@@ -227,16 +227,16 @@ const LivePlayer = (props: ILivePlayerProps) => {
                                     alt="not muted image"
                                     onClick={async () => {
                                         setUserLikedVideo(false)
-                                        setVideoDisLikes(videoDisLikes + 1)
+                                        setLiveDisLikes(liveDisLikes + 1)
                                         if (userLikedVideo) {
-                                            setVideoLikes(videoLikes - 1)
+                                            setLiveLikes(liveLikes - 1)
                                         }
-                                        setUserDisLikedVideo(await dislikeVideo(getCookie('userToken'), props.VideoToken, userFollwsAccount, userDisLikedVideo))
+                                        setUserDisLikedVideo(await dislikeVideo(getCookie('userToken'), props.userStreamToken, userLikedVideo, userDisLikedVideo))
                                     }}
                                 />
                             </>
                         )}
-                        <h1 className="text-white self-center mr-[4rem]">{videoDisLikes}</h1>
+                        <h1 className="text-white self-center mr-[4rem]">{liveDisLikes}</h1>
                     </div>
                 </div>
             </div>

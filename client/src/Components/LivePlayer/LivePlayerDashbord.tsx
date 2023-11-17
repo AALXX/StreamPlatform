@@ -2,8 +2,9 @@ import React, { useEffect, useRef, useState } from 'react'
 import Hls from 'hls.js'
 import Link from 'next/link'
 import { IDasbordLiveData, ILivePlayerProps } from './ILivePlayer'
-import { startStopLive, getDashbordData } from './UtilFunc'
+import { startStopLive, getDashbordData, playOrPauseVideo } from './UtilFunc'
 import { getCookie } from 'cookies-next'
+import LivePlayerOverlay from './LivePlayerOverlay'
 
 const LivePlayerDashbord = (props: ILivePlayerProps) => {
     const VideoRef = useRef<HTMLVideoElement>(null)
@@ -31,10 +32,8 @@ const LivePlayerDashbord = (props: ILivePlayerProps) => {
     const [DurationMinutes, setDurationMinutes] = useState(0)
     const [DurationSeconds, setDurationSeconds] = useState(0)
 
-    const [userLikedVideo, setUserLikedVideo] = useState<boolean>(false)
-    const [userDisLikedVideo, setUserDisLikedVideo] = useState<boolean>(false)
-    const [videoLikes, setVideoLikes] = useState<number>(0)
-    const [videoDisLikes, setVideoDisLikes] = useState<number>(0)
+    const [liveLikes, setLiveLikes] = useState<number>(0)
+    const [liveDisLikes, setLiveDisLikes] = useState<number>(0)
 
     useEffect(() => {
         if (VideoRef.current) {
@@ -42,7 +41,7 @@ const LivePlayerDashbord = (props: ILivePlayerProps) => {
 
             if (Hls.isSupported()) {
                 hls.current = new Hls()
-                hls.current.loadSource(`${process.env.VIDEO_SERVER_BACKEND}/video-manager/live-stream/${props.userToken}/`)
+                hls.current.loadSource(`${process.env.VIDEO_SERVER_BACKEND}/video-manager/live-stream/${props.userStreamToken}/`)
                 hls.current.attachMedia(video)
                 // Add an error event listener to capture and handle HLS errors
                 hls.current.on(Hls.Events.ERROR, (event, data) => {
@@ -72,7 +71,7 @@ const LivePlayerDashbord = (props: ILivePlayerProps) => {
                     })
                 })
             } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
-                video.src = `${process.env.VIDEO_SERVER_BACKEND}/video-manager/live-stream/${props.userToken}/`
+                video.src = `${process.env.VIDEO_SERVER_BACKEND}/video-manager/live-stream/${props.userStreamToken}/`
                 video.addEventListener('loadedmetadata', function () {
                     video.play()
                 })
@@ -84,6 +83,8 @@ const LivePlayerDashbord = (props: ILivePlayerProps) => {
             setLiveData(dashData)
             setLiveTitle(dashData.LiveTitle as string)
             setIsLive(dashData.IsLive)
+            setLiveLikes(dashData.LiveLikes)
+            setLiveDisLikes(dashData.LiveDislikes)
         })()
 
         return () => {
@@ -97,10 +98,28 @@ const LivePlayerDashbord = (props: ILivePlayerProps) => {
         <div className="flex flex-col mt-[3rem] ml-[6rem] h-[100vh]">
             {/*  VideoPlayer Border */}
             <div className="w-[66.8vw] h-[73.8vh] ">
+                {showOverlay ? (
+                    <LivePlayerOverlay
+                        Progress={Progress}
+                        Playing={playing}
+                        CurrentMinutes={CurrentMinutes}
+                        CurrentSeconds={CurrentSeconds}
+                        DurationMinutes={DurationMinutes}
+                        DurationSeconds={DurationSeconds}
+                        Volume={Volume}
+                        setVolume={setVolume}
+                        VideoRef={VideoRef}
+                        playOrPauseVideo={playOrPauseVideo(VideoRef)}
+                        setPlaying={setPlaying}
+                        setShowOverlay={setShowOverlay}
+                    />
+                ) : (
+                    <div></div>
+                )}
                 {isOnline == true ? (
                     <video
                         onClick={() => {
-                            // setPlaying(playOrPauseVideo(VideoRef))
+                            setPlaying(playOrPauseVideo(VideoRef))
                         }}
                         autoPlay
                         ref={VideoRef}
@@ -116,14 +135,14 @@ const LivePlayerDashbord = (props: ILivePlayerProps) => {
                     </video>
                 ) : (
                     <div className="w-full h-full border">
-                        <h1>USer is offline</h1>
+                        <h1>User is offline</h1>
                     </div>
                 )}
-                <div className="flex mt-[.5vh] h-[10vh] w-[66.8vw] bg-[#292929]">
+                <div className="flex mt-[.5vh] h-[11vh] w-[66.8vw] bg-[#292929]">
                     <Link className="ml-4 self-center" href={`/user?id=${getCookie('userPublicToken') as string}`}>
                         <img className="z-10 rounded-full" src={`${process.env.FILE_SERVER}/${getCookie('userPublicToken') as string}/Main_icon.png`} width={50} height={50} alt="Picture of the author" />
                     </Link>
-                    <div className="flex flex-col ml-4 self-center">
+                    <div className="flex flex-col ml-4 self-center ">
                         <input
                             className=" text-[#ffffff]  bg-[#3b3b3b] h-[3vh] border-none w-full placeholder:text-white indent-3"
                             value={liveTitle}
@@ -140,28 +159,13 @@ const LivePlayerDashbord = (props: ILivePlayerProps) => {
                         </div>
                     </div>
                     <div className="flex ml-auto mr-[2vw]">
-                        {userLikedVideo ? (
-                            <>
-                                <img src="/assets/PlayerIcons/Liked_icon.svg" className="cursor-pointer w-[1.6rem] mr-[.5rem]" alt="not muted image" />
-                            </>
-                        ) : (
-                            <>
-                                <img src="/assets/PlayerIcons/Like_icon.svg" className="cursor-pointer w-[1.6rem] ml-auto mr-[.5rem]" alt="not muted image" />
-                            </>
-                        )}
+                        <img src="/assets/PlayerIcons/Like_icon.svg" className="cursor-pointer w-[1.6rem] ml-auto mr-[.5rem]" alt="not muted image" />
 
-                        <h1 className="text-white self-center mr-[1.5rem]">{videoLikes}</h1>
+                        <h1 className="text-white self-center mr-[1.5rem]">{liveLikes}</h1>
 
-                        {userDisLikedVideo ? (
-                            <>
-                                <img src="/assets/PlayerIcons/DisLiked_icon.svg" className="cursor-pointer w-[1.6rem] ml-auto mr-[.5rem]" alt="not muted image" />
-                            </>
-                        ) : (
-                            <>
-                                <img src="/assets/PlayerIcons/DisLike_icon.svg" className="cursor-pointer w-[1.6rem] ml-auto mr-[.5rem]" alt="not muted image" />
-                            </>
-                        )}
-                        <h1 className="text-white self-center mr-[4rem]">{videoDisLikes}</h1>
+                        <img src="/assets/PlayerIcons/DisLike_icon.svg" className="cursor-pointer w-[1.6rem] ml-auto mr-[.5rem]" alt="not muted image" />
+
+                        <h1 className="text-white self-center mr-[4rem]">{liveDisLikes}</h1>
                     </div>
                     {isLive ? (
                         <button

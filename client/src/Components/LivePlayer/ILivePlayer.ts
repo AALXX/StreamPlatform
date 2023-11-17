@@ -8,7 +8,7 @@ interface IDasbordLiveDataResponse {
     LiveDislikes: number
 }
 
-interface IDasbordLiveData{
+interface IDasbordLiveData {
     error: boolean
     AccountName: string
     AccountFolowers: number
@@ -18,19 +18,20 @@ interface IDasbordLiveData{
 
 interface ILiveData {
     error: boolean
+    IsLive: boolean
     LiveTitle: string
+    OwnerToken: string
     AccountName: string
     AccountFolowers: number
     UserFollwsAccount: boolean
-    VideoLikes: number
-    VideoDislikes: number
+    LiveLikes: number
+    LiveDislikes: number
     UserLikedVideo: boolean
-    UserLikedOrDislikedVideo: number
+    UserLikedOrDislikedVideo: { like_or_dislike: number; userLiked: boolean }
 }
 
-
 interface ILivePlayerProps {
-    userToken: string
+    userStreamToken: string
 }
 
 export type { ILiveData, ILivePlayerProps, IDasbordLiveData, IDasbordLiveDataResponse }

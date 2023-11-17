@@ -139,7 +139,6 @@ const userFollowAccountCheck = async (userToken: string, accountPublicToken: str
         const connection = await connect();
         const checkfollowResponse = await query(connection, CheckIfUserFollwsAccountQuerryString);
         let checkfollowdata = JSON.parse(JSON.stringify(checkfollowResponse));
-
         if (Object.keys(checkfollowdata).length != 0) {
             return true;
         } else {
@@ -177,49 +176,53 @@ const CreateVideoToken = (): string => {
  * @param {string} VideoToken
  * @returns
  */
-const getUserLikedOrDislikedVideo = async (userToken: string, VideoToken: string) => {
+const getUserLikedOrDislikedVideo = async (userToken: string, VideoToken: string): Promise<{ userLiked: boolean; like_or_dislike: number }> => {
     const NAMESPACE = 'USER_LIKED_OR_DISLIKED_FUNCTION';
     const CheckIfUserFollwsAccountQuerryString = `SELECT * FROM user_liked_or_disliked_video_class WHERE userToken="${userToken}" AND videoToken="${VideoToken}";`;
 
     try {
         if (userToken === 'undefined') {
-            return false;
+            return { userLiked: false, like_or_dislike: 0 };
         }
 
         const connection = await connect();
         const checkfollowResponse = await query(connection, CheckIfUserFollwsAccountQuerryString);
         let checkfollowdata = JSON.parse(JSON.stringify(checkfollowResponse));
         if (Object.keys(checkfollowdata).length != 0) {
-            return checkfollowdata[0].like_dislike;
+            return { userLiked: true, like_or_dislike: checkfollowdata[0].like_dislike };
         }
+        return { userLiked: false, like_or_dislike: 0 };
     } catch (error: any) {
         logging.error(NAMESPACE, error.message, error);
-        return false;
+        return { userLiked: false, like_or_dislike: 0 };
     }
 };
 
-const userLikedOrDislikedVideoCheck = async (userToken: string, VideoToken: string) => {
-    const NAMESPACE = 'USER_LIKED_OR_DISLIKED_CHECK_FUNCTION';
-
-    const CheckIfUserFollwsAccountQuerryString = `SELECT * FROM user_liked_or_disliked_video_class WHERE userToken="${userToken}" AND videoToken="${VideoToken}";`;
+/**
+ * It gets the stream that user liked
+ * @param {string} userToken
+ * @param {string} StreamToken
+ * @returns
+ */
+const getUserLikedOrDislikedStream = async (userToken: string, StreamToken: string): Promise<{ userLiked: boolean; like_or_dislike: number }> => {
+    const NAMESPACE = 'USER_LIKED_OR_DISLIKED_FUNCTION';
+    const CheckIfUserFollwsAccountQuerryString = `SELECT * FROM user_liked_or_disliked_stream_class WHERE userToken="${userToken}" AND StreamToken="${StreamToken}";`;
 
     try {
         if (userToken === 'undefined') {
-            return false;
+            return { userLiked: false, like_or_dislike: 0 };
         }
-
         const connection = await connect();
-        const checkfollowResponse = await query(connection, CheckIfUserFollwsAccountQuerryString);
-        let checkfollowdata = JSON.parse(JSON.stringify(checkfollowResponse));
-
-        if (Object.keys(checkfollowdata).length != 0) {
-            return true;
-        } else {
-            return false;
+        const checklikeResponse = await query(connection, CheckIfUserFollwsAccountQuerryString);
+        let checklikedata = JSON.parse(JSON.stringify(checklikeResponse));
+        // console.log(checklikedata);
+        if (Object.keys(checklikedata).length != 0) {
+            return { userLiked: true, like_or_dislike: checklikedata[0].like_dislike };
         }
+        return { userLiked: false, like_or_dislike: 0 };
     } catch (error: any) {
         logging.error(NAMESPACE, error.message, error);
-        return false;
+        return { userLiked: false, like_or_dislike: 0 };
     }
 };
 
@@ -279,17 +282,21 @@ const CheckIfLive = async (userPrivateToken: string): Promise<{ isLive: boolean;
  * @param {string} userPrivateToken
  * @return {}
  */
-const StartLive = async (LiveTitle: string, AccountFolowers: string, userPrivateToken: string): Promise<boolean> => {
+const StartLive = async (LiveTitle: string, userPrivateToken: string): Promise<boolean> => {
     const NAMESPACE = 'START_LIVE_FUNCTION';
     logging.info(NAMESPACE, 'USed THE FUNCTION');
 
     try {
+        const StreamToken = CreateVideoToken();
         const UserPublicToken = await utilFunctions.getUserPublicTokenFromPrivateToken(userPrivateToken);
         const connection = await connect();
         if (UserPublicToken == null) {
             return true;
         }
-        const StatALiveQueryString = `INSERT INTO streams(StreamTitle, AccountFolowers, UserPublicToken) VALUES ("${LiveTitle}","${AccountFolowers}","${UserPublicToken}")`;
+        const StatALiveQueryString = `INSERT INTO streams(StreamTitle, AccountFolowers, UserPublicToken, StreamToken)
+SELECT "${LiveTitle}", u.AccountFolowers, "${UserPublicToken}", "${StreamToken}"
+FROM users AS u
+WHERE u.UserPublicToken = "${UserPublicToken}";`;
 
         const results = await query(connection, StatALiveQueryString);
 
@@ -341,8 +348,8 @@ export default {
     CreateVideoToken,
     userFollowAccountCheck,
     getUserLikedOrDislikedVideo,
-    userLikedOrDislikedVideoCheck,
     getUserPublicTokenFromPrivateToken,
+    getUserLikedOrDislikedStream,
     getUserPrivateTokenFromPublicToken,
     RemoveDirectory,
     CheckIfLive,

@@ -2,6 +2,7 @@
 import React, { useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
+import { getCookie } from 'cookies-next'
 
 const NavBar = () => {
     const [isOpen, setIsOpen] = useState<boolean>(false)
@@ -34,6 +35,10 @@ const NavBar = () => {
                 <Link href={'/'} className="self-center w-[90%] h-[2rem] mt-[1rem]">
                     <button className="w-full h-full bg-[#3a3a3a] text-white">FOLLOWING</button>
                 </Link>
+
+                <Link href={'/account/live-dashbord'} className="self-center w-[90%] h-[2rem] mt-[1rem]">
+                    <button className="w-full h-full bg-[#3a3a3a] text-white">LIVE</button>
+                </Link>
             </div>
 
             <h1
@@ -65,8 +70,8 @@ const NavBar = () => {
                     <Image className="ml-1 self-center" src="/assets/CommentsIcons/SendComment_icon.svg" width={30} height={30} alt="Send image" />
                 </div>
             </form>
-            <Link className="ml-auto mr-16 " href={'/account'}>
-                <Image src="/AccountIcon.svg" width={50} height={30} alt="Picture of the author" />
+            <Link className="ml-auto mr-16 self-center " href={'/account'}>
+                <img className="z-10 rounded-full" src={`${process.env.FILE_SERVER}/${getCookie('userPublicToken')}/Main_Icon.png`} width={50} height={50} alt="Picture of the author" />
             </Link>
         </div>
     )

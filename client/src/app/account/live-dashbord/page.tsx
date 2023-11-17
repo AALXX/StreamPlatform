@@ -20,7 +20,7 @@ const LiveDashbord = () => {
             {userLoggedIn ? (
                 <div className="flex flex-col">
                     <div className="flex h-[100vh]">
-                        <LivePlayerDashbord userToken={getCookie('userPublicToken') as string} />
+                        <LivePlayerDashbord userStreamToken={getCookie('userPublicToken') as string} />
                     </div>
                 </div>
             ) : (

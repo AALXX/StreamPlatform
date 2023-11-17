@@ -1,7 +1,7 @@
 import axios from 'axios'
 import { CookieValueTypes } from 'cookies-next'
 import { RefObject } from 'react'
-import { IDasbordLiveDataResponse } from './ILivePlayer'
+import { IDasbordLiveDataResponse, ILiveData } from './ILivePlayer'
 
 //* /////////////////////////////
 //*      Live Dashbord Logic   //
@@ -21,6 +21,23 @@ const getDashbordData = async (userToken: string): Promise<IDasbordLiveDataRespo
     }
 }
 
+const getLiveData = async (streamToken: string, AccountPublicToken: string): Promise<ILiveData> => {
+    const livedData = await axios.get(`${process.env.SERVER_BACKEND}/live-manager/get-live-data/${AccountPublicToken}/${streamToken}`)
+    return {
+        error: livedData.data.error,
+        IsLive: livedData.data.IsLive,
+        AccountName: livedData.data.AccountName,
+        AccountFolowers: livedData.data.AccountFolowers,
+        LiveTitle: livedData.data.LiveTitle,
+        LiveLikes: livedData.data.LiveLikes,
+        UserFollwsAccount: livedData.data.UserFollwsAccount,
+        OwnerToken: livedData.data.OwnerToken,
+        LiveDislikes: livedData.data.LiveDislikes,
+        UserLikedVideo: livedData.data.UserLikedVideo,
+        UserLikedOrDislikedVideo: livedData.data.UserLikedOrDislikedVideo
+    }
+}
+
 const startStopLive = async (LiveTitle: string, UserPrivateToken: string, AccountFolowers: number): Promise<boolean> => {
     const resp = await axios.post(`${process.env.SERVER_BACKEND}/live-manager/start-stop-live`, {
         LiveTitle: LiveTitle,
@@ -30,24 +47,9 @@ const startStopLive = async (LiveTitle: string, UserPrivateToken: string, Accoun
     return resp.data.error
 }
 
-const getLiveData = async (VideoToken: string | null, userToken: string) => {
-    const videoData = await axios.get(`${process.env.SERVER_BACKEND}/videos-manager/get-video-data/${VideoToken}/${userToken}`)
-    return {
-        error: false,
-        VideoFound: true,
-        VideoTitle: videoData.data.VideoTitle,
-        VideoDescription: videoData.data.VideoDescription,
-        PublishDate: videoData.data.PublishDate,
-        OwnerToken: videoData.data.OwnerToken,
-        AccountName: videoData.data.AccountName,
-        AccountFolowers: videoData.data.AccountFolowers,
-        UserFollwsAccount: videoData.data.UserFollwsAccount,
-        VideoLikes: videoData.data.VideoLikes,
-        VideoDislikes: videoData.data.VideoDislikes,
-        UserLikedVideo: videoData.data.UserLikedVideo,
-        UserLikedOrDislikedVideo: videoData.data.UserLikedOrDislikedVideo
-    }
-}
+//* /////////////////////////////
+//*      Live CLient Logic     //
+//* /////////////////////////////
 
 //* Play/Pause
 const playOrPauseVideo = (videoRef: RefObject<HTMLVideoElement>): boolean => {
@@ -78,29 +80,29 @@ const followAccount = async (usrToken: CookieValueTypes, ownerToken: string, use
     return !userFollwsAccount
 }
 
-const likeVideo = async (usrToken: CookieValueTypes, videoToken: string | null, userLikedVideo: boolean, userDisLikedVideo: boolean) => {
-    if (videoToken == null) {
+const likeVideo = async (usrToken: CookieValueTypes, streamToken: string | null, userLikedVideo: boolean, userDisLikedVideo: boolean) => {
+    if (streamToken == null) {
         return false
     }
 
     if ((!userLikedVideo && !userDisLikedVideo) || (!userLikedVideo && userDisLikedVideo)) {
-        await axios.post(`${process.env.SERVER_BACKEND}/videos-manager/like-dislike-video`, { userToken: usrToken, videoToken: videoToken, likeOrDislike: 1 })
+        await axios.post(`${process.env.SERVER_BACKEND}/live-manager/like-dislike-live`, { userToken: usrToken, streamToken: streamToken, likeOrDislike: 1 })
     } else if (userLikedVideo) {
-        await axios.post(`${process.env.SERVER_BACKEND}/videos-manager/like-dislike-video`, { userToken: usrToken, videoToken: videoToken, likeOrDislike: 0 })
+        await axios.post(`${process.env.SERVER_BACKEND}/live-manager/like-dislike-live`, { userToken: usrToken, streamToken: streamToken, likeOrDislike: 0 })
     }
 
     return !userLikedVideo
 }
 
-const dislikeVideo = async (usrToken: CookieValueTypes, videoToken: string | null, userLikedVideo: boolean, userDisLikedVideo: boolean) => {
-    if (videoToken == null) {
+const dislikeVideo = async (usrToken: CookieValueTypes, streamToken: string | null, userLikedVideo: boolean, userDisLikedVideo: boolean) => {
+    if (streamToken == null) {
         return false
     }
 
     if ((!userLikedVideo && !userDisLikedVideo) || (userLikedVideo && !userDisLikedVideo)) {
-        await axios.post(`${process.env.SERVER_BACKEND}/videos-manager/like-dislike-video`, { userToken: usrToken, videoToken: videoToken, likeOrDislike: 2 })
+        await axios.post(`${process.env.SERVER_BACKEND}/live-manager/like-dislike-live`, { userToken: usrToken, streamToken: streamToken, likeOrDislike: 2 })
     } else if (userDisLikedVideo) {
-        await axios.post(`${process.env.SERVER_BACKEND}/videos-manager/like-dislike-video`, { userToken: usrToken, videoToken: videoToken, likeOrDislike: 0 })
+        await axios.post(`${process.env.SERVER_BACKEND}/live-manager/like-dislike-live`, { userToken: usrToken, streamToken: streamToken, likeOrDislike: 0 })
     }
 
     return !userDisLikedVideo

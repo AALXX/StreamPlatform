@@ -9,7 +9,7 @@ const LivePage = () => {
     return (
         <div className="flex flex-col">
             <div className="flex h-[100vh]">
-                <LivePlayer userToken={urlParams.get('u') as string} />
+                <LivePlayer userStreamToken={urlParams.get('t') as string} />
             </div>
         </div>
     )

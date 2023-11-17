@@ -58,9 +58,9 @@ const VideoPlayer = (props: IVideoPlayerProps) => {
             setVideoData(videoData)
             setUserFollwsAccount(videoData.UserFollwsAccount)
             setUserLikedVideo(videoData.UserLikedVideo)
-            if (videoData.UserLikedOrDislikedVideo === 1) {
+            if (videoData.UserLikedOrDislikedVideo.like_or_dislike === 1) {
                 setUserLikedVideo(true)
-            } else if (videoData.UserLikedOrDislikedVideo === 2) {
+            } else if (videoData.UserLikedOrDislikedVideo.like_or_dislike === 2) {
                 setUserDisLikedVideo(true)
             }
 
@@ -153,11 +153,11 @@ const VideoPlayer = (props: IVideoPlayerProps) => {
                 </video>
             </div>
 
-            <div className="flex mt-[.5vh] h-[10vh] w-[66.8vw] bg-[#292929]">
+            <div className="flex mt-[.5vh] h-[11vh] w-[66.8vw] bg-[#292929]">
                 <Link className="ml-4 self-center" href={`/user?id=${VideoData.OwnerToken}`}>
                     <img className="z-10 rounded-full" src={`${process.env.FILE_SERVER}/${VideoData.OwnerToken}/Main_icon.png`} width={50} height={50} alt="Picture of the author" />
                 </Link>
-                <div className="flex flex-col ml-4">
+                <div className="flex flex-col ml-4 self-center">
                     <h1 className="text-white mt-2 text-lg">{VideoData.VideoTitle}</h1>
                     <hr className="w-full" />
                     <div className="flex  ">
@@ -236,7 +236,7 @@ const VideoPlayer = (props: IVideoPlayerProps) => {
                                     setUserLikedVideo(false)
                                     setVideoDisLikes(videoDisLikes - 1)
 
-                                    setUserDisLikedVideo(await dislikeVideo(getCookie('userToken'), props.VideoToken, userFollwsAccount, userDisLikedVideo))
+                                    setUserDisLikedVideo(await dislikeVideo(getCookie('userToken'), props.VideoToken, userLikedVideo, userDisLikedVideo))
                                 }}
                             />
                         </>
@@ -252,7 +252,7 @@ const VideoPlayer = (props: IVideoPlayerProps) => {
                                     if (userLikedVideo) {
                                         setVideoLikes(videoLikes - 1)
                                     }
-                                    setUserDisLikedVideo(await dislikeVideo(getCookie('userToken'), props.VideoToken, userFollwsAccount, userDisLikedVideo))
+                                    setUserDisLikedVideo(await dislikeVideo(getCookie('userToken'), props.VideoToken, userLikedVideo, userDisLikedVideo))
                                 }}
                             />
                         </>
