@@ -8,7 +8,10 @@ import axios from 'axios';
 
 const NAMESPACE = 'ClientVideosServiceManager';
 
-const myValidationResult = validationResult.withDefaults({
+/**
+ * Validates and cleans the request form
+ */
+const RequestValidationResult = validationResult.withDefaults({
     formatter: (error) => {
         return {
             errorMsg: error.msg,
@@ -31,13 +34,14 @@ interface ISearchVideoCards {
 }
 
 /**
- ** Gets Data About Video from db
- * @param req
- * @param res
+ *Gets Data About Video from db
+ * @param {Request} req
+ * @param {Response} res
+ * @return {Response}
  */
 const GetVideoDataByToken = async (req: Request, res: Response) => {
     const GetVideoDataByTokenQueryString = `SELECT VideoTitle, VideoDescription, Likes, Dislikes, PublishDate, OwnerToken FROM videos WHERE VideoToken="${req.params.VideoToken}"`;
-    const errors = myValidationResult(req);
+    const errors = RequestValidationResult(req);
     if (!errors.isEmpty()) {
         errors.array().map((error) => {
             logging.error('GET_VIDEO_DATA_BY_TOKEN_FUNC', error.errorMsg);
@@ -77,6 +81,8 @@ const GetVideoDataByToken = async (req: Request, res: Response) => {
             UserLikedOrDislikedVideo: getuserlikedordislike,
         });
     } catch (error: any) {
+        logging.error(NAMESPACE, error.message, error);
+
         return res.status(500).json({
             message: error.message,
             error: true,
@@ -86,11 +92,12 @@ const GetVideoDataByToken = async (req: Request, res: Response) => {
 
 /**
  * Like the video by token
- * @param req
- * @param res
+ * @param {Request} req
+ * @param {Response} res
+ * @return {Response}
  */
 const LikeDislikeVideoFunc = async (req: Request, res: Response) => {
-    const errors = myValidationResult(req);
+    const errors = RequestValidationResult(req);
     if (!errors.isEmpty()) {
         errors.array().map((error) => {
             logging.error('LIKE_OR_DISLIKE_FUNC', error.errorMsg);
@@ -106,43 +113,43 @@ const LikeDislikeVideoFunc = async (req: Request, res: Response) => {
         if (getkuserlikedordislike.userLiked) {
             if (req.body.likeOrDislike === 0) {
                 const deleteAndUpdateSql = `
-    DELETE FROM user_liked_or_disliked_video_class
-    WHERE userToken="${req.body.userToken}" AND videoToken="${req.body.videoToken}";
+                DELETE FROM user_liked_or_disliked_video_class
+                WHERE userToken="${req.body.userToken}" AND videoToken="${req.body.videoToken}";
 
-    UPDATE videos
-    SET
-        Likes = Likes - (CASE WHEN ${getkuserlikedordislike.like_or_dislike} = 1 THEN 1 ELSE 0 END),
-        Dislikes = Dislikes - (CASE WHEN ${getkuserlikedordislike.like_or_dislike} = 2 THEN 1 ELSE 0 END)
-    WHERE VideoToken = "${req.body.videoToken}";
+                UPDATE videos
+                SET
+                Likes = Likes - (CASE WHEN ${getkuserlikedordislike.like_or_dislike} = 1 THEN 1 ELSE 0 END),
+                Dislikes = Dislikes - (CASE WHEN ${getkuserlikedordislike.like_or_dislike} = 2 THEN 1 ELSE 0 END)
+                WHERE VideoToken = "${req.body.videoToken}";
 `;
 
                 await query(connection, deleteAndUpdateSql);
             } else {
                 const updateSql = `
-    UPDATE user_liked_or_disliked_video_class
-    SET like_dislike=${req.body.likeOrDislike}
-    WHERE userToken="${req.body.userToken}" AND videoToken="${req.body.videoToken}";
-
-    UPDATE videos
-    SET
-        Likes = Likes + (CASE WHEN ${req.body.likeOrDislike} = 1 THEN 1 ELSE -1 END),
-        Dislikes = Dislikes + (CASE WHEN ${req.body.likeOrDislike} = 2 THEN 1 ELSE -1 END)
-    WHERE VideoToken="${req.body.videoToken}";
+                UPDATE user_liked_or_disliked_video_class
+                SET like_dislike=${req.body.likeOrDislike}
+                WHERE userToken="${req.body.userToken}" AND videoToken="${req.body.videoToken}";
+            
+                UPDATE videos
+                SET
+                    Likes = Likes + (CASE WHEN ${req.body.likeOrDislike} = 1 THEN 1 ELSE -1 END),
+                    Dislikes = Dislikes + (CASE WHEN ${req.body.likeOrDislike} = 2 THEN 1 ELSE -1 END)
+                WHERE VideoToken="${req.body.videoToken}";
 `;
 
                 await query(connection, updateSql);
             }
         } else {
             const insertOrUpdateDataSql = `
-    INSERT INTO user_liked_or_disliked_video_class (userToken, videoToken, like_dislike)
-    VALUES ('${req.body.userToken}', '${req.body.videoToken}', '${req.body.likeOrDislike}')
-    ON DUPLICATE KEY UPDATE
-    like_dislike = VALUES(like_dislike);
-
-    UPDATE videos
-    SET Likes = Likes + (CASE WHEN ${req.body.likeOrDislike} = 1 THEN 1 ELSE 0 END),
-    Dislikes = Dislikes + (CASE WHEN ${req.body.likeOrDislike} = 2 THEN 1 ELSE 0 END)
-    WHERE VideoToken = "${req.body.videoToken}";
+            INSERT INTO user_liked_or_disliked_video_class (userToken, videoToken, like_dislike)
+            VALUES ('${req.body.userToken}', '${req.body.videoToken}', '${req.body.likeOrDislike}')
+            ON DUPLICATE KEY UPDATE
+            like_dislike = VALUES(like_dislike);
+        
+            UPDATE videos
+            SET Likes = Likes + (CASE WHEN ${req.body.likeOrDislike} = 1 THEN 1 ELSE 0 END),
+            Dislikes = Dislikes + (CASE WHEN ${req.body.likeOrDislike} = 2 THEN 1 ELSE 0 END)
+            WHERE VideoToken = "${req.body.videoToken}";
 `;
 
             await query(connection, insertOrUpdateDataSql);
@@ -151,6 +158,8 @@ const LikeDislikeVideoFunc = async (req: Request, res: Response) => {
             error: false,
         });
     } catch (error: any) {
+        logging.error(NAMESPACE, error.message, error);
+
         res.status(202).json({
             error: true,
         });
@@ -159,11 +168,12 @@ const LikeDislikeVideoFunc = async (req: Request, res: Response) => {
 
 /**
  * post comment to a video
- * @param req
- * @param res
+ * @param {Request} req
+ * @param {Response} res
+ * @return {Response}
  */
 const PostCommentToVideo = async (req: Request, res: Response) => {
-    const errors = myValidationResult(req);
+    const errors = RequestValidationResult(req);
     if (!errors.isEmpty()) {
         errors.array().map((error) => {
             logging.error('POST_COMMENT_FUNC', error.errorMsg);
@@ -201,11 +211,12 @@ const PostCommentToVideo = async (req: Request, res: Response) => {
 
 /**
  * delete comment to a video
- * @param req
- * @param res
+ * @param {Request} req
+ * @param {Response} res
+ * @return {Response}
  */
 const DeleteComment = async (req: Request, res: Response) => {
-    const errors = myValidationResult(req);
+    const errors = RequestValidationResult(req);
     if (!errors.isEmpty()) {
         errors.array().map((error) => {
             logging.error('DELETE_COMMENT_FUNC', error.errorMsg);
@@ -232,11 +243,12 @@ const DeleteComment = async (req: Request, res: Response) => {
 
 /**
  * get comment from a video
- * @param req
- * @param res
+ * @param {Request} req
+ * @param {Response} res
+ * @return {Response}
  */
 const GetVideoComments = async (req: Request, res: Response) => {
-    const errors = myValidationResult(req);
+    const errors = RequestValidationResult(req);
     if (!errors.isEmpty()) {
         errors.array().map((error) => {
             logging.error('POST_COMMENT_FUNC', error.errorMsg);
@@ -285,8 +297,14 @@ const GetVideoComments = async (req: Request, res: Response) => {
     }
 };
 
+/**
+ * Search a video 
+ * @param {Request} req
+ * @param {Response} res
+ * @return {Response}
+ */
 const SearchVideo = async (req: Request, res: Response) => {
-    const errors = myValidationResult(req);
+    const errors = RequestValidationResult(req);
     if (!errors.isEmpty()) {
         errors.array().map((error) => {
             logging.error('POST_COMMENT_FUNC', error.errorMsg);

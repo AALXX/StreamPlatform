@@ -23,7 +23,7 @@ const LivePlayer = (props: ILivePlayerProps) => {
         LiveDislikes: 0,
         UserLikedVideo: false,
         OwnerToken: '',
-        UserLikedOrDislikedVideo: { like_or_dislike: 0, userLiked: false }
+        UserLikedOrDislikedLive: { like_or_dislike: 0, userLiked: false }
     })
 
     const [playing, setPlaying] = useState(false)
@@ -84,14 +84,13 @@ const LivePlayer = (props: ILivePlayerProps) => {
         }
 
         ;(async () => {
-            console.log(props.userStreamToken)
             const LiveData = await getLiveData(getCookie('userToken') as string, props.userStreamToken)
             setLiveData(LiveData)
             setUserFollwsAccount(LiveData.UserFollwsAccount)
             setUserLikedVideo(LiveData.UserLikedVideo)
-            if (LiveData.UserLikedOrDislikedVideo.like_or_dislike === 1) {
+            if (LiveData.UserLikedOrDislikedLive.like_or_dislike === 1) {
                 setUserLikedVideo(true)
-            } else if (LiveData.UserLikedOrDislikedVideo.like_or_dislike === 2) {
+            } else if (LiveData.UserLikedOrDislikedLive.like_or_dislike === 2) {
                 setUserDisLikedVideo(true)
             }
 

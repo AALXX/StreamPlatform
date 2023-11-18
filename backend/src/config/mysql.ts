@@ -9,6 +9,10 @@ const params = {
     database: config.mysql.database,
 };
 
+/**
+ * connects to an sql server
+ * @return {Promise<mysql.Connection>}
+ */
 const connect = async () =>
     new Promise<mysql.Connection>((resolve, reject) => {
         const connection = mysql.createConnection(params);
@@ -21,6 +25,12 @@ const connect = async () =>
         });
     });
 
+/**
+ * query an sql string
+ * @param {mysql.Connection} connection 
+ * @param {string} query 
+ * @returns 
+ */
 const query = async (connection: mysql.Connection, query: string) =>
     new Promise((resolve, reject) => {
         connection.query(query, connection, (err, result) => {

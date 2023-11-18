@@ -12,7 +12,10 @@ import utilFunctions from '../../util/utilFunctions';
 
 const NAMESPACE = 'UserAccountService';
 
-const myValidationResult = validationResult.withDefaults({
+/**
+ * Validates and cleans the request form
+ */
+const RequestValidationResult = validationResult.withDefaults({
     formatter: (error) => {
         return {
             errorMsg: error.msg,
@@ -20,8 +23,14 @@ const myValidationResult = validationResult.withDefaults({
     },
 });
 
+/**
+ * Gets a personal user account data by User Private Token
+ * @param {Request} req
+ * @param {Response} res
+ * @return {Response}
+ */
 const GetUserAccountData = async (req: Request, res: Response) => {
-    const errors = myValidationResult(req);
+    const errors = RequestValidationResult(req);
     if (!errors.isEmpty()) {
         errors.array().map((error) => {
             logging.error('GET_ACCOUNT_DATA', error.errorMsg);
@@ -50,6 +59,8 @@ const GetUserAccountData = async (req: Request, res: Response) => {
             userData: accData[0],
         });
     } catch (error: any) {
+        logging.error(NAMESPACE, error.message);
+
         res.status(202).json({
             error: true,
             errmsg: error.message,
@@ -57,8 +68,14 @@ const GetUserAccountData = async (req: Request, res: Response) => {
     }
 };
 
+/**
+ * Gets a public  creator account data by User Public Token
+ * @param {Request} req
+ * @param {Response} res
+ * @return {Response}
+ */
 const GetCreatorAccountData = async (req: Request, res: Response) => {
-    const errors = myValidationResult(req);
+    const errors = RequestValidationResult(req);
     if (!errors.isEmpty()) {
         errors.array().map((error) => {
             logging.error('GET_ACCOUNT_DATA', error.errorMsg);
@@ -95,15 +112,22 @@ const GetCreatorAccountData = async (req: Request, res: Response) => {
             userFollowsCreator: itFollows,
         });
     } catch (error: any) {
+        logging.error(NAMESPACE, error.message);
+
         res.status(202).json({
             error: true,
             errmsg: error.message,
         });
     }
 };
-
+/**
+ * Gets user account public videos
+ * @param {Request} req
+ * @param {Response} res
+ * @return {Response}
+ */
 const GetAccountVideos = async (req: Request, res: Response) => {
-    const errors = myValidationResult(req);
+    const errors = RequestValidationResult(req);
     if (!errors.isEmpty()) {
         // deepcode ignore CallbackShouldReturn: <please specify a reason of ignoring this>
         errors.array().map((error) => {
@@ -126,12 +150,13 @@ const GetAccountVideos = async (req: Request, res: Response) => {
         const accountVideosDB = await query(connection, GetAccountVideosSQL);
 
         let accountVideos = JSON.parse(JSON.stringify(accountVideosDB));
-
         res.status(202).json({
             error: false,
             videos: accountVideos,
         });
     } catch (error: any) {
+        logging.error(NAMESPACE, error.message);
+
         res.status(202).json({
             error: true,
             errmsg: error.message,
@@ -139,8 +164,14 @@ const GetAccountVideos = async (req: Request, res: Response) => {
     }
 };
 
+/**
+ * Gets creator account public videos
+ * @param {Request} req
+ * @param {Response} res
+ * @return {Response}
+ */
 const GetCreatorVideos = async (req: Request, res: Response) => {
-    const errors = myValidationResult(req);
+    const errors = RequestValidationResult(req);
     if (!errors.isEmpty()) {
         // deepcode ignore CallbackShouldReturn: <please specify a reason of ignoring this>
         errors.array().map((error) => {
@@ -162,6 +193,8 @@ const GetCreatorVideos = async (req: Request, res: Response) => {
             videos: accountVideos,
         });
     } catch (error: any) {
+        logging.error(NAMESPACE, error.message);
+
         res.status(202).json({
             error: true,
             errmsg: error.message,
@@ -169,8 +202,14 @@ const GetCreatorVideos = async (req: Request, res: Response) => {
     }
 };
 
+/**
+ * Follws an account
+ * @param {Request} req
+ * @param {Response} res
+ * @return {Response}
+ */
 const FollowAccount = async (req: Request, res: Response) => {
-    const errors = myValidationResult(req);
+    const errors = RequestValidationResult(req);
     if (!errors.isEmpty()) {
         errors.array().map((error) => {
             logging.error('FOLLOW_ACCOUNT_FUNC', error.errorMsg);
@@ -209,6 +248,8 @@ const FollowAccount = async (req: Request, res: Response) => {
             succes: true,
         });
     } catch (error: any) {
+        logging.error(NAMESPACE, error.message);
+
         res.status(202).json({
             error: true,
             succes: false,
@@ -216,8 +257,14 @@ const FollowAccount = async (req: Request, res: Response) => {
     }
 };
 
+/**
+ * Change  users data
+ * @param {Request} req
+ * @param {Response} res
+ * @return {Response}
+ */
 const ChangeUserData = async (req: Request, res: Response) => {
-    const errors = myValidationResult(req);
+    const errors = RequestValidationResult(req);
     if (!errors.isEmpty()) {
         errors.array().map((error) => {
             logging.error('CHANGE_ACCOUNT_DATA_FUNC', error.errorMsg);
@@ -239,6 +286,8 @@ const ChangeUserData = async (req: Request, res: Response) => {
             videos: accountVideos,
         });
     } catch (error: any) {
+        logging.error(NAMESPACE, error.message);
+
         res.status(202).json({
             error: true,
             errmsg: error.message,
@@ -246,6 +295,9 @@ const ChangeUserData = async (req: Request, res: Response) => {
     }
 };
 
+/**
+ * file storage
+ */
 const storage = multer.diskStorage({
     destination: (req: Request, file: any, callback: any) => {
         callback(null, '../server/accounts/IconTmp');
@@ -270,6 +322,12 @@ let upload = multer({
     // fileFilter: fileFilter,
 }).single('iconFile');
 
+/**
+ * Change UserIcon
+ * @param {Request} req
+ * @param {Response} res
+ * @return {Response}
+ */
 const ChangeUserIcon = async (req: Request, res: Response) => {
     upload(req, res, async (err: any) => {
         if (err) {
@@ -327,11 +385,14 @@ const ChangeUserIcon = async (req: Request, res: Response) => {
     });
 };
 
-// -------------------------------------------------------------------------
-//                              Account Auth
-// -------------------------------------------------------------------------
+/**
+ * Register User
+ * @param {Request} req
+ * @param {Response} res
+ * @return {Response}
+ */
 const RegisterUser = async (req: Request, res: Response) => {
-    const errors = myValidationResult(req);
+    const errors = RequestValidationResult(req);
     if (!errors.isEmpty()) {
         errors.array().map((error) => {
             logging.error('REGISTER_USER_FUNC', error.errorMsg);
@@ -371,6 +432,8 @@ const RegisterUser = async (req: Request, res: Response) => {
             });
         });
     } catch (error: any) {
+        logging.error(NAMESPACE, error.message);
+
         return res.status(500).json({
             message: error.message,
             error: true,
@@ -378,8 +441,14 @@ const RegisterUser = async (req: Request, res: Response) => {
     }
 };
 
+/**
+ * Login User
+ * @param {Request} req
+ * @param {Response} res
+ * @return {Response}
+ */
 const LoginUser = async (req: Request, res: Response) => {
-    const errors = myValidationResult(req);
+    const errors = RequestValidationResult(req);
     if (!errors.isEmpty()) {
         errors.array().map((error) => {
             logging.error('LOGiN_USER_FUNC', error.errorMsg);
@@ -422,6 +491,8 @@ const LoginUser = async (req: Request, res: Response) => {
             }
         });
     } catch (error: any) {
+        logging.error(NAMESPACE, error.message);
+
         res.status(202).json({
             error: true,
             errmsg: error.message,
@@ -429,8 +500,14 @@ const LoginUser = async (req: Request, res: Response) => {
     }
 };
 
+/**
+ * Sends passwords reset link to user email
+ * @param {Request} req
+ * @param {Response} res
+ * @return {Response}
+ */
 const SendPwdLinkToEmail = async (req: Request, res: Response) => {
-    const errors = myValidationResult(req);
+    const errors = RequestValidationResult(req);
     if (!errors.isEmpty()) {
         errors.array().map((error) => {
             logging.error('SEND_PASSWORD_RESET_LINK_FUNC', error.errorMsg);
@@ -479,6 +556,8 @@ const SendPwdLinkToEmail = async (req: Request, res: Response) => {
             }
         });
     } catch (error: any) {
+        logging.error(NAMESPACE, error.message);
+
         res.status(202).json({
             error: true,
             errmsg: error.message,
@@ -486,8 +565,14 @@ const SendPwdLinkToEmail = async (req: Request, res: Response) => {
     }
 };
 
+/**
+ * checks reset pasword link valability
+ * @param {Request} req
+ * @param {Response} res
+ * @return {Response}
+ */
 const CheckResetPasswordLinkValability = async (req: Request, res: Response) => {
-    const errors = myValidationResult(req);
+    const errors = RequestValidationResult(req);
     if (!errors.isEmpty()) {
         errors.array().map((error) => {
             logging.error('CHECK_LINK_AVALABILITY_FUNC', error.errorMsg);
@@ -502,6 +587,8 @@ const CheckResetPasswordLinkValability = async (req: Request, res: Response) => 
             error: false,
         });
     } catch (error: any) {
+        logging.error(NAMESPACE, error.message);
+
         res.status(202).json({
             error: true,
             errmsg: error.message,
@@ -509,8 +596,14 @@ const CheckResetPasswordLinkValability = async (req: Request, res: Response) => 
     }
 };
 
+/**
+ * Change User Password
+ * @param {Request} req
+ * @param {Response} res
+ * @return {Response}
+ */
 const ChangeUserPasswod = async (req: Request, res: Response) => {
-    const errors = myValidationResult(req);
+    const errors = RequestValidationResult(req);
     if (!errors.isEmpty()) {
         errors.array().map((error) => {
             logging.error('CHANGE_USER_PASSWOD_FUNC', error.errorMsg);
@@ -555,6 +648,7 @@ const ChangeUserPasswod = async (req: Request, res: Response) => {
                 });
             });
         } else {
+            
             return res.status(200).json({
                 error: false,
                 pwdChanged: false,
@@ -562,6 +656,7 @@ const ChangeUserPasswod = async (req: Request, res: Response) => {
             });
         }
     } catch (error: any) {
+        logging.error(NAMESPACE, error.message);
         res.status(202).json({
             error: true,
             msg: error.message,

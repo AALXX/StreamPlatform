@@ -34,7 +34,7 @@ const getLiveData = async (streamToken: string, AccountPublicToken: string): Pro
         OwnerToken: livedData.data.OwnerToken,
         LiveDislikes: livedData.data.LiveDislikes,
         UserLikedVideo: livedData.data.UserLikedVideo,
-        UserLikedOrDislikedVideo: livedData.data.UserLikedOrDislikedVideo
+        UserLikedOrDislikedLive: livedData.data.UserLikedOrDislikedLive
     }
 }
 

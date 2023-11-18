@@ -27,7 +27,7 @@ interface ILiveData {
     LiveLikes: number
     LiveDislikes: number
     UserLikedVideo: boolean
-    UserLikedOrDislikedVideo: { like_or_dislike: number; userLiked: boolean }
+    UserLikedOrDislikedLive: { like_or_dislike: number; userLiked: boolean }
 }
 
 interface ILivePlayerProps {

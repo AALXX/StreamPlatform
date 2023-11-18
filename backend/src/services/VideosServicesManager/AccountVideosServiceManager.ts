@@ -10,11 +10,13 @@ import UtilFunc from '../../util/utilFunctions';
 import axios from 'axios';
 import utilFunctions from '../../util/utilFunctions';
 import { validationResult } from 'express-validator';
-import { rimraf } from 'rimraf';
 
 const NAMESPACE = 'AccountUploadServiceManager';
 
-const myValidationResult = validationResult.withDefaults({
+/**
+ * Validates and cleans the request form
+ */
+const RequestValidationResult = validationResult.withDefaults({
     formatter: (error) => {
         return {
             errorMsg: error.msg,
@@ -22,6 +24,9 @@ const myValidationResult = validationResult.withDefaults({
     },
 });
 
+/**
+ * file storage
+ */
 const storage = multer.diskStorage({
     destination: (req: Request, file: any, callback: any) => {
         callback(null, '../server/accounts/VideosTmp');
@@ -65,9 +70,13 @@ let thumbnailUpload = multer({
     },
 ]);
 
-//---------------------------------------------------------------------------------
-//                                  Account Videos                                |
-//---------------------------------------------------------------------------------
+
+/**
+ * Uploads video file to video server
+ * @param {Request} req
+ * @param {Response} res
+ * @return {Response}
+ */
 const UploadVideoFileToServer = async (req: any, res: Response) => {
     logging.info(NAMESPACE, 'Posting Video service called');
 
@@ -231,6 +240,10 @@ const SendVideoCategoryToDb = async (videoToken: string, CategoryId: string) => 
     }
 };
 
+/**
+ * Processes and make all thumbnails 626x325
+ * @param {string} path 
+ */
 const ThumbnailProceesor = async (path: string) =>
     new Promise((resolve, reject) => {
         FFmpeg(path)
@@ -247,6 +260,12 @@ const ThumbnailProceesor = async (path: string) =>
             .run();
     });
 
+/**
+ * Processes every video intto specified size 
+ * @param {string} Title 
+ * @param {string} path 
+ * @param {string} VideoSize 
+ */
 const VideoProceesor = async (Title: string, path: string, VideoSize: string) =>
     new Promise((resolve, reject) => {
         FFmpeg(path)
@@ -267,11 +286,12 @@ const VideoProceesor = async (Title: string, path: string, VideoSize: string) =>
 
 /**
  * get creator video data
- * @param req
- * @param res
+ * @param {Request} req
+ * @param {Response} res
+ * @return {Response}
  */
 const GetCreatorVideoData = async (req: Request, res: Response) => {
-    const errors = myValidationResult(req);
+    const errors = RequestValidationResult(req);
     if (!errors.isEmpty()) {
         errors.array().map((error) => {
             logging.error('GET_CREATOR_VIDEO_DATA_BY_TOKEN_FUNC', error.errorMsg);
@@ -304,6 +324,7 @@ const GetCreatorVideoData = async (req: Request, res: Response) => {
             ShowLikesDislikes: Videodata[0].ShowLikesDislikes === 0 ? false : Videodata[0].ShowLikesDislikes === 1 ? true : undefined,
         });
     } catch (error: any) {
+        logging.error(NAMESPACE, error.message);
         return res.status(500).json({
             message: error.message,
             error: true,
@@ -311,13 +332,15 @@ const GetCreatorVideoData = async (req: Request, res: Response) => {
     }
 };
 
-/*
+
+/**
  * update creator video data
- * @param req
- * @param res
+ * @param {Request} req
+ * @param {Response} res
+ * @return {Response}
  */
 const UpdateCreatorVideoData = async (req: Request, res: Response) => {
-    const errors = myValidationResult(req);
+    const errors = RequestValidationResult(req);
     if (!errors.isEmpty()) {
         errors.array().map((error) => {
             logging.error('GET_CREATOR_VIDEO_DATA_BY_TOKEN_FUNC', error.errorMsg);
@@ -359,7 +382,8 @@ const UpdateCreatorVideoData = async (req: Request, res: Response) => {
             error: false,
         });
     } catch (error: any) {
-        console.log(error.message);
+        logging.error(NAMESPACE, error.message);
+
         return res.status(500).json({
             message: error.message,
             error: true,
@@ -369,11 +393,12 @@ const UpdateCreatorVideoData = async (req: Request, res: Response) => {
 
 /**
  * delete creator video
- * @param req
- * @param res
+ * @param {Request} req
+ * @param {Response} res
+ * @return {Response}
  */
 const DeleteCreatorVideoData = async (req: Request, res: Response) => {
-    const errors = myValidationResult(req);
+    const errors = RequestValidationResult(req);
     if (!errors.isEmpty()) {
         errors.array().map((error) => {
             logging.error('GET_CREATOR_VIDEO_DATA_BY_TOKEN_FUNC', error.errorMsg);
@@ -453,6 +478,12 @@ const DeleteCreatorVideoData = async (req: Request, res: Response) => {
     }
 };
 
+/**
+ * Change Video Thumbnail
+ * @param {Request} req
+ * @param {Response} res
+ * @return {Response}
+ */
 const ChangeVideoThumbnail = async (req: any, res: Response) => {
     thumbnailUpload(req, res, async (err: any) => {
         if (err) {

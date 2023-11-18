@@ -2,6 +2,12 @@ const getTimeStamp = (): string => {
     return new Date().toString();
 };
 
+/**
+ * Logs an info
+ * @param {string} namespace 
+ * @param {string} message 
+ * @param {any} object 
+ */
 const info = (namespace: string, message: string, object?: any) => {
     if (object) {
         console.log(`[${getTimeStamp()}] [INFO] [${namespace}] ${message}`, object);
@@ -10,6 +16,12 @@ const info = (namespace: string, message: string, object?: any) => {
     }
 };
 
+/**
+ * Logs an warn
+ * @param {string} namespace 
+ * @param {string} message 
+ * @param {any} object 
+ */
 const warn = (namespace: string, message: string, object?: any) => {
     if (object) {
         console.warn(`[${getTimeStamp()}] [WARN] [${namespace}] ${message}`, object);
@@ -18,6 +30,12 @@ const warn = (namespace: string, message: string, object?: any) => {
     }
 };
 
+/**
+ * Logs an error
+ * @param {string} namespace 
+ * @param {string} message 
+ * @param {any} object 
+ */
 const error = (namespace: string, message: string, object?: any) => {
     if (object) {
         console.error(`[${getTimeStamp()}] [ERROR] [${namespace}] ${message}`, object);
@@ -26,6 +44,12 @@ const error = (namespace: string, message: string, object?: any) => {
     }
 };
 
+/**
+ * Logs an debug
+ * @param {string} namespace 
+ * @param {string} message 
+ * @param {any} object 
+ */
 const debug = (namespace: string, message: string, object?: any) => {
     if (object) {
         console.debug(`[${getTimeStamp()}] [DEBUG] [${namespace}] ${message}`, object);

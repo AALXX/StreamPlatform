@@ -294,9 +294,9 @@ const StartLive = async (LiveTitle: string, userPrivateToken: string): Promise<b
             return true;
         }
         const StatALiveQueryString = `INSERT INTO streams(StreamTitle, AccountFolowers, UserPublicToken, StreamToken)
-SELECT "${LiveTitle}", u.AccountFolowers, "${UserPublicToken}", "${StreamToken}"
-FROM users AS u
-WHERE u.UserPublicToken = "${UserPublicToken}";`;
+        SELECT "${LiveTitle}", u.AccountFolowers, "${UserPublicToken}", "${StreamToken}"
+        FROM users AS u
+        WHERE u.UserPublicToken = "${UserPublicToken}";`;
 
         const results = await query(connection, StatALiveQueryString);
 
@@ -317,7 +317,7 @@ WHERE u.UserPublicToken = "${UserPublicToken}";`;
  * @param {string} userPrivateToken
  * @return {}
  */
-const EndLive = async (userPrivateToken: string): Promise<boolean> => {
+const EndLive = async (userPrivateToken: string, streamToken: string): Promise<boolean> => {
     const NAMESPACE = 'END_LIVE_FUNCTION';
 
     try {
@@ -326,7 +326,16 @@ const EndLive = async (userPrivateToken: string): Promise<boolean> => {
         if (UserPublicToken == null) {
             return true;
         }
-        const StatALiveQueryString = `DELETE FROM streams WHERE UserPublicToken="${UserPublicToken}"`;
+        const StatALiveQueryString = `
+        START TRANSACTION;
+        
+        SELECT StreamToken FROM streams WHERE UserPublicToken = "${UserPublicToken}";
+        
+        DELETE FROM user_liked_or_disliked_stream_class WHERE StreamToken = (SELECT StreamToken FROM streams WHERE UserPublicToken = "${UserPublicToken}");
+        
+        DELETE FROM streams WHERE UserPublicToken = "${UserPublicToken}";
+        
+        COMMIT;`;
 
         const results = await query(connection, StatALiveQueryString);
 
