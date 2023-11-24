@@ -3,6 +3,7 @@ import { connect, query } from '../../config/mysql';
 import logging from '../../config/logging';
 import utilFunctions from '../../util/utilFunctions';
 import { validationResult } from 'express-validator';
+import { Socket, Server } from 'socket.io';
 
 const NAMESPACE = 'LiveStreamService';
 
@@ -18,9 +19,9 @@ const RequestValidationResult = validationResult.withDefaults({
 });
 
 /**
- * Authentification for recived streamkey 
- * @param {Request} req 
- * @param {Response} res 
+ * Authentification for recived streamkey
+ * @param {Request} req
+ * @param {Response} res
  * @return {Response}
  */
 const LiveStreamAuth = async (req: Request, res: Response) => {
@@ -41,7 +42,7 @@ const LiveStreamAuth = async (req: Request, res: Response) => {
         }
         return res.status(403).send();
     } catch (error: any) {
-        logging.error(NAMESPACE, error.message)
+        logging.error(NAMESPACE, error.message);
         res.status(202).json({
             error: true,
             errmsg: error.message,
@@ -51,8 +52,8 @@ const LiveStreamAuth = async (req: Request, res: Response) => {
 
 /**
  * Get live dashbord data for streamer
- * @param {Request} req 
- * @param {Response} res 
+ * @param {Request} req
+ * @param {Response} res
  * @return {Response}
  */
 const GetLiveAdminData = async (req: Request, res: Response) => {
@@ -101,8 +102,8 @@ const GetLiveAdminData = async (req: Request, res: Response) => {
 
 /**
  * Get Live data for viewr
- * @param {Request} req 
- * @param {Response} res 
+ * @param {Request} req
+ * @param {Response} res
  * @return {Response}
  */
 const GetLiveData = async (req: Request, res: Response) => {
@@ -114,18 +115,14 @@ const GetLiveData = async (req: Request, res: Response) => {
         FROM streams AS s
         LEFT JOIN users AS u ON s.UserPublicToken = u.UserPublicToken
         WHERE s.StreamToken = "${req.params.streamToken}";`;
-        
+
         const results = await query(connection, GetLiveDataQueryString);
         const userPublicToken = await utilFunctions.getUserPublicTokenFromPrivateToken(req.params.userPrivateToken);
-        if (userPublicToken == null) {
-            return res.status(202).json({
-                error: true,
-            });
-        }
+
         const data = JSON.parse(JSON.stringify(results));
         const itFollows = await utilFunctions.userFollowAccountCheck(req.params.userPrivateToken, data[0].UserPublicToken);
         const getUserLikedOrDisliked = await utilFunctions.getUserLikedOrDislikedStream(String(userPublicToken), req.params.streamToken);
-        
+
         if (Object.keys(data[0]).length === 0) {
             return res.status(200).json({
                 error: false,
@@ -138,6 +135,21 @@ const GetLiveData = async (req: Request, res: Response) => {
                 UserLikedOrDislikedLive: { userLiked: false, like_or_dislike: 0 },
                 LiveLikes: 0,
                 LiveDislikes: 0,
+            });
+        }
+
+        if (userPublicToken == null) {
+            return res.status(200).json({
+                error: false,
+                IsLive: true,
+                AccountName: data[0].UserName,
+                AccountFolowers: data[0].AccountFolowers,
+                OwnerToken: data[0].UserPublicToken,
+                LiveTitle: data[0].StreamTitle,
+                LiveLikes: data[0].Likes,
+                LiveDislikes: data[0].Dislikes,
+                UserFollwsAccount: false,
+                UserLikedOrDislikedLive: { userLiked: false, like_or_dislike: 0 },
             });
         }
 
@@ -162,11 +174,10 @@ const GetLiveData = async (req: Request, res: Response) => {
     }
 };
 
-
 /**
  * Starts or stops a stream trigered by admin
- * @param {Request} req 
- * @param {Response} res 
+ * @param {Request} req
+ * @param {Response} res
  * @return {Response}
  */
 const StartStopLive = async (req: Request, res: Response) => {
@@ -217,8 +228,8 @@ const StartStopLive = async (req: Request, res: Response) => {
 
 /**
  * Like the Live by token
- * @param {Request} req 
- * @param {Response} res 
+ * @param {Request} req
+ * @param {Response} res
  * @return {Response}
  */
 const LikeDislikeLiveFunc = async (req: Request, res: Response) => {
@@ -295,10 +306,55 @@ const LikeDislikeLiveFunc = async (req: Request, res: Response) => {
     }
 };
 
+const JoinLive = (LiveToken: string, socket: Socket) => {
+    console.log(LiveToken);
+    socket.join(LiveToken);
+};
+
+const delayBetweenRequests = 2000; // Adjust this to set the delay in milliseconds
+const lastMessageTimes = new Map(); // Map to store last message times per socket ID
+const SendMessage = async (io: Server, socket: Socket, Message: string, LiveToken: string, UserPrivateToken: string) => {
+    const currentTime = Date.now();
+    const socketId = socket.id;
+    const lastMessageTime = lastMessageTimes.get(socketId) || 0;
+    try {
+        if (currentTime - lastMessageTime < delayBetweenRequests) {
+            const timeToWait = delayBetweenRequests - (currentTime - lastMessageTime);
+            console.log(`Too many requests, wait ${timeToWait}ms before sending another message`);
+            return;
+        } else {
+            const connection = await connect();
+
+            const UserPublicToken = await utilFunctions.getUserPublicTokenFromPrivateToken(UserPrivateToken);
+            if (UserPublicToken === null) {
+                return io.to(LiveToken).emit('undefinedToken');
+            }
+            const GetLiveDataQueryString = `
+            SELECT UserName FROM users WHERE UserPublicToken = "${UserPublicToken}";`;
+            const results = await query(connection, GetLiveDataQueryString);
+            const data = JSON.parse(JSON.stringify(results));
+            lastMessageTimes.set(socketId, currentTime);
+
+            io.to(LiveToken).emit('recived-message', { message: Message, ownerName: data[0].UserName, ownerToken: UserPublicToken });
+            return;
+        }
+    } catch (error) {
+        return io.to(LiveToken).emit('Error');
+    }
+};
+
+const LeaveLive = (LiveToken: string, io: Server) => {
+    io.socketsLeave(LiveToken);
+    console.log(`Discenect from: ${LiveToken}`);
+};
+
 export default {
     LiveStreamAuth,
     GetLiveAdminData,
     StartStopLive,
     GetLiveData,
     LikeDislikeLiveFunc,
+    JoinLive,
+    SendMessage,
+    LeaveLive,
 };

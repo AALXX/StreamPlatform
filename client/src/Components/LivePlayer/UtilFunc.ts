@@ -21,8 +21,8 @@ const getDashbordData = async (userToken: string): Promise<IDasbordLiveDataRespo
     }
 }
 
-const getLiveData = async (streamToken: string, AccountPublicToken: string): Promise<ILiveData> => {
-    const livedData = await axios.get(`${process.env.SERVER_BACKEND}/live-manager/get-live-data/${AccountPublicToken}/${streamToken}`)
+const getLiveData = async (useroken: string, StreamToken: string): Promise<ILiveData> => {
+    const livedData = await axios.get(`${process.env.SERVER_BACKEND}/live-manager/get-live-data/${StreamToken}/${useroken}`)
     return {
         error: livedData.data.error,
         IsLive: livedData.data.IsLive,

@@ -31,7 +31,6 @@ const CommentSection = (props: IVideoPlayerProps) => {
     useEffect(() => {
         ;(async () => {
             const getCommentsForVideo = await axios.get(`${process.env.SERVER_BACKEND}/videos-manager/get-video-comments/${props.VideoToken}`)
-            console.log(getCommentsForVideo)
             if (getCommentsForVideo.data.CommentsFound === true) {
                 setHasComments(true)
                 setVideoComments(getCommentsForVideo.data.comments)
@@ -40,7 +39,7 @@ const CommentSection = (props: IVideoPlayerProps) => {
     }, [])
 
     return (
-        <div className="flex flex-col ml-[.5rem] mt-[3rem] h-[84.4vh] w-[22vw] bg-[#2e2e2e]">
+        <div className="flex flex-col ml-[.5rem] mt-[3rem] h-[85.4vh] w-[22vw] bg-[#2e2e2e] ">
             <div className="flex flex-col h-[88%] overflow-y-scroll">
                 {hasComments ? (
                     <>

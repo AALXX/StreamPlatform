@@ -4,7 +4,9 @@ import express, { NextFunction } from 'express';
 //* imports from route folder
 import UserAccountRoutes from '../routes/UserAccount/UserAccountRoutes';
 import LiveStreamRoutes from '../routes/LiveStreamRoutes/LiveStreamRoutes';
+import LiveServices from '../services/LiveStreamServicesManager/LiveStreamServicesManager';
 import VideosRoutes from '../routes/VideosManagerRoutes/VideoRoutesControler';
+import { Server } from 'socket.io';
 
 //* Configs
 import config from '../config/config';
@@ -45,4 +47,22 @@ router.use((req: any, res: any, next: NextFunction) => {
 const httpServer = http.createServer(router);
 httpServer.listen(config.server.port, () => {
     logging.info(NAMESPACE, `Api is runing on: ${config.server.hostname}:${config.server.port}`);
+});
+
+const io = new Server(httpServer, {
+    cors: {
+        origin: ['http://localhost:3000'],
+    },
+});
+
+io.on('connection', (socket) => {
+    socket.on('join-live', ({ LiveToken }) => {
+        LiveServices.JoinLive(LiveToken, socket);
+    });
+
+    socket.on('send-message', async ({ message, LiveToken, UserPrivateToken }) => {
+        return LiveServices.SendMessage(io, socket, message, LiveToken, UserPrivateToken);
+    });
+
+    socket.on('disconnect', () => {});
 });
