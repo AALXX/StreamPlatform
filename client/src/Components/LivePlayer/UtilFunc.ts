@@ -9,9 +9,10 @@ import { IDasbordLiveDataResponse, ILiveData } from './ILivePlayer'
 
 const getDashbordData = async (userToken: string): Promise<IDasbordLiveDataResponse> => {
     const dashbordData = await axios.get(`${process.env.SERVER_BACKEND}/live-manager/get-live-admin-data/${userToken}`)
-    console.log(dashbordData.data)
+
     return {
         error: dashbordData.data.error,
+        LiveToken: dashbordData.data.LiveToken,
         IsLive: dashbordData.data.IsLive,
         AccountName: dashbordData.data.AccountName,
         AccountFolowers: dashbordData.data.AccountFolowers,

@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 import { validationResult } from 'express-validator';
 import UtilFunc from '../../util/utilFunctions';
-import { connect, query } from '../../config/mysql';
+import { createPool, query } from '../../config/mysql';
 import logging from '../../config/logging';
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcrypt';
@@ -40,10 +40,10 @@ const GetUserAccountData = async (req: Request, res: Response) => {
     }
 
     try {
-        const connection = await connect();
+        const pool = createPool();
 
         const GetUserDataQueryString = `SELECT UserName, UserDescription, AccountFolowers, UserEmail FROM users WHERE UserPrivateToken='${req.params.privateToken}';`;
-        const data = await query(connection, GetUserDataQueryString);
+        const data = await query(pool, GetUserDataQueryString);
 
         let accData = JSON.parse(JSON.stringify(data));
 
@@ -85,10 +85,10 @@ const GetCreatorAccountData = async (req: Request, res: Response) => {
     }
 
     try {
-        const connection = await connect();
+        const pool = createPool();
 
         const GetUserDataQueryString = `SELECT UserName, UserDescription, AccountFolowers, userVisibility FROM users WHERE UserPublicToken='${req.params.accountToken}';`;
-        const data = await query(connection, GetUserDataQueryString);
+        const data = await query(pool, GetUserDataQueryString);
 
         let accData = JSON.parse(JSON.stringify(data));
 
@@ -145,9 +145,9 @@ const GetAccountVideos = async (req: Request, res: Response) => {
             });
         }
 
-        const connection = await connect();
+        const pool = createPool();
         const GetAccountVideosSQL = `SELECT * FROM videos WHERE OwnerToken="${ownerToken}"`;
-        const accountVideosDB = await query(connection, GetAccountVideosSQL);
+        const accountVideosDB = await query(pool, GetAccountVideosSQL);
 
         let accountVideos = JSON.parse(JSON.stringify(accountVideosDB));
         res.status(202).json({
@@ -182,9 +182,9 @@ const GetCreatorVideos = async (req: Request, res: Response) => {
     }
 
     try {
-        const connection = await connect();
+        const pool = createPool();
         const GetAccountVideosSQL = `SELECT VideoTitle, VideoDescription, Likes, Dislikes, PublishDate, VideoToken, OwnerToken FROM videos WHERE OwnerToken="${req.params.ownerToken}" AND Visibility="public"`;
-        const accountVideosDB = await query(connection, GetAccountVideosSQL);
+        const accountVideosDB = await query(pool, GetAccountVideosSQL);
 
         let accountVideos = JSON.parse(JSON.stringify(accountVideosDB));
 
@@ -225,21 +225,21 @@ const FollowAccount = async (req: Request, res: Response) => {
     }
 
     const itFollows = await UtilFunc.userFollowAccountCheck(req.body.userToken, req.body.accountToken);
-    const connection = await connect();
+    const pool = createPool();
     try {
         if (itFollows) {
             if (req.body.userToken !== undefined) {
                 const updateunfollwCountQueryString = `DELETE FROM user_follw_account_class WHERE userToken="${req.body.userToken}" AND accountToken="${
                     req.body.accountToken
                 }"; UPDATE users SET AccountFolowers = AccountFolowers-${1} WHERE UserPublicToken="${req.body.accountToken}";`;
-                await query(connection, updateunfollwCountQueryString);
+                await query(pool, updateunfollwCountQueryString);
             }
         } else {
             if (req.body.userToken !== undefined) {
                 const updatefollwCountQueryString = `INSERT INTO user_follw_account_class (userToken, accountToken) VALUES ('${req.body.userToken}','${
                     req.body.accountToken
                 }'); UPDATE users SET AccountFolowers = AccountFolowers+${1} WHERE UserPublicToken="${req.body.accountToken}";`;
-                await query(connection, updatefollwCountQueryString);
+                await query(pool, updatefollwCountQueryString);
             }
         }
 
@@ -274,10 +274,10 @@ const ChangeUserData = async (req: Request, res: Response) => {
     }
 
     try {
-        const connection = await connect();
+        const pool = createPool();
         const changeUserDataSQL = `UPDATE users SET UserName='${req.body.userName}',UserDescription='${req.body.userDescription}',UserEmail='${req.body.userEmail}', 
         userVisibility='${req.body.userVisibility}' WHERE UserPrivateToken='${req.body.userToken}';`;
-        const accountVideosDB = await query(connection, changeUserDataSQL);
+        const accountVideosDB = await query(pool, changeUserDataSQL);
 
         let accountVideos = JSON.parse(JSON.stringify(accountVideosDB));
 
@@ -416,8 +416,8 @@ const RegisterUser = async (req: Request, res: Response) => {
         ('${req.body.userName}', '${req.body.userEmail}', '${hashedpwd}','${userPrivateToken}','${userPublicToken}');`;
 
     try {
-        const connection = await connect();
-        await query(connection, InsertUserQueryString);
+        const pool = createPool();
+        await query(pool, InsertUserQueryString);
         fs.mkdir(`../server/accounts/${userPublicToken}/`, (err) => {
             if (err) {
                 return res.status(200).json({
@@ -458,10 +458,10 @@ const LoginUser = async (req: Request, res: Response) => {
     }
 
     try {
-        const connection = await connect();
+        const pool = createPool();
         const LoginQueryString = `SELECT UserPrivateToken, UserPublicToken, UserPwd FROM users WHERE UserEmail='${req.body.userEmail}';`;
 
-        const accountVideosDB = await query(connection, LoginQueryString);
+        const accountVideosDB = await query(pool, LoginQueryString);
 
         let data = JSON.parse(JSON.stringify(accountVideosDB));
         if (Object.keys(data).length === 0) {
@@ -517,9 +517,9 @@ const SendPwdLinkToEmail = async (req: Request, res: Response) => {
     }
 
     try {
-        const connection = await connect();
+        const pool = createPool();
         const getUserEmailSQl = `SELECT UserEmail FROM users WHERE UserPrivateToken='${req.body.userToken}';`;
-        const userEmailDB = await query(connection, getUserEmailSQl);
+        const userEmailDB = await query(pool, getUserEmailSQl);
 
         let userEmail = JSON.parse(JSON.stringify(userEmailDB));
 
@@ -613,9 +613,9 @@ const ChangeUserPasswod = async (req: Request, res: Response) => {
     }
 
     try {
-        const connection = await connect();
+        const pool = createPool();
         const getUserPassword = `SELECT UserPwd FROM users WHERE UserEmail='${req.body.userEmail}';`;
-        const DBDataRaw = await query(connection, getUserPassword);
+        const DBDataRaw = await query(pool, getUserPassword);
 
         let DbData = JSON.parse(JSON.stringify(DBDataRaw));
 
@@ -631,7 +631,7 @@ const ChangeUserPasswod = async (req: Request, res: Response) => {
                 }
 
                 const changeUserPassword = `UPDATE users SET UserPwd="${hashedPwd}" WHERE UserEmail='${req.body.userEmail}';`;
-                const DBDataRaw = await query(connection, changeUserPassword);
+                const DBDataRaw = await query(pool, changeUserPassword);
                 let DbData = JSON.parse(JSON.stringify(DBDataRaw));
                 console.log(DbData.affectedRows);
                 if (DbData.affectedRows === 0) {

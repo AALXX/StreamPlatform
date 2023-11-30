@@ -73,7 +73,7 @@ const AccountProfile = () => {
             break
         case 'Videos':
             component = (
-                <div className="grid xl:grid-cols-6 lg:grid-cols-5 gap-4">
+                <div className="grid xl:grid-cols-6 lg:grid-cols-5 gap-4 ">
                     {hasVideos ? (
                         <>
                             {videosData.map((video: IVideoTemplateProps, index: number) => (

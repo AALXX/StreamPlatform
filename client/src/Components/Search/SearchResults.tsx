@@ -14,6 +14,7 @@ const SearchResults = ({ videoToken }: { videoToken: string }) => {
             }
         })()
     }, [])
+    
     return (
         <>
             {Object.keys(videosList).length === 0 ? (

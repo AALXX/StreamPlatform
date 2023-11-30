@@ -1,5 +1,8 @@
+import { Dispatch, SetStateAction } from "react"
+
 interface IDasbordLiveDataResponse {
     error: boolean
+    LiveToken: string
     LiveTitle: string
     IsLive: boolean
     AccountName: string
@@ -8,8 +11,12 @@ interface IDasbordLiveDataResponse {
     LiveDislikes: number
 }
 
+/**
+ * Data to display
+ */
 interface IDasbordLiveData {
     error: boolean
+    LiveToken: string
     AccountName: string
     AccountFolowers: number
     LiveLikes: number

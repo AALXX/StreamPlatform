@@ -1,8 +1,14 @@
 import Link from 'next/link'
 import React from 'react'
-import { ICommentProps } from '../ILiveChat'
 
-const Message = (props: ICommentProps) => {
+interface ICommentProps {
+    ownerToken: string
+    message: string
+    ownerName: string
+    isStreamer: boolean
+}
+
+const MessageAdmin = (props: ICommentProps) => {
     return (
         <div className="flex flex-col bg-[#494949] h-[8.5rem] w-[95%] mt-[1rem] self-center">
             <div className="flex  w-full h-[4rem]">
@@ -20,4 +26,4 @@ const Message = (props: ICommentProps) => {
     )
 }
 
-export default Message
+export default MessageAdmin

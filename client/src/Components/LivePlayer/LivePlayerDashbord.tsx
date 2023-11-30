@@ -1,20 +1,23 @@
-import React, { useEffect, useRef, useState } from 'react'
+import React, { Suspense, useEffect, useRef, useState } from 'react'
 import Hls from 'hls.js'
 import Link from 'next/link'
 import { IDasbordLiveData, ILivePlayerProps } from './ILivePlayer'
 import { startStopLive, getDashbordData, playOrPauseVideo } from './UtilFunc'
 import { getCookie } from 'cookies-next'
 import LivePlayerOverlay from './LivePlayerOverlay'
+import LiveChatAdmin from '@/Components/LivePlayer/LiveChatAdmin/LiveChatAdmin'
 
 const LivePlayerDashbord = (props: ILivePlayerProps) => {
     const VideoRef = useRef<HTMLVideoElement>(null)
     const [showOverlay, setShowOverlay] = useState(false)
+    const userToken: string = getCookie('userToken') as string
 
     const hls = useRef<Hls | null>(null)
     const [isOnline, setIsOline] = useState<boolean>(true)
 
     const [LiveData, setLiveData] = useState<IDasbordLiveData>({
         error: false,
+        LiveToken: '',
         AccountName: '',
         AccountFolowers: 0,
         LiveLikes: 0,
@@ -80,6 +83,7 @@ const LivePlayerDashbord = (props: ILivePlayerProps) => {
 
         ;(async () => {
             const dashData = await getDashbordData(getCookie('userToken') as string)
+            console.log(dashData)
             setLiveData(dashData)
             setLiveTitle(dashData.LiveTitle as string)
             setIsLive(dashData.IsLive)
@@ -95,105 +99,110 @@ const LivePlayerDashbord = (props: ILivePlayerProps) => {
     }, [])
 
     return (
-        <div className="flex flex-col mt-[3rem] ml-[6rem] h-[100vh]">
-            {/*  VideoPlayer Border */}
-            <div className="w-[66.8vw] h-[73.8vh] ">
-                {showOverlay ? (
-                    <LivePlayerOverlay
-                        Progress={Progress}
-                        Playing={playing}
-                        CurrentMinutes={CurrentMinutes}
-                        CurrentSeconds={CurrentSeconds}
-                        DurationMinutes={DurationMinutes}
-                        DurationSeconds={DurationSeconds}
-                        Volume={Volume}
-                        setVolume={setVolume}
-                        VideoRef={VideoRef}
-                        playOrPauseVideo={playOrPauseVideo(VideoRef)}
-                        setPlaying={setPlaying}
-                        setShowOverlay={setShowOverlay}
-                    />
-                ) : (
-                    <div></div>
-                )}
-                {isOnline == true ? (
-                    <video
-                        onClick={() => {
-                            setPlaying(playOrPauseVideo(VideoRef))
-                        }}
-                        autoPlay
-                        ref={VideoRef}
-                        className="w-full h-full"
-                        onMouseEnter={() => {
-                            setShowOverlay(true)
-                        }}
-                        onMouseLeave={() => {
-                            setShowOverlay(false)
-                        }}
-                    >
-                        <p>Your browser does not support the HTML5 Video element.</p>
-                    </video>
-                ) : (
-                    <div className="w-full h-full border">
-                        <h1>User is offline</h1>
-                    </div>
-                )}
-                <div className="flex mt-[.5vh] h-[11vh] w-[66.8vw] bg-[#292929]">
-                    <Link className="ml-4 self-center" href={`/user?id=${getCookie('userPublicToken') as string}`}>
-                        <img className="z-10 rounded-full" src={`${process.env.FILE_SERVER}/${getCookie('userPublicToken') as string}/Main_icon.png`} width={50} height={50} alt="Picture of the author" />
-                    </Link>
-                    <div className="flex flex-col ml-4 self-center ">
-                        <input
-                            className=" text-[#ffffff]  bg-[#3b3b3b] h-[3vh] border-none w-full placeholder:text-white indent-3"
-                            value={liveTitle}
-                            onChange={e => {
-                                setLiveTitle(e.target.value)
-                            }}
+        <div className="flex h-[100vh]">
+            <div className="flex flex-col mt-[3rem] ml-[6rem] h-[100vh]">
+                {/*  VideoPlayer Border */}
+                <div className="w-[66.8vw] h-[73.8vh] ">
+                    {showOverlay ? (
+                        <LivePlayerOverlay
+                            Progress={Progress}
+                            Playing={playing}
+                            CurrentMinutes={CurrentMinutes}
+                            CurrentSeconds={CurrentSeconds}
+                            DurationMinutes={DurationMinutes}
+                            DurationSeconds={DurationSeconds}
+                            Volume={Volume}
+                            setVolume={setVolume}
+                            VideoRef={VideoRef}
+                            playOrPauseVideo={playOrPauseVideo(VideoRef)}
+                            setPlaying={setPlaying}
+                            setShowOverlay={setShowOverlay}
                         />
-                        <hr className="w-full" />
-                        <div className="flex  ">
-                            <div className="flex flex-col">
-                                <h1 className="text-white text-base">{LiveData.AccountName}</h1>
-                                <h1 className="text-white text-xs">{LiveData.AccountFolowers} followers</h1>
+                    ) : (
+                        <div></div>
+                    )}
+                    {isOnline == true ? (
+                        <video
+                            onClick={() => {
+                                setPlaying(playOrPauseVideo(VideoRef))
+                            }}
+                            autoPlay
+                            ref={VideoRef}
+                            className="w-full h-full"
+                            onMouseEnter={() => {
+                                setShowOverlay(true)
+                            }}
+                            onMouseLeave={() => {
+                                setShowOverlay(false)
+                            }}
+                        >
+                            <p>Your browser does not support the HTML5 Video element.</p>
+                        </video>
+                    ) : (
+                        <div className="w-full h-full border">
+                            <h1>User is offline</h1>
+                        </div>
+                    )}
+                    <div className="flex mt-[.5vh] h-[11vh] w-[66.8vw] bg-[#292929]">
+                        <Link className="ml-4 self-center" href={`/user?id=${getCookie('userPublicToken') as string}`}>
+                            <img className="z-10 rounded-full" src={`${process.env.FILE_SERVER}/${getCookie('userPublicToken') as string}/Main_icon.png`} width={50} height={50} alt="Picture of the author" />
+                        </Link>
+                        <div className="flex flex-col ml-4 self-center ">
+                            <input
+                                className=" text-[#ffffff]  bg-[#3b3b3b] h-[3vh] border-none w-full placeholder:text-white indent-3"
+                                value={liveTitle}
+                                onChange={e => {
+                                    setLiveTitle(e.target.value)
+                                }}
+                            />
+                            <hr className="w-full" />
+                            <div className="flex  ">
+                                <div className="flex flex-col">
+                                    <h1 className="text-white text-base">{LiveData.AccountName}</h1>
+                                    <h1 className="text-white text-xs">{LiveData.AccountFolowers} followers</h1>
+                                </div>
                             </div>
                         </div>
+                        <div className="flex ml-auto mr-[2vw]">
+                            <img src="/assets/PlayerIcons/Like_icon.svg" className="cursor-pointer w-[1.6rem] ml-auto mr-[.5rem]" alt="not muted image" />
+
+                            <h1 className="text-white self-center mr-[1.5rem]">{liveLikes}</h1>
+
+                            <img src="/assets/PlayerIcons/DisLike_icon.svg" className="cursor-pointer w-[1.6rem] ml-auto mr-[.5rem]" alt="not muted image" />
+
+                            <h1 className="text-white self-center mr-[4rem]">{liveDisLikes}</h1>
+                        </div>
+                        {isLive ? (
+                            <button
+                                className="text-[#e46a6a] mr-4  bg-[#3d3d3d] h-[4rem] self-center"
+                                onClick={async () => {
+                                    const error = await startStopLive(liveTitle, getCookie('userToken') as string, LiveData.AccountFolowers)
+                                    if (!error) {
+                                        setIsLive(!isLive)
+                                    }
+                                }}
+                            >
+                                END LIVE
+                            </button>
+                        ) : (
+                            <button
+                                className="text-[#e46a6a] mr-4  bg-[#3d3d3d] h-[4rem] self-center"
+                                onClick={async () => {
+                                    const error = await startStopLive(liveTitle, getCookie('userToken') as string, LiveData.AccountFolowers)
+                                    if (!error) {
+                                        setIsLive(!isLive)
+                                    }
+                                }}
+                            >
+                                GO LIVE
+                            </button>
+                        )}
                     </div>
-                    <div className="flex ml-auto mr-[2vw]">
-                        <img src="/assets/PlayerIcons/Like_icon.svg" className="cursor-pointer w-[1.6rem] ml-auto mr-[.5rem]" alt="not muted image" />
-
-                        <h1 className="text-white self-center mr-[1.5rem]">{liveLikes}</h1>
-
-                        <img src="/assets/PlayerIcons/DisLike_icon.svg" className="cursor-pointer w-[1.6rem] ml-auto mr-[.5rem]" alt="not muted image" />
-
-                        <h1 className="text-white self-center mr-[4rem]">{liveDisLikes}</h1>
-                    </div>
-                    {isLive ? (
-                        <button
-                            className="text-[#e46a6a] mr-4  bg-[#3d3d3d] h-[4rem] self-center"
-                            onClick={async () => {
-                                const error = await startStopLive(liveTitle, getCookie('userToken') as string, LiveData.AccountFolowers)
-                                if (!error) {
-                                    setIsLive(!isLive)
-                                }
-                            }}
-                        >
-                            END LIVE
-                        </button>
-                    ) : (
-                        <button
-                            className="text-[#e46a6a] mr-4  bg-[#3d3d3d] h-[4rem] self-center"
-                            onClick={async () => {
-                                const error = await startStopLive(liveTitle, getCookie('userToken') as string, LiveData.AccountFolowers)
-                                if (!error) {
-                                    setIsLive(!isLive)
-                                }
-                            }}
-                        >
-                            GO LIVE
-                        </button>
-                    )}
                 </div>
             </div>
+            <Suspense fallback={<div>Loading...</div>}>
+                <LiveChatAdmin UserToken={userToken} LiveToken={LiveData.LiveToken} />
+            </Suspense>
         </div>
     )
 }

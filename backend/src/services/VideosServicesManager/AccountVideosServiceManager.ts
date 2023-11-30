@@ -5,7 +5,7 @@ import fs from 'fs';
 import FFmpeg from 'fluent-ffmpeg';
 
 import logging from '../../config/logging';
-import { connect, query } from '../../config/mysql';
+import { createPool, query } from '../../config/mysql';
 import UtilFunc from '../../util/utilFunctions';
 import axios from 'axios';
 import utilFunctions from '../../util/utilFunctions';
@@ -70,7 +70,6 @@ let thumbnailUpload = multer({
     },
 ]);
 
-
 /**
  * Uploads video file to video server
  * @param {Request} req
@@ -117,64 +116,62 @@ const UploadVideoFileToServer = async (req: any, res: Response) => {
                             error: true,
                         });
                     }
+
                     //*Save video data to db
-                    SendVideoDataToDb(userPublicToken as string, VideoToken, req.body.VideoTitle, req.body.VideoVisibility, async (err: boolean) => {
-                        if (err) {
-                            return res.status(200).json({
-                                error: true,
-                            });
-                        }
-
-                        await ThumbnailProceesor(`../server/accounts/${userPublicToken}/${VideoToken}/Thumbnail_image.jpg`);
-
-                        const file = fs.readFileSync(`../server/accounts/${userPublicToken}/${VideoToken}/Source.mp4`);
-
-                        // Encode the binary data as Base64
-                        const base64Video = Buffer.from(file).toString('base64');
-
-                        const formData = new FormData();
-                        formData.append('file', base64Video);
-                        formData.append('video_name', `${req.body.VideoTitle}.mp4`);
-
-                        const video_category_server_resp = await axios.post(`http://localhost:6200/api/get-video-category`, formData, {
-                            headers: {
-                                'Content-Type': 'multipart/form-data',
-                            },
-                        });
-
-                        if (video_category_server_resp.data.error == true) {
-                            return res.status(200).json({
-                                error: true,
-                            });
-                        }
-
-                        const vide_index_server_resp = await axios.post(`http://localhost:7300/api/index-video`, {
-                            VideoTitle: req.body.VideoTitle,
-                            VideoToken: VideoToken,
-                            VideoVisibility: req.body.VideoVisibility,
-                            OwnerPrivateToken: req.body.UserPrivateToken,
-                        });
-
-                        if (vide_index_server_resp.data.error == true) {
-                            return res.status(200).json({
-                                error: true,
-                            });
-                        }
-
-                        if ((await SendVideoCategoryToDb(VideoToken, video_category_server_resp.data.video_type)) == false) {
-                            return res.status(200).json({
-                                error: true,
-                            });
-                        }
-
-                        // * Creates a 720p and 480p variant of the video
-                        // await VideoProceesor(`${req.body.VideoTitle}`, `../server/accounts/${req.body.UserPrivateToken}/${VideoToken}/${req.body.VideoTitle}_Source.mp4`, '1280x720').then(async () => {
-                        //     await VideoProceesor(`${req.body.VideoTitle}`, `../videos/${VideoToken}/${req.body.VideoTitle}_Source.mp4`, '480x360').then(() => {});
-                        // });
-
+                    const success = await SendVideoDataToDb(userPublicToken as string, VideoToken, req.body.VideoTitle, req.body.VideoVisibility);
+                    if (success == false) {
                         return res.status(200).json({
-                            error: false,
+                            error: true,
                         });
+                    }
+
+                    await ThumbnailProceesor(`../server/accounts/${userPublicToken}/${VideoToken}/Thumbnail_image.jpg`);
+                    const file = fs.readFileSync(`../server/accounts/${userPublicToken}/${VideoToken}/Source.mp4`);
+
+                    // Encode the binary data as Base64
+                    const base64Video = Buffer.from(file).toString('base64');
+
+                    const formData = new FormData();
+                    formData.append('file', base64Video);
+                    formData.append('video_name', `${req.body.VideoTitle}.mp4`);
+
+                    const video_category_server_resp = await axios.post(`http://localhost:6200/api/get-video-category`, formData, {
+                        headers: {
+                            'Content-Type': 'multipart/form-data',
+                        },
+                    });
+                    if (video_category_server_resp.data.error == true) {
+                        return res.status(200).json({
+                            error: true,
+                        });
+                    }
+
+                    const vide_index_server_resp = await axios.post(`http://localhost:7300/api/index-video`, {
+                        VideoTitle: req.body.VideoTitle,
+                        VideoToken: VideoToken,
+                        VideoVisibility: req.body.VideoVisibility,
+                        OwnerPrivateToken: req.body.UserPrivateToken,
+                    });
+
+                    if (vide_index_server_resp.data.error == true) {
+                        return res.status(200).json({
+                            error: true,
+                        });
+                    }
+
+                    if ((await SendVideoCategoryToDb(VideoToken, video_category_server_resp.data.video_type)) == false) {
+                        return res.status(200).json({
+                            error: true,
+                        });
+                    }
+
+                    // * Creates a 720p and 480p variant of the video
+                    // await VideoProceesor(`${req.body.VideoTitle}`, `../server/accounts/${req.body.UserPrivateToken}/${VideoToken}/${req.body.VideoTitle}_Source.mp4`, '1280x720').then(async () => {
+                    //     await VideoProceesor(`${req.body.VideoTitle}`, `../videos/${VideoToken}/${req.body.VideoTitle}_Source.mp4`, '480x360').then(() => {});
+                    // });
+
+                    return res.status(200).json({
+                        error: false,
                     });
                 });
             });
@@ -190,27 +187,26 @@ const UploadVideoFileToServer = async (req: any, res: Response) => {
  * @param {string} VideoVisibility
  * @param {any} callback
  */
-const SendVideoDataToDb = (userPublicToken: string, videoToken: string, VideoTitle: string, VideoVisibility: string, callback: any) => {
+const SendVideoDataToDb = async (userPublicToken: string, videoToken: string, VideoTitle: string, VideoVisibility: string) => {
     let today = new Date().toISOString().slice(0, 10);
-    const SendVidsDatasSqlQuery = `INSERT INTO videos (VideoTitle, Likes, PublishDate, VideoToken, OwnerToken, Visibility)
-  VALUES("${VideoTitle}", "0", "${today}","${videoToken}", "${userPublicToken}", "${VideoVisibility}")`;
 
-    connect()
-        .then((connection) => {
-            query(connection, SendVidsDatasSqlQuery)
-                .then(() => {
-                    return callback(false);
-                })
-                .catch((error) => {
-                    logging.error(NAMESPACE, error.message, error);
-                })
-                .finally(() => {
-                    connection.end();
-                });
-        })
-        .catch((error) => {
-            logging.error(NAMESPACE, error.message, error);
-        });
+    try {
+        const pool = createPool();
+
+        const SendVidsDatasSqlQuery = `INSERT INTO videos (VideoTitle, Likes, PublishDate, VideoToken, OwnerToken, Visibility)
+        VALUES("${VideoTitle}", "0", "${today}","${videoToken}", "${userPublicToken}", "${VideoVisibility}")`;
+        const data = await query(pool, SendVidsDatasSqlQuery);
+
+        let vidData = JSON.parse(JSON.stringify(data));
+
+        if (Object.keys(vidData).length === 0) {
+            return false;
+        }
+
+        return true;
+    } catch (error: any) {
+        return false;
+    }
 };
 
 /**
@@ -223,10 +219,10 @@ const SendVideoDataToDb = (userPublicToken: string, videoToken: string, VideoTit
  */
 const SendVideoCategoryToDb = async (videoToken: string, CategoryId: string) => {
     try {
-        const connection = await connect();
+        const pool = createPool();
 
         const sendVideoCategoryToDbSQl = `INSERT INTO videos_categoriy_alloc (videoToken, CategoryId) VALUES ('${videoToken}','${CategoryId}')`;
-        const data = await query(connection, sendVideoCategoryToDbSQl);
+        const data = await query(pool, sendVideoCategoryToDbSQl);
 
         let accData = JSON.parse(JSON.stringify(data));
 
@@ -242,7 +238,7 @@ const SendVideoCategoryToDb = async (videoToken: string, CategoryId: string) => 
 
 /**
  * Processes and make all thumbnails 626x325
- * @param {string} path 
+ * @param {string} path
  */
 const ThumbnailProceesor = async (path: string) =>
     new Promise((resolve, reject) => {
@@ -261,10 +257,10 @@ const ThumbnailProceesor = async (path: string) =>
     });
 
 /**
- * Processes every video intto specified size 
- * @param {string} Title 
- * @param {string} path 
- * @param {string} VideoSize 
+ * Processes every video intto specified size
+ * @param {string} Title
+ * @param {string} path
+ * @param {string} VideoSize
  */
 const VideoProceesor = async (Title: string, path: string, VideoSize: string) =>
     new Promise((resolve, reject) => {
@@ -302,8 +298,8 @@ const GetCreatorVideoData = async (req: Request, res: Response) => {
 
     const GetVideoDataQueryString = `SELECT VideoTitle, OwnerToken, Likes, Dislikes, PublishDate, Visibility, ShowComments, ShowLikesDislikes FROM videos WHERE VideoToken="${req.params.VideoToken}"`;
     try {
-        const connection = await connect();
-        const getVideoResponse = await query(connection, GetVideoDataQueryString);
+        const pool = createPool();
+        const getVideoResponse = await query(pool, GetVideoDataQueryString);
 
         let Videodata = JSON.parse(JSON.stringify(getVideoResponse));
         if (Object.keys(Videodata).length === 0) {
@@ -332,7 +328,6 @@ const GetCreatorVideoData = async (req: Request, res: Response) => {
     }
 };
 
-
 /**
  * update creator video data
  * @param {Request} req
@@ -354,9 +349,9 @@ const UpdateCreatorVideoData = async (req: Request, res: Response) => {
         const showCommentsConversion = req.body.ShowComments === true ? 1 : 0;
         const showLikesDislikesConversion = req.body.ShowLikesDislikes === true ? 1 : 0;
 
-        const connection = await connect();
+        const pool = createPool();
         const GetVideoDataQueryString = `UPDATE videos SET VideoTitle="${req.body.VideoTitle}", Visibility="${req.body.VideoVisibility}", ShowComments="${showCommentsConversion}", ShowLikesDislikes="${showLikesDislikesConversion}" WHERE VideoToken="${req.body.VideoToken}" AND  OwnerToken="${UserPublicToken}";`;
-        const getVideoResponse = await query(connection, GetVideoDataQueryString);
+        const getVideoResponse = await query(pool, GetVideoDataQueryString);
 
         let Videodata = JSON.parse(JSON.stringify(getVideoResponse));
         const video_index_server_resp = await axios.post(`http://localhost:7300/api/update-indexed-video`, {
@@ -408,7 +403,7 @@ const DeleteCreatorVideoData = async (req: Request, res: Response) => {
     }
 
     try {
-        const connection = await connect();
+        const pool = createPool();
         let ownerToken = await utilFunctions.getUserPublicTokenFromPrivateToken(req.body.UserPrivateToken);
         if (ownerToken == null) {
             return res.status(200).json({
@@ -432,7 +427,7 @@ const DeleteCreatorVideoData = async (req: Request, res: Response) => {
 
         const GetVideoDataQueryString = `DELETE FROM videos WHERE VideoToken="${req.body.VideoToken}" AND OwnerToken="${ownerToken}"`;
 
-        const getVideoResponse = await query(connection, GetVideoDataQueryString);
+        const getVideoResponse = await query(pool, GetVideoDataQueryString);
 
         let resp = JSON.parse(JSON.stringify(getVideoResponse));
         if (Object.keys(resp).length === 0) {
@@ -457,7 +452,6 @@ const DeleteCreatorVideoData = async (req: Request, res: Response) => {
                     });
                 }
             } else {
-                console.log('CUM');
                 // utilFunctions.RemoveDirectory(`../server/accounts/${userPublicToken}/${req.body.VideoToken}/`);
                 return res.status(202).json({
                     error: false,

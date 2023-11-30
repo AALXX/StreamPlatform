@@ -1,8 +1,7 @@
-'use client'
 import React, { useState } from 'react'
 import Image from 'next/image'
 
-import Message from './Message'
+import Comment from './MessageAdmin'
 import { useEffect } from 'react'
 import { io, Socket } from 'socket.io-client'
 import { getCookie } from 'cookies-next'
@@ -10,7 +9,7 @@ import { isLoggedIn } from '@/security/Accounts'
 import Link from 'next/link'
 import { ICommentProps, ILiveChatProps } from '../ILiveChat'
 
-const LiveChat = (props: ILiveChatProps) => {
+const LiveChatAdmin = (props: ILiveChatProps) => {
     const [commentInput, setCommentInput] = useState<string>('')
     const [liveMessages, setliveMessages] = useState<Array<ICommentProps>>([])
     const [socket, setSocket] = useState<Socket | null>(null)
@@ -18,6 +17,7 @@ const LiveChat = (props: ILiveChatProps) => {
     const [userLoggedIn, setUserLoggedIn] = useState<boolean>(false)
 
     useEffect(() => {
+        console.log(props.LiveToken)
         const loginAync = async () => {
             const usrLoggedIn = await isLoggedIn()
             setUserLoggedIn(usrLoggedIn)
@@ -31,6 +31,7 @@ const LiveChat = (props: ILiveChatProps) => {
         newSocket.emit('join-live', { LiveToken: props.LiveToken })
 
         newSocket.on('recived-message', ({ message, ownerName, ownerToken, isStreamer }) => {
+            console.log(message)
             setliveMessages(liveMessages => [...liveMessages, { ownerToken: ownerToken, message: message, ownerName: ownerName, isStreamer: isStreamer }])
         })
 
@@ -38,7 +39,7 @@ const LiveChat = (props: ILiveChatProps) => {
         return () => {
             newSocket.disconnect()
         }
-    }, [])
+    }, [props.LiveToken])
 
     const postMessage = (e: any) => {
         e.preventDefault()
@@ -51,7 +52,7 @@ const LiveChat = (props: ILiveChatProps) => {
                 {Object.keys(liveMessages).length > 0 ? (
                     <>
                         {liveMessages.map((comment: ICommentProps, index: number) => (
-                            <Message key={index} ownerToken={comment.ownerToken} message={comment.message} ownerName={comment.ownerName} isStreamer={comment.isStreamer}/>
+                            <Comment key={index} ownerToken={comment.ownerToken} message={comment.message} ownerName={comment.ownerName} isStreamer={comment.isStreamer} />
                         ))}
                     </>
                 ) : (
@@ -77,4 +78,4 @@ const LiveChat = (props: ILiveChatProps) => {
     )
 }
 
-export default LiveChat
+export default LiveChatAdmin

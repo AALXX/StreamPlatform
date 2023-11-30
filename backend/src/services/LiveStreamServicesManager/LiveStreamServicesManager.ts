@@ -1,9 +1,10 @@
 import { Request, Response } from 'express';
-import { connect, query } from '../../config/mysql';
+import { createPool, query } from '../../config/mysql';
 import logging from '../../config/logging';
 import utilFunctions from '../../util/utilFunctions';
 import { validationResult } from 'express-validator';
 import { Socket, Server } from 'socket.io';
+import { SCYconnect, SCYquery } from '../../config/scylla';
 
 const NAMESPACE = 'LiveStreamService';
 
@@ -26,10 +27,10 @@ const RequestValidationResult = validationResult.withDefaults({
  */
 const LiveStreamAuth = async (req: Request, res: Response) => {
     try {
-        const connection = await connect();
+        const pool = createPool();
         const GetUserDataQueryString = `SELECT StreamKey FROM users WHERE UserPublicToken="${req.body.name}";`;
 
-        const results = await query(connection, GetUserDataQueryString);
+        const results = await query(pool, GetUserDataQueryString);
 
         const data = JSON.parse(JSON.stringify(results));
 
@@ -59,20 +60,21 @@ const LiveStreamAuth = async (req: Request, res: Response) => {
 const GetLiveAdminData = async (req: Request, res: Response) => {
     try {
         const UserPublicToken = await utilFunctions.getUserPublicTokenFromPrivateToken(req.params.userPrivateToken);
-        const connection = await connect();
+        const pool = createPool();
         const GetLiveAdminDataQueryString = `
-        SELECT s.StreamTitle, s.Likes, s.Dislikes, s.AccountFolowers, u.UserName, u.AccountFolowers
+        SELECT s.StreamTitle, s.Likes, s.Dislikes, s.StreamToken, u.UserName, u.AccountFolowers
         FROM users AS u
         LEFT JOIN streams AS s ON s.UserPublicToken = u.UserPublicToken
         WHERE u.UserPublicToken = "${UserPublicToken}";`;
 
-        const results = await query(connection, GetLiveAdminDataQueryString);
+        const results = await query(pool, GetLiveAdminDataQueryString);
 
         const data = JSON.parse(JSON.stringify(results));
         if (data[0].StreamTitle == null || data[0].Likes == null || data[0].StreamTitle == null) {
             return res.status(200).json({
                 error: false,
                 IsLive: false,
+                LiveToken: '',
                 AccountName: data[0].UserName,
                 AccountFolowers: data[0].AccountFolowers,
                 LiveTitle: 'PlaceHolder',
@@ -84,6 +86,7 @@ const GetLiveAdminData = async (req: Request, res: Response) => {
         return res.status(200).json({
             error: false,
             IsLive: true,
+            LiveToken: data[0].StreamToken,
             AccountName: data[0].UserName,
             AccountFolowers: data[0].AccountFolowers,
             LiveTitle: data[0].StreamTitle,
@@ -108,15 +111,15 @@ const GetLiveAdminData = async (req: Request, res: Response) => {
  */
 const GetLiveData = async (req: Request, res: Response) => {
     try {
-        const connection = await connect();
+        const pool = createPool();
 
         const GetLiveDataQueryString = `
-        SELECT s.StreamTitle, s.Likes, s.Dislikes, s.AccountFolowers, u.UserName, u.AccountFolowers AS UserAccountFolowers, u.UserPublicToken 
+        SELECT s.StreamTitle, s.Likes, s.Dislikes, s.Active, u.UserName, u.AccountFolowers AS UserAccountFolowers, u.UserPublicToken 
         FROM streams AS s
         LEFT JOIN users AS u ON s.UserPublicToken = u.UserPublicToken
         WHERE s.StreamToken = "${req.params.streamToken}";`;
 
-        const results = await query(connection, GetLiveDataQueryString);
+        const results = await query(pool, GetLiveDataQueryString);
         const userPublicToken = await utilFunctions.getUserPublicTokenFromPrivateToken(req.params.userPrivateToken);
 
         const data = JSON.parse(JSON.stringify(results));
@@ -124,6 +127,20 @@ const GetLiveData = async (req: Request, res: Response) => {
         const getUserLikedOrDisliked = await utilFunctions.getUserLikedOrDislikedStream(String(userPublicToken), req.params.streamToken);
 
         if (Object.keys(data[0]).length === 0) {
+            return res.status(200).json({
+                error: false,
+                IsLive: false,
+                OwnerToken: data[0].UserPublicToken,
+                AccountName: data[0].UserName,
+                AccountFolowers: data[0].AccountFolowers,
+                LiveTitle: 'No Name',
+                UserFollwsAccount: false,
+                UserLikedOrDislikedLive: { userLiked: false, like_or_dislike: 0 },
+                LiveLikes: 0,
+                LiveDislikes: 0,
+            });
+        }
+        if (data[0].Active == 0) {
             return res.status(200).json({
                 error: false,
                 IsLive: false,
@@ -250,7 +267,7 @@ const LikeDislikeLiveFunc = async (req: Request, res: Response) => {
     }
     const getkuserlikedordislike = await utilFunctions.getUserLikedOrDislikedStream(UserPublicToken as string, req.body.streamToken);
     try {
-        const connection = await connect();
+        const pool = createPool();
         if (getkuserlikedordislike.userLiked) {
             if (req.body.likeOrDislike === 0) {
                 const deleteAndUpdateSql = `
@@ -264,7 +281,7 @@ const LikeDislikeLiveFunc = async (req: Request, res: Response) => {
                 WHERE StreamToken="${req.body.streamToken}";
 `;
 
-                await query(connection, deleteAndUpdateSql);
+                await query(pool, deleteAndUpdateSql);
             } else {
                 const updateSql = `
                 UPDATE user_liked_or_disliked_stream_class
@@ -275,10 +292,10 @@ const LikeDislikeLiveFunc = async (req: Request, res: Response) => {
                 SET
                 Likes = Likes + (CASE WHEN ${req.body.likeOrDislike} = 1 THEN 1 ELSE -1 END),
                 Dislikes = Dislikes + (CASE WHEN ${req.body.likeOrDislike} = 2 THEN 1 ELSE -1 END)
-                WHERE StreamToken="${req.body.streamToken}";
+                WHERE StreamToken="${req.body.streamToken}" AND Active="1";
                 `;
 
-                await query(connection, updateSql);
+                await query(pool, updateSql);
             }
         } else {
             const insertOrUpdateDataSql = `
@@ -290,10 +307,10 @@ const LikeDislikeLiveFunc = async (req: Request, res: Response) => {
             UPDATE streams
             SET Likes = Likes + (CASE WHEN ${req.body.likeOrDislike} = 1 THEN 1 ELSE 0 END),
             Dislikes = Dislikes + (CASE WHEN ${req.body.likeOrDislike} = 2 THEN 1 ELSE 0 END)
-            WHERE StreamToken="${req.body.streamToken}";
+            WHERE StreamToken="${req.body.streamToken}" AND Active="1";
 `;
 
-            await query(connection, insertOrUpdateDataSql);
+            await query(pool, insertOrUpdateDataSql);
         }
         res.status(202).json({
             error: false,
@@ -307,7 +324,6 @@ const LikeDislikeLiveFunc = async (req: Request, res: Response) => {
 };
 
 const JoinLive = (LiveToken: string, socket: Socket) => {
-    console.log(LiveToken);
     socket.join(LiveToken);
 };
 
@@ -323,19 +339,25 @@ const SendMessage = async (io: Server, socket: Socket, Message: string, LiveToke
             console.log(`Too many requests, wait ${timeToWait}ms before sending another message`);
             return;
         } else {
-            const connection = await connect();
+            const pool = createPool();
+            await SCYconnect();
 
             const UserPublicToken = await utilFunctions.getUserPublicTokenFromPrivateToken(UserPrivateToken);
             if (UserPublicToken === null) {
                 return io.to(LiveToken).emit('undefinedToken');
             }
             const GetLiveDataQueryString = `
-            SELECT UserName FROM users WHERE UserPublicToken = "${UserPublicToken}";`;
-            const results = await query(connection, GetLiveDataQueryString);
+            SELECT u.UserName, s.UserPublicToken
+            FROM users u
+            LEFT JOIN streams s ON u.UserPublicToken = s.UserPublicToken AND s.StreamToken = "${LiveToken}"
+            WHERE u.UserPublicToken = "${UserPublicToken}";`;
+
+            const results = await query(pool, GetLiveDataQueryString);
             const data = JSON.parse(JSON.stringify(results));
             lastMessageTimes.set(socketId, currentTime);
-
-            io.to(LiveToken).emit('recived-message', { message: Message, ownerName: data[0].UserName, ownerToken: UserPublicToken });
+            await SCYquery(`INSERT INTO LiveMessages (Id, livetoken, OwnerToken, Message, SentAt)
+            // VALUES (uuid(), '${LiveToken}','${UserPublicToken}', '${Message}.', toTimestamp(now()));`);
+            io.to(LiveToken).emit('recived-message', { message: Message, ownerName: data[0].UserName, ownerToken: UserPublicToken, isStreamer: UserPublicToken == data[0].UserPublicToken });
             return;
         }
     } catch (error) {
