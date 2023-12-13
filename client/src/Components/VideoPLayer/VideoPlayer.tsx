@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { getVideoData, IVideoData, playOrPauseVideo, followAccount, likeVideo, dislikeVideo } from '@/Components/VideoPLayer/UtilFunc'
 import { getCookie } from 'cookies-next'
 import PlayerOverlay from './PlayerOverlay'
+import axios from 'axios'
 
 interface IVideoPlayerProps {
     VideoToken: string | null
@@ -21,10 +22,13 @@ const VideoPlayer = (props: IVideoPlayerProps) => {
     const [playing, setPlaying] = useState(false)
     const [Progress, setProgress] = useState(0)
     const [Volume, setVolume] = useState<number>(0.5)
-    const [CurrentMinutes, setCurrentMinutes] = useState(0)
-    const [CurrentSeconds, setCurrentSeconds] = useState(0)
-    const [DurationMinutes, setDurationMinutes] = useState(0)
-    const [DurationSeconds, setDurationSeconds] = useState(0)
+    const [CurrentMinutes, setCurrentMinutes] = useState<number>(0)
+    const [CurrentSeconds, setCurrentSeconds] = useState<number>(0)
+    const [DurationMinutes, setDurationMinutes] = useState<number>(0)
+    const [DurationSeconds, setDurationSeconds] = useState<number>(0)
+
+    const [allTimeWatch, setAllTimeWatch] = useState<number>(0)
+    const [startTime, setStartTime] = useState<number>(0)
 
     const [VideoData, setVideoData] = useState<IVideoData>({
         error: false,
@@ -103,10 +107,26 @@ const VideoPlayer = (props: IVideoPlayerProps) => {
             }
         }, 1000)
 
+        const sendVideoAnalitycs = async () => {
+            const resp = await axios.post(`${process.env.SERVER_BACKEND}/videos-manager/update-video-alalytics`, {
+                WatchTime: Math.floor(allTimeWatch / 1000),
+                UserPublicToken: getCookie('userToken'),
+                VideoToken: props.VideoToken
+            })
+            console.log(resp)
+        }
+
+        const handleBeforeUnload = (event: BeforeUnloadEvent) => {
+            sendVideoAnalitycs() // Call analytics function when leaving the page
+            event.preventDefault()
+            event.returnValue = 'Are you sure you want to leave?'
+        }
+
         return () => {
             clearInterval(VideoChecks)
+            console.log(allTimeWatch)
         }
-    }, [])
+    }, [props.VideoToken])
 
     return (
         // * PLayer Outer Border
@@ -136,7 +156,7 @@ const VideoPlayer = (props: IVideoPlayerProps) => {
 
                 <video
                     onClick={() => {
-                        setPlaying(playOrPauseVideo(VideoRef))
+                        setPlaying(playOrPauseVideo(VideoRef, allTimeWatch, setAllTimeWatch, startTime, setStartTime))
                     }}
                     autoPlay
                     ref={VideoRef}

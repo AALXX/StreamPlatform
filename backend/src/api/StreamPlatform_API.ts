@@ -11,16 +11,24 @@ import { Server } from 'socket.io';
 //* Configs
 import config from '../config/config';
 import logging from '../config/logging';
+import { createPool } from '../config/mysql';
+import mysql from 'mysql2';
+
 const NAMESPACE = 'StreamPlatform_API';
 const router = express();
 
 router.use(express.urlencoded({ extended: false }));
 router.use(express.json());
 
-//* Rules of Api
+
+const pool = createPool();
+
+//* Api rules
 router.use((req: any, res: any, next: NextFunction) => {
     res.header('Access-Control-Allow-Origin', '*');
     res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
+
+    req.pool = pool;
 
     if (req.method == 'OPTIONS') {
         res.header('Acces-Control-Allow-Methods', 'GET POST PATCH DELETE PUT');
@@ -35,7 +43,7 @@ router.use('/api/videos-manager/', VideosRoutes);
 router.use('/api/live-manager/', LiveStreamRoutes);
 
 //* Error Handleling
-router.use((req: any, res: any, next: NextFunction) => {
+router.use((req: express.Request, res: any, next: NextFunction) => {
     const error = new Error('not found');
 
     return res.status(404).json({
@@ -51,7 +59,7 @@ httpServer.listen(config.server.port, () => {
 
 const io = new Server(httpServer, {
     cors: {
-        origin: ['http://localhost:3000'],
+        origin: ['http://test:3000'],
     },
 });
 
@@ -61,7 +69,7 @@ io.on('connection', (socket) => {
     });
 
     socket.on('send-message', async ({ message, LiveToken, UserPrivateToken }) => {
-        return LiveServices.SendMessage(io, socket, message, LiveToken, UserPrivateToken);
+        return LiveServices.SendMessage(pool, io, socket, message, LiveToken, UserPrivateToken);
     });
 
     socket.on('disconnect', () => {});

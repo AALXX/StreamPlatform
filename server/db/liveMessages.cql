@@ -7,7 +7,7 @@ CREATE TABLE IF NOT EXISTS LiveMessages (
   Id UUID PRIMARY KEY,
   OwnerToken TEXT,
   Message TEXT,
-  SentAt TIMESTAMP
+  SentAt TIMESTAMP,
   livetoken TEXT
 );
 

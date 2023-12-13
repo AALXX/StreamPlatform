@@ -2,7 +2,10 @@ import express from 'express';
 import { body, param } from 'express-validator';
 import UserAccountServices from '../../services/UserAccountServiecesManager/UserAccountServiecesManager';
 
+
 const router = express.Router();
+// MySQL Connection Pool setup
+
 
 //* Account auth
 router.post('/register-account', body('userName').not().isEmpty(), body('userEmail').isEmail().not().isEmpty(), body('password').isLength({ min: 4 }).not().isEmpty().trim(), UserAccountServices.RegisterUser);
@@ -17,12 +20,14 @@ router.post(
     UserAccountServices.ChangeUserPasswod,
 );
 
+
+
 //* Account data
 router.get('/get-account-data/:privateToken', UserAccountServices.GetUserAccountData);
 router.get('/get-account-videos/:accountToken', param('accountToken').not().isEmpty(), UserAccountServices.GetAccountVideos);
 
 router.post('/change-user-data', body('userName').not().isEmpty(), body('userEmail').not().isEmpty(), body('userDescription').not().isEmpty(), body('userVisibility').not().isEmpty(), UserAccountServices.ChangeUserData);
-    
+
 router.post('/change-user-icon', UserAccountServices.ChangeUserIcon);
 
 //*Cretor Account

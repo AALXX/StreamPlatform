@@ -1,0 +1,71 @@
+version: '4.15'
+
+
+services:
+  backend:
+    image: backend:latest 
+    container_name: backend-server
+    ports:
+      - "7070:7070"
+    volumes:
+      - videos-driver:/accounts
+  video-stream-server-java:
+    image: video_stream_server_java_img:latest 
+    container_name: vides-stream-server
+    ports:
+      - "7500:7500"
+    volumes:
+      - videos-driver:/accounts
+  search-server:
+    image: search-server:latest 
+    container_name: search-server
+    ports:
+      - "7300:7300"
+  video-categorization-server:
+    image: categorize-server:latest 
+    container_name: categorize-server
+    ports:
+      - "6200:6200"
+  rtmp:
+    image: stream-server-img:latest 
+    ports:
+      - "1935:1935"
+    container_name: rtmp_server
+    volumes:
+      - videos-driver:/accounts:rw
+  mysql-db:
+    image: mysql:latest
+    container_name: mysql-container
+
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: gh_platform_db
+      MYSQL_USER: alx
+      MYSQL_PASSWORD: serbvn
+    ports:
+      - "3306:3306" 
+    volumes:
+      - mysql-data:/var/lib/mysql
+    restart: always
+
+  scylla-db:
+    image: scylladb/scylla:latest
+    container_name: scylla-container
+    ports:
+      - "9042:9042"   # CQL port
+      - "9160:9160"   # Thrift port
+      - "7000:7000"   # Inter-node communication
+      - "7001:7001"   # Inter-node TLS communication
+      - "7199:7199"   # JMX
+      - "9180:9180"   # Prometheus (optional)
+    volumes:
+      - scylla-data:/var/lib/scylla
+
+
+volumes:
+  mysql-data:
+    driver: local
+  scylla-data:
+    driver: local
+  videos-driver:
+    driver: local

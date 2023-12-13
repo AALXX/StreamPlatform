@@ -6,4 +6,4 @@ services:
       - "1935:1935"
     container_name: rtmp_server
     volumes:
-      - ./streams-data:/tmp/hls
+      - ./streams-data:/tmp/hls:rw

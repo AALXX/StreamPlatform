@@ -25,6 +25,7 @@ router.post(
 );
 router.post('/delete-video', body('VideoToken').not().isEmpty(), body('UserPrivateToken').not().isEmpty(), AccountVideoServices.DeleteCreatorVideoData);
 router.post('/change-thumbnail', AccountVideoServices.ChangeVideoThumbnail);
+router.post('/update-video-alalytics', AccountVideoServices.UpdateVideoAnalytics);
 
 //*comment related
 router.get('/get-video-comments/:videoToken', param('videoToken').not().isEmpty(), ClientVideosServices.GetVideoComments);

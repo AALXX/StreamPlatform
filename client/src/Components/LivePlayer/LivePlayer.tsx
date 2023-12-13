@@ -41,50 +41,51 @@ const LivePlayer = (props: ILivePlayerProps) => {
     const [liveDisLikes, setLiveDisLikes] = useState<number>(0)
 
     useEffect(() => {
-        if (VideoRef.current) {
-            const video = VideoRef.current
-
-            if (Hls.isSupported()) {
-                hls.current = new Hls()
-                hls.current.loadSource(`${process.env.VIDEO_SERVER_BACKEND}/video-manager/live-stream/${props.userStreamToken}/`)
-                hls.current.attachMedia(video)
-                // Add an error event listener to capture and handle HLS errors
-                hls.current.on(Hls.Events.ERROR, (event, data) => {
-                    if (data.fatal) {
-                        switch (data.type) {
-                            case Hls.ErrorTypes.NETWORK_ERROR:
-                                setIsOline(false)
-                                console.error('HLS network error occurred')
-                                // Handle network errors
-                                break
-                            case Hls.ErrorTypes.MEDIA_ERROR:
-                                setIsOline(false)
-                                console.error('HLS media error occurred')
-                                setIsOline(false)
-                                // Handle media errors
-                                break
-                            default:
-                                console.error('HLS error occurred')
-                            // Handle other errors
-                        }
-                    }
-                })
-
-                hls.current.on(Hls.Events.MANIFEST_PARSED, () => {
-                    video.play().catch(error => {
-                        console.log('Error playing the video:', error)
-                    })
-                })
-            } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
-                video.src = `${process.env.VIDEO_SERVER_BACKEND}/video-manager/live-stream/${props.userStreamToken}/`
-                video.addEventListener('loadedmetadata', function () {
-                    video.play()
-                })
-            }
-        }
-
         ;(async () => {
             const LiveData = await getLiveData(getCookie('userToken') as string, props.userStreamToken)
+
+            if (VideoRef.current) {
+                const video = VideoRef.current
+
+                if (Hls.isSupported()) {
+                    hls.current = new Hls()
+                    hls.current.loadSource(`${process.env.VIDEO_SERVER_BACKEND}/video-manager/live-stream/${LiveData.OwnerToken}/`)
+                    hls.current.attachMedia(video)
+                    // Add an error event listener to capture and handle HLS errors
+                    hls.current.on(Hls.Events.ERROR, (event, data) => {
+                        if (data.fatal) {
+                            switch (data.type) {
+                                case Hls.ErrorTypes.NETWORK_ERROR:
+                                    setIsOline(false)
+                                    console.error('HLS network error occurred')
+                                    // Handle network errors
+                                    break
+                                case Hls.ErrorTypes.MEDIA_ERROR:
+                                    setIsOline(false)
+                                    console.error('HLS media error occurred')
+                                    setIsOline(false)
+                                    // Handle media errors
+                                    break
+                                default:
+                                    console.error('HLS error occurred')
+                                // Handle other errors
+                            }
+                        }
+                    })
+
+                    hls.current.on(Hls.Events.MANIFEST_PARSED, () => {
+                        video.play().catch(error => {
+                            console.log('Error playing the video:', error)
+                        })
+                    })
+                } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+                    video.src = `${process.env.VIDEO_SERVER_BACKEND}/video-manager/live-stream/${props.userStreamToken}/`
+                    video.addEventListener('loadedmetadata', function () {
+                        video.play()
+                    })
+                }
+            }
+
             setLiveData(LiveData)
             setUserFollwsAccount(LiveData.UserFollwsAccount)
             setUserLikedVideo(LiveData.UserLikedVideo)

@@ -1,4 +1,14 @@
 {
     "java.configuration.updateBuildConfiguration": "automatic",
-    "dotnet.defaultSolution": "server/recomandation-server/recomandation-server.sln"
+    "dotnet.defaultSolution": "server/recomandation-server/recomandation-server.sln",
+    "sqltools.connections": [
+        {
+            "server": "localhost",
+            "port": 9042,
+            "previewLimit": 50,
+            "askForPassword": true,
+            "driver": "Scylla",
+            "name": "gh_platform"
+        }
+    ]
 }

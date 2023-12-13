@@ -23,8 +23,8 @@ import reactor.core.publisher.Mono;
 public class VideoServices implements IVideoServices {
 
     private static final String VideoPathFormat = "file:../accounts/%s/%s/Source.mp4";
-    private static final String LivePathFormat = "file:../live-stream-server/streams-data/%s/index.m3u8";
-    private static final String SegmentsPathFormat = "../live-stream-server/streams-data/%s/%s";
+    private static final String LivePathFormat = "file:../accounts/Lives/%s/index.m3u8";
+    private static final String SegmentsPathFormat = "../accounts/Lives/%s/%s";
 
     // * it loads video from file system
     @Autowired

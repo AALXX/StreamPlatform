@@ -15,10 +15,10 @@ func InitDB() (*sql.DB, error) {
 	// Construct the data source name
 	dataSourceName := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s",
 		"root",
-		"",
-		"127.0.0.1",
+		"root",
+		"mysql-container",
 		"3306",
-		"stream_platform",
+		"gh_platform_db",
 	)
 
 	// Open a database connection

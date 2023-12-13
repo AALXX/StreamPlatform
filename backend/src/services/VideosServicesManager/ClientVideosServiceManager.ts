@@ -1,7 +1,7 @@
-import { Request, Response } from 'express';
+import { Response } from 'express';
 import { validationResult } from 'express-validator';
 import logging from '../../config/logging';
-import { createPool, query } from '../../config/mysql';
+import { CustomRequest, createPool, query } from '../../config/mysql';
 import UtilFunc from '../../util/utilFunctions';
 import utilFunctions from '../../util/utilFunctions';
 import axios from 'axios';
@@ -9,9 +9,9 @@ import axios from 'axios';
 const NAMESPACE = 'ClientVideosServiceManager';
 
 /**
- * Validates and cleans the request form
+ * Validates and cleans the CustomRequest form
  */
-const RequestValidationResult = validationResult.withDefaults({
+const CustomRequestValidationResult = validationResult.withDefaults({
     formatter: (error) => {
         return {
             errorMsg: error.msg,
@@ -35,13 +35,13 @@ interface ISearchVideoCards {
 
 /**
  *Gets Data About Video from db
- * @param {Request} req
+ * @param {CustomRequest} req
  * @param {Response} res
  * @return {Response}
  */
-const GetVideoDataByToken = async (req: Request, res: Response) => {
+const GetVideoDataByToken = async (req: CustomRequest, res: Response) => {
     const GetVideoDataByTokenQueryString = `SELECT VideoTitle, VideoDescription, Likes, Dislikes, PublishDate, OwnerToken FROM videos WHERE VideoToken="${req.params.VideoToken}"`;
-    const errors = RequestValidationResult(req);
+    const errors = CustomRequestValidationResult(req);
     if (!errors.isEmpty()) {
         errors.array().map((error) => {
             logging.error('GET_VIDEO_DATA_BY_TOKEN_FUNC', error.errorMsg);
@@ -51,22 +51,22 @@ const GetVideoDataByToken = async (req: Request, res: Response) => {
     }
 
     try {
-        const pool = createPool();
+        const connection = await req.pool?.promise().getConnection();
         // const pool = await connect();
-        const getVideoResponse = await query(pool, GetVideoDataByTokenQueryString);
+        const getVideoResponse = await query(connection, GetVideoDataByTokenQueryString);
         let Videodata = JSON.parse(JSON.stringify(getVideoResponse));
 
         const GetOwnerrDataQueryString = `SELECT UserName, AccountFolowers FROM users WHERE UserPublicToken="${Videodata[0].OwnerToken}"`;
 
         // const getUserDataResponse = await query(pool, GetOwnerrDataQueryString);
-        const getUserDataResponse = await query(pool, GetOwnerrDataQueryString);
+        const getUserDataResponse = await query(connection, GetOwnerrDataQueryString);
 
         let UserData = JSON.parse(JSON.stringify(getUserDataResponse));
         if (Object.keys(Videodata).length === 0) {
             return res.status(202).json({ error: false, VideoFound: false });
         }
-        const itFollows = await UtilFunc.userFollowAccountCheck(req.params.UserPublicToken, Videodata[0].OwnerToken);
-        const getuserlikedordislike = await UtilFunc.getUserLikedOrDislikedVideo(req.params.UserPublicToken, req.params.VideoToken);
+        const itFollows = await UtilFunc.userFollowAccountCheck(req.pool!, req.params.UserPublicToken, Videodata[0].OwnerToken);
+        const getuserlikedordislike = await UtilFunc.getUserLikedOrDislikedVideo(req.pool!, req.params.UserPublicToken, req.params.VideoToken);
 
         res.status(202).json({
             error: false,
@@ -94,12 +94,12 @@ const GetVideoDataByToken = async (req: Request, res: Response) => {
 
 /**
  * Like the video by token
- * @param {Request} req
+ * @param {CustomRequest} req
  * @param {Response} res
  * @return {Response}
  */
-const LikeDislikeVideoFunc = async (req: Request, res: Response) => {
-    const errors = RequestValidationResult(req);
+const LikeDislikeVideoFunc = async (req: CustomRequest, res: Response) => {
+    const errors = CustomRequestValidationResult(req);
     if (!errors.isEmpty()) {
         errors.array().map((error) => {
             logging.error('LIKE_OR_DISLIKE_FUNC', error.errorMsg);
@@ -108,10 +108,10 @@ const LikeDislikeVideoFunc = async (req: Request, res: Response) => {
         return res.status(200).json({ error: true, errors: errors.array() });
     }
 
-    const getkuserlikedordislike = await UtilFunc.getUserLikedOrDislikedVideo(req.body.userToken, req.body.videoToken);
+    const getkuserlikedordislike = await UtilFunc.getUserLikedOrDislikedVideo(req.pool!, req.body.userToken, req.body.videoToken);
 
     try {
-        const pool = createPool();
+        const connection = await req.pool?.promise().getConnection();
 
         if (getkuserlikedordislike.userLiked) {
             if (req.body.likeOrDislike === 0) {
@@ -126,7 +126,7 @@ const LikeDislikeVideoFunc = async (req: Request, res: Response) => {
                 WHERE VideoToken = "${req.body.videoToken}";
 `;
 
-                await query(pool, deleteAndUpdateSql);
+                await query(connection, deleteAndUpdateSql);
             } else {
                 const updateSql = `
                 UPDATE user_liked_or_disliked_video_class
@@ -140,7 +140,7 @@ const LikeDislikeVideoFunc = async (req: Request, res: Response) => {
                 WHERE VideoToken="${req.body.videoToken}";
 `;
 
-                await query(pool, updateSql);
+                await query(connection, updateSql);
             }
         } else {
             const insertOrUpdateDataSql = `
@@ -155,7 +155,7 @@ const LikeDislikeVideoFunc = async (req: Request, res: Response) => {
             WHERE VideoToken = "${req.body.videoToken}";
 `;
 
-            await query(pool, insertOrUpdateDataSql);
+            await query(connection, insertOrUpdateDataSql);
         }
         res.status(202).json({
             error: false,
@@ -171,12 +171,12 @@ const LikeDislikeVideoFunc = async (req: Request, res: Response) => {
 
 /**
  * post comment to a video
- * @param {Request} req
+ * @param {CustomRequest} req
  * @param {Response} res
  * @return {Response}
  */
-const PostCommentToVideo = async (req: Request, res: Response) => {
-    const errors = RequestValidationResult(req);
+const PostCommentToVideo = async (req: CustomRequest, res: Response) => {
+    const errors = CustomRequestValidationResult(req);
     if (!errors.isEmpty()) {
         errors.array().map((error) => {
             logging.error('POST_COMMENT_FUNC', error.errorMsg);
@@ -186,9 +186,9 @@ const PostCommentToVideo = async (req: Request, res: Response) => {
     }
 
     try {
-        const pool = createPool();
+        const connection = await req.pool?.promise().getConnection();
 
-        let ownerToken = await utilFunctions.getUserPublicTokenFromPrivateToken(req.body.UserToken);
+        let ownerToken = await utilFunctions.getUserPublicTokenFromPrivateToken(req.pool!, req.body.UserToken);
         if (ownerToken == null) {
             return res.status(200).json({
                 error: true,
@@ -196,7 +196,7 @@ const PostCommentToVideo = async (req: Request, res: Response) => {
         }
 
         const PostCommentSQL = `INSERT INTO comments (ownerToken, videoToken, comment) VALUES ("${ownerToken}","${req.body.VideoToken}","${req.body.Comment}"); SELECT UserName FROM users WHERE UserPublicToken="${ownerToken}";`;
-        const resData = await query(pool, PostCommentSQL);
+        const resData = await query(connection, PostCommentSQL);
 
         let userName = JSON.parse(JSON.stringify(resData));
 
@@ -215,12 +215,12 @@ const PostCommentToVideo = async (req: Request, res: Response) => {
 
 /**
  * delete comment to a video
- * @param {Request} req
+ * @param {CustomRequest} req
  * @param {Response} res
  * @return {Response}
  */
-const DeleteComment = async (req: Request, res: Response) => {
-    const errors = RequestValidationResult(req);
+const DeleteComment = async (req: CustomRequest, res: Response) => {
+    const errors = CustomRequestValidationResult(req);
     if (!errors.isEmpty()) {
         errors.array().map((error) => {
             logging.error('DELETE_COMMENT_FUNC', error.errorMsg);
@@ -229,11 +229,11 @@ const DeleteComment = async (req: Request, res: Response) => {
         return res.status(200).json({ error: true, errors: errors.array() });
     }
 
-    const pool = createPool();
+    const connection = await req.pool?.promise().getConnection();
 
     try {
         const PostCommentSQL = `DELETE FROM comments WHERE userToken="${req.body.UserToken}" AND videoToken="${req.body.VideoToken}"`;
-        await query(pool, PostCommentSQL);
+        await query(connection, PostCommentSQL);
         res.status(202).json({
             error: false,
         });
@@ -247,12 +247,12 @@ const DeleteComment = async (req: Request, res: Response) => {
 
 /**
  * get comment from a video
- * @param {Request} req
+ * @param {CustomRequest} req
  * @param {Response} res
  * @return {Response}
  */
-const GetVideoComments = async (req: Request, res: Response) => {
-    const errors = RequestValidationResult(req);
+const GetVideoComments = async (req: CustomRequest, res: Response) => {
+    const errors = CustomRequestValidationResult(req);
     if (!errors.isEmpty()) {
         errors.array().map((error) => {
             logging.error('POST_COMMENT_FUNC', error.errorMsg);
@@ -262,10 +262,10 @@ const GetVideoComments = async (req: Request, res: Response) => {
     }
 
     try {
-        const pool = createPool();
+        const connection = await req.pool?.promise().getConnection();
 
         const GetVideoCommentsSQL = `SELECT * FROM comments WHERE videoToken="${req.params.videoToken}"`;
-        const getVideoComments = await query(pool, GetVideoCommentsSQL);
+        const getVideoComments = await query(connection, GetVideoCommentsSQL);
 
         let VideoComments = JSON.parse(JSON.stringify(getVideoComments));
         let VideoCommentsToBeSend: Array<IVideoCommentsToBeSendType> = [];
@@ -273,7 +273,7 @@ const GetVideoComments = async (req: Request, res: Response) => {
         for (const comment in VideoComments) {
             if (Object.prototype.hasOwnProperty.call(VideoComments, comment)) {
                 const GetOwnerNameSQL = `SELECT UserName FROM users WHERE UserPublicToken="${VideoComments[comment].ownerToken}"`;
-                const ownerNameData = await query(pool, GetOwnerNameSQL);
+                const ownerNameData = await query(connection, GetOwnerNameSQL);
                 let ownerName = JSON.parse(JSON.stringify(ownerNameData));
 
                 VideoCommentsToBeSend.push({
@@ -304,13 +304,13 @@ const GetVideoComments = async (req: Request, res: Response) => {
 
 /**
  * Search a video
- * @param {Request} req
+ * @param {CustomRequest} req
  * @param {Response} res
  * @return {Response}
  */
-const SearchVideo = async (req: Request, res: Response) => {
+const SearchVideo = async (req: CustomRequest, res: Response) => {
     const NAMESPACE = 'SEARCH_VIDEO_FUNC';
-    const errors = RequestValidationResult(req);
+    const errors = CustomRequestValidationResult(req);
     if (!errors.isEmpty()) {
         errors.array().map((error) => {
             logging.error(NAMESPACE, error.errorMsg);
@@ -319,9 +319,9 @@ const SearchVideo = async (req: Request, res: Response) => {
         return res.status(200).json({ error: true, errors: errors.array() });
     }
     try {
-        const pool = createPool();
+        const connection = await req.pool?.promise().getConnection();
 
-        const video_search_server_resp = await axios.get(`http://localhost:7300/api/search/${req.params.search_query}`);
+        const video_search_server_resp = await axios.get(`${process.env.SEARCH_SERVER}/search/${req.params.search_query}`);
         if (video_search_server_resp.data.error === true) {
             res.status(202).json({
                 error: true,
@@ -333,7 +333,7 @@ const SearchVideo = async (req: Request, res: Response) => {
             if (Object.prototype.hasOwnProperty.call(video_search_server_resp.data.videoSearchedResults, video)) {
                 const videoData = video_search_server_resp.data.videoSearchedResults[video];
                 const GetVideoDataSqlQuery = `SELECT VideoTitle, OwnerToken, u.UserName FROM videos v JOIN users u ON v.OwnerToken = u.UserPublicToken WHERE VideoToken="${videoData.VideoToken}" `;
-                const getVideoData = await query(pool, GetVideoDataSqlQuery);
+                const getVideoData = await query(connection, GetVideoDataSqlQuery);
                 let resp = JSON.parse(JSON.stringify(getVideoData));
                 videos.push({ OwnerName: resp[0].UserName, VideoTitle: resp[0].VideoTitle, OwnerToken: resp[0].OwnerToken, VideoToken: videoData.VideoToken });
             }
