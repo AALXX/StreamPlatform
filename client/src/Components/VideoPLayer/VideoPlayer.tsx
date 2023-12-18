@@ -27,8 +27,7 @@ const VideoPlayer = (props: IVideoPlayerProps) => {
     const [DurationMinutes, setDurationMinutes] = useState<number>(0)
     const [DurationSeconds, setDurationSeconds] = useState<number>(0)
 
-    const [allTimeWatch, setAllTimeWatch] = useState<number>(0)
-    const [startTime, setStartTime] = useState<number>(0)
+    const allTimeWatchRef = useRef<number>(0)
 
     const [VideoData, setVideoData] = useState<IVideoData>({
         error: false,
@@ -53,11 +52,12 @@ const VideoPlayer = (props: IVideoPlayerProps) => {
     const [videoDisLikes, setVideoDisLikes] = useState<number>(0)
 
     useEffect(() => {
+
         if (props.VideoToken == null) {
             window.location.href = 'http://localhost:3000/'
         }
 
-        ;(async () => {
+        ; (async () => {
             const videoData = await getVideoData(props.VideoToken, getCookie('userToken') as string)
             setVideoData(videoData)
             setUserFollwsAccount(videoData.UserFollwsAccount)
@@ -74,7 +74,6 @@ const VideoPlayer = (props: IVideoPlayerProps) => {
 
         const storageVolume = Number(localStorage.getItem('Volume'))
 
-        // * this extra + will convert the string to integer.
         setVolume(storageVolume)
 
         setTimeout(() => {
@@ -96,10 +95,25 @@ const VideoPlayer = (props: IVideoPlayerProps) => {
 
             //* it updates current and total minutes shown
             if (VideoRef?.current) {
-                setCurrentMinutes(Math.floor(VideoRef?.current?.currentTime / 60))
-                setCurrentSeconds(Math.floor(VideoRef?.current?.currentTime - CurrentMinutes * 60))
-                setDurationMinutes(Math.floor(VideoRef?.current?.duration / 60))
-                setDurationSeconds(Math.floor(VideoRef?.current?.duration - DurationMinutes * 60))
+                const currentTime = Math.floor(VideoRef.current.currentTime);
+                const totalDuration = Math.floor(VideoRef.current.duration);
+
+                const currentMinutes = Math.floor(currentTime / 60);
+                const currentSeconds = currentTime % 60;
+
+                const totalMinutes = Math.floor(totalDuration / 60);
+                const totalSeconds = totalDuration % 60;
+
+                setCurrentMinutes(currentMinutes);
+                setCurrentSeconds(currentSeconds);
+
+                setDurationMinutes(totalMinutes);
+                setDurationSeconds(totalSeconds);
+            }
+
+            if (VideoRef?.current) {
+                // Update allTimeWatch using the ref
+                allTimeWatchRef.current = VideoRef?.current?.currentTime
             }
 
             if (VideoRef?.current?.duration === VideoRef?.current?.currentTime) {
@@ -108,23 +122,20 @@ const VideoPlayer = (props: IVideoPlayerProps) => {
         }, 1000)
 
         const sendVideoAnalitycs = async () => {
-            const resp = await axios.post(`${process.env.SERVER_BACKEND}/videos-manager/update-video-alalytics`, {
-                WatchTime: Math.floor(allTimeWatch / 1000),
-                UserPublicToken: getCookie('userToken'),
-                VideoToken: props.VideoToken
-            })
-            console.log(resp)
+            if (Math.floor(allTimeWatchRef.current) > 3) {
+                const resp = await axios.post(`${process.env.SERVER_BACKEND}/videos-manager/update-video-alalytics`, {
+                    WatchTime: allTimeWatchRef.current,
+                    UserPublicToken: getCookie('userToken'),
+                    VideoToken: props.VideoToken
+                })
+                console.log(resp)
+            }
         }
 
-        const handleBeforeUnload = (event: BeforeUnloadEvent) => {
-            sendVideoAnalitycs() // Call analytics function when leaving the page
-            event.preventDefault()
-            event.returnValue = 'Are you sure you want to leave?'
-        }
-
-        return () => {
+        return async () => {
             clearInterval(VideoChecks)
-            console.log(allTimeWatch)
+            console.log(allTimeWatchRef.current)
+            await sendVideoAnalitycs()
         }
     }, [props.VideoToken])
 
@@ -156,11 +167,10 @@ const VideoPlayer = (props: IVideoPlayerProps) => {
 
                 <video
                     onClick={() => {
-                        setPlaying(playOrPauseVideo(VideoRef, allTimeWatch, setAllTimeWatch, startTime, setStartTime))
+                        setPlaying(playOrPauseVideo(VideoRef))
                     }}
-                    autoPlay
                     ref={VideoRef}
-                    className="w-full h-full"
+                    className="w-full h-full bg-black"
                     onMouseEnter={() => {
                         setShowOverlay(true)
                     }}
@@ -249,7 +259,7 @@ const VideoPlayer = (props: IVideoPlayerProps) => {
                     {userDisLikedVideo ? (
                         <>
                             <img
-                                src="/assets/PlayerIcons/DisLiked_icon.svg"
+                                src="/assets/PlayerIcons/Disliked_icon.svg"
                                 className="cursor-pointer w-[1.6rem] ml-auto mr-[.5rem]"
                                 alt="not muted image"
                                 onClick={async () => {
@@ -263,7 +273,7 @@ const VideoPlayer = (props: IVideoPlayerProps) => {
                     ) : (
                         <>
                             <img
-                                src="/assets/PlayerIcons/DisLike_icon.svg"
+                                src="/assets/PlayerIcons/Dislike_icon.svg"
                                 className="cursor-pointer w-[1.6rem] ml-auto mr-[.5rem]"
                                 alt="not muted image"
                                 onClick={async () => {

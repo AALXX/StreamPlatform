@@ -1,6 +1,6 @@
 import axios from 'axios'
 import { CookieValueTypes } from 'cookies-next'
-import { Dispatch, RefObject, SetStateAction } from 'react'
+import { Dispatch, MutableRefObject, Ref, RefObject, SetStateAction } from 'react'
 
 interface IVideoData {
     error: boolean
@@ -38,17 +38,11 @@ const getVideoData = async (VideoToken: string | null, userToken: string) => {
 }
 
 //* Play/Pause
-const playOrPauseVideo = (videoRef: RefObject<HTMLVideoElement>, allTimeWatch: number, setAllTimeWatch: Dispatch<SetStateAction<number>>, startTime: number, setStartTime: Dispatch<SetStateAction<number>>): boolean => {
+const playOrPauseVideo = (videoRef: RefObject<HTMLVideoElement>): boolean => {
     if (videoRef?.current?.paused) {
-        setStartTime(Date.now())
         videoRef?.current?.play()
         return true
     } else {
-        if (startTime != undefined) {
-            const endTime = Date.now()
-            const durationWatched = endTime - startTime
-            setAllTimeWatch(allTimeWatch + durationWatched)
-        }
         videoRef?.current?.pause()
         return false
     }

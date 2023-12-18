@@ -6,11 +6,18 @@ import (
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
+    "github.com/joho/godotenv"
 
 	"log"
 )
 
 func main() {
+	// Load the environment variables from the .env file
+    err := godotenv.Load()
+    if err != nil {
+        log.Fatalf("Error loading .env file: %v", err)
+    }
+
 	// Initialize the database connection
 	db, err := config.InitDB()
 	if err != nil {

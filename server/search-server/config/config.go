@@ -3,6 +3,7 @@ package config
 import (
 	"database/sql"
 	"log"
+	"os"
 
 	"fmt"
 	"search-server/models"
@@ -12,12 +13,19 @@ import (
 )
 
 func InitDB() (*sql.DB, error) {
+
+	// Access the environment variables
+	dbHost := os.Getenv("MYSQL_HOST")
+	dbPort := os.Getenv("MYSQL_PORT")
+	dbUser := os.Getenv("MYSQL_USER")
+	dbPass := os.Getenv("MYSQL_PASS")
+
 	// Construct the data source name
 	dataSourceName := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s",
-		"root",
-		"root",
-		"mysql-container",
-		"3306",
+		dbUser,
+		dbPass,
+		dbHost,
+		dbPort,
 		"gh_platform_db",
 	)
 
