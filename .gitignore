@@ -49,3 +49,5 @@ server/video-categorize-server/src/model
 server/video-categorize-server/src/data_images
 server/accounts/
 .svn/
+
+updateHistoryTables-server/target

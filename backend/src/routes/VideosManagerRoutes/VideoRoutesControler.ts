@@ -12,7 +12,7 @@ router.get('/get-video-data/:VideoToken/:UserPublicToken', param('VideoToken').n
 router.get('/search-video/:search_query', param('search_query').not().isEmpty(), ClientVideosServices.SearchVideo);
 
 //*Creator related
-router.get('/get-creator-video-data/:VideoToken', param('VideoToken').not().isEmpty(), AccountVideoServices.GetCreatorVideoData);
+router.get('/get-creator-video-data/:UserPrivateToken/:VideoToken', param('VideoToken').not().isEmpty(), AccountVideoServices.GetCreatorVideoData);
 router.post(
     '/update-creator-video-data',
     body('VideoTitle').not().isEmpty().isLength({ max: 20 }),
@@ -26,6 +26,7 @@ router.post(
 router.post('/delete-video', body('VideoToken').not().isEmpty(), body('UserPrivateToken').not().isEmpty(), AccountVideoServices.DeleteCreatorVideoData);
 router.post('/change-thumbnail', AccountVideoServices.ChangeVideoThumbnail);
 router.post('/update-video-alalytics', AccountVideoServices.UpdateVideoAnalytics);
+router.get('/get-video-history-data/:UserPrivateToken/:VideoToken', AccountVideoServices.GetVideoHistory);
 
 //*comment related
 router.get('/get-video-comments/:videoToken', param('videoToken').not().isEmpty(), ClientVideosServices.GetVideoComments);

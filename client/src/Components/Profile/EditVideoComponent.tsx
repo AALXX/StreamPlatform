@@ -1,8 +1,12 @@
-import React, { useEffect, useState } from 'react'
+import React, { Suspense, useEffect, useState } from 'react'
 import { getCookie } from 'cookies-next'
 import ProfileCards from '@/Components/Profile/utils/ProfileCards'
 import axios from 'axios'
 import PopupCanvas from '@/Components/Util/PopupCanvas'
+import formatDateToDDMMYY from '../Util/Date';
+import dynamic from 'next/dynamic'
+import { IGraphType } from './utils/VideoAnalytics/VideoAnalytics'
+const VideoAnalytics = dynamic(() => import('./utils/VideoAnalytics/VideoAnalytics'), { ssr: false })
 
 const EditVideoComponent = ({ videoToken }: { videoToken: string }) => {
     const [ToggleDeleteVideoPopup, setToggleDeleteVideoPopup] = useState<boolean>(false)
@@ -16,17 +20,20 @@ const EditVideoComponent = ({ videoToken }: { videoToken: string }) => {
     const [videoOwnerToken, setVideoOwnerToken] = useState<string>('')
     const [showComments, setShowComments] = useState<boolean>(false)
     const [showLikesDislikes, setShowLikesDislikes] = useState<boolean>(false)
-
+    const [videoViews, setVideoViews] = useState<number>(0)
+    const [avrageWatchTime, setAvrageWatchTime] = useState<number>(0)
 
     const [thumbnalFile, setThumbnalFile] = useState<File | null>(null)
     const [isHovered, setIsHovered] = useState<boolean>(false)
     const [videoNotFoundScreen, setVideoNotFoundScreen] = useState<boolean>(false)
 
+    const [videoHistoryData, setVideoHistoryData] = useState<Array<IGraphType>>([])
+
     let component
 
     useEffect(() => {
-        ;(async () => {
-            const res = await axios.get(`${process.env.SERVER_BACKEND}/videos-manager/get-creator-video-data/${videoToken}`)
+        ; (async () => {
+            const res = await axios.get(`${process.env.SERVER_BACKEND}/videos-manager/get-creator-video-data/${getCookie('userToken')}/${videoToken}`)
             setVideoNotFoundScreen(res.data.error)
             setVideoTitle(res.data.VideoTitle)
             setPublishDate(res.data.PublishDate)
@@ -36,7 +43,14 @@ const EditVideoComponent = ({ videoToken }: { videoToken: string }) => {
             setVideoOwnerToken(res.data.OwnerToken)
             setShowComments(res.data.ShowComments)
             setShowLikesDislikes(res.data.ShowLikesDislikes)
+            setVideoViews(res.data.Views)
+            setAvrageWatchTime(res.data.AvrageWatchTime)
+
+            const histres = await axios.get(`${process.env.SERVER_BACKEND}/videos-manager/get-video-history-data/${getCookie('userToken')}/${videoToken}`)
+            setVideoHistoryData(histres.data.VideoHistoryData)
+            console.log(histres.data.VideoHistoryData)
         })()
+
     }, [])
 
     const updateVideoData = async () => {
@@ -173,7 +187,11 @@ const EditVideoComponent = ({ videoToken }: { videoToken: string }) => {
             }
             break
         case 'Analytics':
-            component = <></>
+            component =
+                <Suspense fallback={<div>Loading...</div>}>
+                    <VideoAnalytics AvrageTime={avrageWatchTime} VideoViews={videoViews} Dislikes={videoDislikes} Likes={videoLikes}
+                        PublishDateFormated={formatDateToDDMMYY(new Date(publishDate).toISOString())} videoHistoryData={videoHistoryData} />
+                </Suspense>
 
             break
         case 'editor':

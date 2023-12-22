@@ -10,6 +10,7 @@ import (
 	"strings"
 	"sync"
 
+    "github.com/joho/godotenv"
 	"github.com/fsnotify/fsnotify"
 )
 
@@ -107,6 +108,11 @@ func watchFiles(dir string) {
 }
 
 func main() {
+	// Load the environment variables from the .env file
+    err := godotenv.Load()
+    if err != nil {
+        log.Fatalf("Error loading .env file: %v", err)
+    }
 
 	// Initialize the database connection
 	db, err := config.InitDB()

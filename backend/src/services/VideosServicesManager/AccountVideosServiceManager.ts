@@ -10,7 +10,7 @@ import { CustomRequest, query } from '../../config/mysql';
 import UtilFunc from '../../util/utilFunctions';
 import axios from 'axios';
 import utilFunctions from '../../util/utilFunctions';
-import { validationResult } from 'express-validator';
+import { validationResult, param } from 'express-validator';
 import mysql from 'mysql2';
 
 const NAMESPACE = 'AccountUploadServiceManager';
@@ -201,7 +201,7 @@ const UploadVideoFileToServer = async (req: any, res: Response) => {
  * @param {string} VideoVisibility
  * @param {any} callback
  */
-const SendVideoDataToDb = async (req:CustomRequest, userPublicToken: string, videoToken: string, VideoTitle: string, VideoVisibility: string) => {
+const SendVideoDataToDb = async (req: CustomRequest, userPublicToken: string, videoToken: string, VideoTitle: string, VideoVisibility: string) => {
     let today = new Date().toISOString().slice(0, 10);
 
     try {
@@ -231,7 +231,7 @@ const SendVideoDataToDb = async (req:CustomRequest, userPublicToken: string, vid
  * @param {string} VideoVisibility
  * @param {any} callback
  */
-const SendVideoCategoryToDb = async (req:CustomRequest, videoToken: string, CategoryId: string) => {
+const SendVideoCategoryToDb = async (req: CustomRequest, videoToken: string, CategoryId: string) => {
     try {
         const connection = await req.pool?.promise().getConnection();
 
@@ -310,7 +310,9 @@ const GetCreatorVideoData = async (req: CustomRequest, res: Response) => {
         return res.status(200).json({ error: true, errors: errors.array() });
     }
 
-    const GetVideoDataQueryString = `SELECT VideoTitle, OwnerToken, Likes, Dislikes, PublishDate, Visibility, ShowComments, ShowLikesDislikes FROM videos WHERE VideoToken="${req.params.VideoToken}"`;
+    const UserPublicToken = await UtilFunc.getUserPublicTokenFromPrivateToken(req.pool!, req.params.UserPrivateToken);
+
+    const GetVideoDataQueryString = `SELECT VideoTitle, OwnerToken, Likes, Dislikes, PublishDate, Visibility, ShowComments, ShowLikesDislikes, AvrageWatchTime, Views FROM videos WHERE VideoToken="${req.params.VideoToken}" AND OwnerToken="${UserPublicToken}"`;
     try {
         const connection = await req.pool?.promise().getConnection();
         const getVideoResponse = await query(connection, GetVideoDataQueryString);
@@ -332,6 +334,8 @@ const GetCreatorVideoData = async (req: CustomRequest, res: Response) => {
             VideoDislikes: Videodata[0].Dislikes,
             ShowComments: Videodata[0].ShowComments === 0 ? false : Videodata[0].ShowComments === 1 ? true : undefined,
             ShowLikesDislikes: Videodata[0].ShowLikesDislikes === 0 ? false : Videodata[0].ShowLikesDislikes === 1 ? true : undefined,
+            AvrageWatchTime: Videodata[0].AvrageWatchTime,
+            Views: Videodata[0].Views,
         });
     } catch (error: any) {
         logging.error(NAMESPACE, error.message);
@@ -534,8 +538,7 @@ const ChangeVideoThumbnail = async (req: any, res: Response) => {
  * @param {Response} res
  * @return {Response}
  */
-const UpdateVideoAnalytics = async (req: any, res: Response) => {
-    console.log(req.body);
+const UpdateVideoAnalytics = async (req: CustomRequest, res: Response) => {
     try {
         if (req.body.WatchTime < 2) {
             return res.status(500).json({
@@ -543,7 +546,7 @@ const UpdateVideoAnalytics = async (req: any, res: Response) => {
             });
         }
 
-        const UserPublicToken = await UtilFunc.getUserPublicTokenFromPrivateToken(req.pool!, req.body.UserPublicToken);
+        // const UserPublicToken = await UtilFunc.getUserPublicTokenFromPrivateToken(req.pool!, req.body.UserPublicToken);
         const connection = await req.pool?.promise().getConnection();
         const GetVideoDataQueryString = `SELECT AvrageWatchTime, Views FROM videos WHERE VideoToken="${req.body.VideoToken}"`;
         const getResp = await query(connection, GetVideoDataQueryString);
@@ -557,7 +560,52 @@ const UpdateVideoAnalytics = async (req: any, res: Response) => {
             });
         }
     } catch (error: any) {
-        logging.error(NAMESPACE, `ERRRO: ${error.message}`);
+        logging.error(NAMESPACE, `ERROR: ${error.message}`);
+
+        return res.status(500).json({
+            message: error.message,
+            error: true,
+        });
+    }
+};
+
+/**
+ * get video history analityics
+ * @param {CustomRequest} req
+ * @param {Response} res
+ * @return {Response}
+ */
+const GetVideoHistory = async (req: CustomRequest, res: Response) => {
+    try {
+        if (req.body.WatchTime < 2) {
+            return res.status(500).json({
+                error: false,
+            });
+        }
+
+        const connection = await req.pool?.promise().getConnection();
+        const UserPublicToken = await UtilFunc.getUserPublicTokenFromPrivateToken(req.pool!, req.params.UserPrivateToken);
+
+        const GetVideoDataQueryString = `SELECT cvh.*
+        FROM videos v
+        JOIN creator_videos_history cvh ON v.id = cvh.video_id
+        WHERE v.VideoToken="${req.params.VideoToken}" AND v.OwnerToken="${UserPublicToken}"`;
+        const getResp = await query(connection, GetVideoDataQueryString);
+        let VideoDataResp = JSON.parse(JSON.stringify(getResp));
+
+        if (Object.keys(VideoDataResp).length == 0) {
+            return res.status(200).json({
+                error: true,
+            });
+        }
+
+        return res.status(200).json({
+            error: false,
+            VideoHistoryData: VideoDataResp,
+        });
+
+    } catch (error: any) {
+        logging.error(NAMESPACE, `ERROR: ${error.message}`);
 
         return res.status(500).json({
             message: error.message,
@@ -568,6 +616,7 @@ const UpdateVideoAnalytics = async (req: any, res: Response) => {
 
 export default {
     UploadVideoFileToServer,
+    GetVideoHistory,
     GetCreatorVideoData,
     UpdateCreatorVideoData,
     DeleteCreatorVideoData,

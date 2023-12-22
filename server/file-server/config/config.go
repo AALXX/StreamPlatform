@@ -3,19 +3,26 @@ package config
 import (
 	"database/sql"
 	"fmt"
+	"os"
 
 	_ "github.com/go-sql-driver/mysql"
 )
 
 func InitDB() (*sql.DB, error) {
-    // Construct the data source name
-    dataSourceName := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s",
-        "root",
-        "root",
-        "127.0.0.1",
-        "3306",
-        "gh_platform_db",
-    )
+    	// Access the environment variables
+	dbHost := os.Getenv("MYSQL_HOST")
+	dbPort := os.Getenv("MYSQL_PORT")
+	dbUser := os.Getenv("MYSQL_USER")
+	dbPass := os.Getenv("MYSQL_PASS")
+
+	// Construct the data source name
+	dataSourceName := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s",
+		dbUser,
+		dbPass,
+		dbHost,
+		dbPort,
+		"gh_platform_db",
+	)
 
     // Open a database connection
     db, err := sql.Open("mysql", dataSourceName)

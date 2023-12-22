@@ -1,9 +1,8 @@
-import SetStateAction from 'react';
 /**
  * turns image string data to file
  * @param {string}  dataURL
  * @param {string} fileName
- * @return
+ * @return {JSX}
  */
 function dataURLtoFile(dataURL: string, fileName: string) {
     const arr = dataURL.split(',')

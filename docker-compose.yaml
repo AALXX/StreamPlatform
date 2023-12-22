@@ -16,6 +16,11 @@ services:
       - "7500:7500"
     volumes:
       - videos-driver:/accounts
+  file-server:
+    image: file-server:latest 
+    container_name: file-server
+    ports:
+      - "7300:7300"
   search-server:
     image: search-server:latest 
     container_name: search-server

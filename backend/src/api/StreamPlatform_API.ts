@@ -12,7 +12,6 @@ import { Server } from 'socket.io';
 import config from '../config/config';
 import logging from '../config/logging';
 import { createPool } from '../config/mysql';
-import mysql from 'mysql2';
 
 const NAMESPACE = 'StreamPlatform_API';
 const router = express();
