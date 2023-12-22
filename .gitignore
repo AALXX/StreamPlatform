@@ -50,4 +50,4 @@ server/video-categorize-server/src/data_images
 server/accounts/
 .svn/
 
-updateHistoryTables-server/target
+server/updateHistoryTables-server/target/

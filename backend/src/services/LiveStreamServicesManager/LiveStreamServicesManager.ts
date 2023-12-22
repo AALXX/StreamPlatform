@@ -63,7 +63,7 @@ const GetLiveAdminData = async (req: CustomRequest, res: Response) => {
         const UserPublicToken = await utilFunctions.getUserPublicTokenFromPrivateToken(req.pool!, req.params.userPrivateToken);
         const connection = await req.pool?.promise().getConnection();
         const GetLiveAdminDataQueryString = `
-        SELECT s.StreamTitle, s.Likes, s.Dislikes, s.StreamToken, u.UserName, u.AccountFolowers
+        SELECT s.StreamTitle, s.Likes, s.Dislikes, s.StreamToken, s.Active, u.UserName, u.AccountFolowers
         FROM users AS u
         LEFT JOIN streams AS s ON s.UserPublicToken = u.UserPublicToken
         WHERE u.UserPublicToken = "${UserPublicToken}";`;
@@ -71,7 +71,7 @@ const GetLiveAdminData = async (req: CustomRequest, res: Response) => {
         const results = await query(connection, GetLiveAdminDataQueryString);
 
         const data = JSON.parse(JSON.stringify(results));
-        if (data[0].StreamTitle == null || data[0].Likes == null || data[0].StreamTitle == null) {
+        if (data[0].StreamTitle == null || data[0].Likes == null || data[0].StreamTitle == null || data[0].Active === 0) {
             return res.status(200).json({
                 error: false,
                 IsLive: false,
@@ -199,8 +199,10 @@ const GetLiveData = async (req: CustomRequest, res: Response) => {
  * @return {Response}
  */
 const StartStopLive = async (req: CustomRequest, res: Response) => {
+    console.log(req.body);
     try {
-        const IsLiveCheck: { isLive: boolean; error: boolean } = await utilFunctions.CheckIfLive(req.pool!, req.body.UserPrivateToken);
+        const IsLiveCheck: { isLive: boolean; error: boolean } = await utilFunctions.CheckIfLive(req.pool!, req.body.UserPrivateToken, req.body.StreamToken);
+        // console.log(IsLiveCheck);
         if (IsLiveCheck.error) {
             logging.error(NAMESPACE, 'START_OR_STOP_LIVE_FUNCTION');
             return res.status(202).json({
@@ -219,15 +221,18 @@ const StartStopLive = async (req: CustomRequest, res: Response) => {
                 error: false,
             });
         } else if (IsLiveCheck.isLive === false) {
-            const error = await utilFunctions.StartLive(req.pool!, req.body.LiveTitle, req.body.UserPrivateToken);
+            const { error, LiveToken } = await utilFunctions.StartLive(req.pool!, req.body.LiveTitle, req.body.UserPrivateToken);
             if (error) {
                 return res.status(202).json({
                     error: true,
+                    LiveToken: LiveToken,
                 });
             }
+            // console.log(LiveToken);
 
             return res.status(202).json({
                 error: false,
+                LiveToken: LiveToken,
             });
         }
 
@@ -341,6 +346,7 @@ const SendMessage = async (pool: mysql.Pool, io: Server, socket: Socket, Message
             return;
         } else {
             await SCYconnect();
+            const connection = await pool.promise().getConnection();
 
             const UserPublicToken = await utilFunctions.getUserPublicTokenFromPrivateToken(pool, UserPrivateToken);
             if (UserPublicToken === null) {
@@ -352,7 +358,7 @@ const SendMessage = async (pool: mysql.Pool, io: Server, socket: Socket, Message
             LEFT JOIN streams s ON u.UserPublicToken = s.UserPublicToken AND s.StreamToken = "${LiveToken}"
             WHERE u.UserPublicToken = "${UserPublicToken}";`;
 
-            const results = await query(pool, GetLiveDataQueryString);
+            const results = await query(connection, GetLiveDataQueryString);
             const data = JSON.parse(JSON.stringify(results));
             lastMessageTimes.set(socketId, currentTime);
             await SCYquery(`INSERT INTO LiveMessages (Id, livetoken, OwnerToken, Message, SentAt)

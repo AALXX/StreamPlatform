@@ -9,7 +9,6 @@ import { IDasbordLiveDataResponse, ILiveData } from './ILivePlayer'
 
 const getDashbordData = async (userToken: string): Promise<IDasbordLiveDataResponse> => {
     const dashbordData = await axios.get(`${process.env.SERVER_BACKEND}/live-manager/get-live-admin-data/${userToken}`)
-
     return {
         error: dashbordData.data.error,
         LiveToken: dashbordData.data.LiveToken,
@@ -39,13 +38,18 @@ const getLiveData = async (useroken: string, StreamToken: string): Promise<ILive
     }
 }
 
-const startStopLive = async (LiveTitle: string, UserPrivateToken: string, AccountFolowers: number): Promise<boolean> => {
+const startStopLive = async (LiveTitle: string, UserPrivateToken: string, AccountFolowers: number, LiveToken: string): Promise<string> => {
     const resp = await axios.post(`${process.env.SERVER_BACKEND}/live-manager/start-stop-live`, {
         LiveTitle: LiveTitle,
         UserPrivateToken: UserPrivateToken,
-        AccountFolowers: AccountFolowers
+        AccountFolowers: AccountFolowers,
+        StreamToken: LiveToken
     })
-    return resp.data.error
+
+    if (resp.data.error) {
+        return ''
+    }
+    return resp.data.LiveToken
 }
 
 //* /////////////////////////////

@@ -81,7 +81,7 @@ const LivePlayerDashbord = (props: ILivePlayerProps) => {
             }
         }
 
-        ;(async () => {
+        ; (async () => {
             const dashData = await getDashbordData(getCookie('userToken') as string)
             console.log(dashData)
             setLiveData(dashData)
@@ -168,7 +168,7 @@ const LivePlayerDashbord = (props: ILivePlayerProps) => {
 
                             <h1 className="text-white self-center mr-[1.5rem]">{liveLikes}</h1>
 
-                            <img src="/assets/PlayerIcons/DisLike_icon.svg" className="cursor-pointer w-[1.6rem] ml-auto mr-[.5rem]" alt="not muted image" />
+                            <img src="/assets/PlayerIcons/Dislike_icon.svg" className="cursor-pointer w-[1.6rem] ml-auto mr-[.5rem]" alt="not muted image" />
 
                             <h1 className="text-white self-center mr-[4rem]">{liveDisLikes}</h1>
                         </div>
@@ -176,9 +176,14 @@ const LivePlayerDashbord = (props: ILivePlayerProps) => {
                             <button
                                 className="text-[#e46a6a] mr-4  bg-[#3d3d3d] h-[4rem] self-center"
                                 onClick={async () => {
-                                    const error = await startStopLive(liveTitle, getCookie('userToken') as string, LiveData.AccountFolowers)
-                                    if (!error) {
+                                    const LiveToken = await startStopLive(liveTitle, getCookie('userToken') as string, LiveData.AccountFolowers, LiveData.LiveToken)
+                                    if (LiveToken !== '') {
                                         setIsLive(!isLive)
+
+                                        setLiveData(prevState => ({
+                                            ...prevState, // Spread the previous state
+                                            LiveToken: LiveToken, // Update the LiveLikes property
+                                        }));
                                     }
                                 }}
                             >
@@ -188,9 +193,14 @@ const LivePlayerDashbord = (props: ILivePlayerProps) => {
                             <button
                                 className="text-[#e46a6a] mr-4  bg-[#3d3d3d] h-[4rem] self-center"
                                 onClick={async () => {
-                                    const error = await startStopLive(liveTitle, getCookie('userToken') as string, LiveData.AccountFolowers)
-                                    if (!error) {
+                                    const LiveToken = await startStopLive(liveTitle, getCookie('userToken') as string, LiveData.AccountFolowers, LiveData.LiveToken)
+                                    if (LiveToken !== '') {
                                         setIsLive(!isLive)
+
+                                        setLiveData(prevState => ({
+                                            ...prevState, // Spread the previous state
+                                            LiveToken: LiveToken, // Update the LiveLikes property
+                                        }));
                                     }
                                 }}
                             >

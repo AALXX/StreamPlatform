@@ -39,7 +39,6 @@ const HashPassword = async (password: string) => {
  */
 const UserNameAndEmailExistCheck = (UserName: string, Email: string, callback: any) => {
     const NAMESPACE = 'USERNAME_EMAIL_EXIST_CHECK_FUNCTION';
-    console.log('CUM');
     const CheckIfUsernamexExistsQuerryString = `SELECT 1 FROM users WHERE UserName="${UserName}" OR UserEmail="${Email}";`;
 
     // connect()
@@ -254,9 +253,10 @@ const RemoveDirectory = (dirPath: string) => {
 /**
  * Start a live
  * @param {string} userPrivateToken
+ * @param {string} LiveToken
  * @return {}
  */
-const CheckIfLive = async (pool: mysql.Pool, userPrivateToken: string): Promise<{ isLive: boolean; error: boolean }> => {
+const CheckIfLive = async (pool: mysql.Pool, userPrivateToken: string, LiveToken: string): Promise<{ isLive: boolean; error: boolean }> => {
     const NAMESPACE = 'CHECK_IF_IS_LIVE_FUNCTION';
 
     try {
@@ -265,14 +265,15 @@ const CheckIfLive = async (pool: mysql.Pool, userPrivateToken: string): Promise<
         if (UserPublicToken == null) {
             return { isLive: false, error: true };
         }
-        const StatALiveQueryString = `SELECT id FROM streams WHERE UserPublicToken="${UserPublicToken}"`;
+        const StatALiveQueryString = `SELECT id, Active FROM streams WHERE UserPublicToken="${UserPublicToken}" AND StreamToken="${LiveToken}"`;
 
         const results = await query(connection, StatALiveQueryString);
         const data = JSON.parse(JSON.stringify(results));
         if (Object.keys(data).length == 0) {
             return { isLive: false, error: false };
         }
-        return { isLive: true, error: false };
+
+        return { isLive: data[0].Active === 0 ? false : true, error: false };
     } catch (error: any) {
         logging.error(NAMESPACE, error.message);
         return { isLive: false, error: true };
@@ -284,7 +285,7 @@ const CheckIfLive = async (pool: mysql.Pool, userPrivateToken: string): Promise<
  * @param {string} userPrivateToken
  * @return {}
  */
-const StartLive = async (pool: mysql.Pool, LiveTitle: string, userPrivateToken: string): Promise<boolean> => {
+const StartLive = async (pool: mysql.Pool, LiveTitle: string, userPrivateToken: string): Promise<{ error: boolean; LiveToken: string }> => {
     const NAMESPACE = 'START_LIVE_FUNCTION';
 
     try {
@@ -292,10 +293,9 @@ const StartLive = async (pool: mysql.Pool, LiveTitle: string, userPrivateToken: 
         const UserPublicToken = await utilFunctions.getUserPublicTokenFromPrivateToken(pool, userPrivateToken);
         const connection = await pool.promise().getConnection();
         if (UserPublicToken == null) {
-            return true;
+            return { error: true, LiveToken: '' };
         }
         const currentTimestamp = new Date().toISOString().replace(/T/, ' ').replace(/\..+/, ''); // Get current timestamp in MySQL format
-        console.log(currentTimestamp);
         const StatALiveQueryString = `INSERT INTO streams(StreamTitle,  UserPublicToken, StartedAt, StreamToken, Active)
         SELECT "${LiveTitle}", "${UserPublicToken}", "${currentTimestamp}",  "${StreamToken}", "1"
         FROM users AS u
@@ -305,13 +305,13 @@ const StartLive = async (pool: mysql.Pool, LiveTitle: string, userPrivateToken: 
 
         const data = JSON.parse(JSON.stringify(results));
         if (data.affectedRows == 0) {
-            return true;
+            return { error: true, LiveToken: '' };
         }
 
-        return false;
+        return { error: false, LiveToken: StreamToken };
     } catch (error: any) {
         logging.error(NAMESPACE, error.message);
-        return true;
+        return { error: true, LiveToken: '' };
     }
 };
 

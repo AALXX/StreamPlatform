@@ -19,7 +19,6 @@ const router = express();
 router.use(express.urlencoded({ extended: false }));
 router.use(express.json());
 
-
 const pool = createPool();
 
 //* Api rules
@@ -58,7 +57,7 @@ httpServer.listen(config.server.port, () => {
 
 const io = new Server(httpServer, {
     cors: {
-        origin: ['http://test:3000'],
+        origin: ['http://localhost:3000'],
     },
 });
 

@@ -41,7 +41,7 @@ const LivePlayer = (props: ILivePlayerProps) => {
     const [liveDisLikes, setLiveDisLikes] = useState<number>(0)
 
     useEffect(() => {
-        ;(async () => {
+        ; (async () => {
             const LiveData = await getLiveData(getCookie('userToken') as string, props.userStreamToken)
 
             if (VideoRef.current) {
@@ -208,7 +208,7 @@ const LivePlayer = (props: ILivePlayerProps) => {
                         {userDisLikedVideo ? (
                             <>
                                 <img
-                                    src="/assets/PlayerIcons/DisLiked_icon.svg"
+                                    src="/assets/PlayerIcons/Disliked_icon.svg"
                                     className="cursor-pointer w-[1.6rem] ml-auto mr-[.5rem]"
                                     alt="not muted image"
                                     onClick={async () => {
@@ -222,7 +222,7 @@ const LivePlayer = (props: ILivePlayerProps) => {
                         ) : (
                             <>
                                 <img
-                                    src="/assets/PlayerIcons/DisLike_icon.svg"
+                                    src="/assets/PlayerIcons/Dislike_icon.svg"
                                     className="cursor-pointer w-[1.6rem] ml-auto mr-[.5rem]"
                                     alt="not muted image"
                                     onClick={async () => {
