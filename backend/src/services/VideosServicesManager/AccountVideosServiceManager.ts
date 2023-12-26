@@ -11,7 +11,6 @@ import UtilFunc from '../../util/utilFunctions';
 import axios from 'axios';
 import utilFunctions from '../../util/utilFunctions';
 import { validationResult, param } from 'express-validator';
-import mysql from 'mysql2';
 
 const NAMESPACE = 'AccountUploadServiceManager';
 
@@ -31,7 +30,6 @@ const CustomRequestValidationResult = validationResult.withDefaults({
  */
 const storage = multer.diskStorage({
     destination: (req: CustomRequest, file: any, callback: any) => {
-        callback(null, `${process.env.ACCOUNTS_FOLDER_PATH}/VideosTmp`);
     },
 
     filename: (req: CustomRequest, file, cb: any) => {
@@ -148,44 +146,50 @@ const UploadVideoFileToServer = async (req: any, res: Response) => {
                         formData.append('file', base64Video);
                         formData.append('video_name', `${req.body.VideoTitle}.mp4`);
 
-                        const video_category_server_resp = await axios.post(`${process.env.VIDEO_CATEGORIZE_SERVER}/get-video-category`, formData, {
-                            headers: {
-                                'Content-Type': 'multipart/form-data',
-                            },
-                        });
-                        if (video_category_server_resp.data.error == true) {
+                        try {
+                            const video_category_server_resp = await axios.post(`${process.env.VIDEO_CATEGORIZE_SERVER}/get-video-category`, formData, {
+                                headers: {
+                                    'Content-Type': 'multipart/form-data',
+                                },
+                            });
+                            if (video_category_server_resp.data.error == true) {
+                                return res.status(200).json({
+                                    error: true,
+                                });
+                            }
+
+                            const vide_index_server_resp = await axios.post(`${process.env.SEARCH_SERVER}/index-video`, {
+                                VideoTitle: req.body.VideoTitle,
+                                VideoToken: VideoToken,
+                                VideoVisibility: req.body.VideoVisibility,
+                                OwnerPrivateToken: req.body.UserPrivateToken,
+                            });
+
+                            if (vide_index_server_resp.data.error == true) {
+                                return res.status(200).json({
+                                    error: true,
+                                });
+                            }
+
+                            if ((await SendVideoCategoryToDb(req, VideoToken, video_category_server_resp.data.video_type)) == false) {
+                                return res.status(200).json({
+                                    error: true,
+                                });
+                            }
+
+                            // * Creates a 720p and 480p variant of the video
+                            // await VideoProceesor(`${req.body.VideoTitle}`, `${process.env.ACCOUNTS_FOLDER_PATH}/${req.body.UserPrivateToken}/${VideoToken}/${req.body.VideoTitle}_Source.mp4`, '1280x720').then(async () => {
+                            //     await VideoProceesor(`${req.body.VideoTitle}`, `../videos/${VideoToken}/${req.body.VideoTitle}_Source.mp4`, '480x360').then(() => {});
+                            // });
+
+                            return res.status(200).json({
+                                error: false,
+                            });
+                        } catch (error) {
                             return res.status(200).json({
                                 error: true,
                             });
                         }
-
-                        const vide_index_server_resp = await axios.post(`${process.env.SEARCH_SERVER}/index-video`, {
-                            VideoTitle: req.body.VideoTitle,
-                            VideoToken: VideoToken,
-                            VideoVisibility: req.body.VideoVisibility,
-                            OwnerPrivateToken: req.body.UserPrivateToken,
-                        });
-
-                        if (vide_index_server_resp.data.error == true) {
-                            return res.status(200).json({
-                                error: true,
-                            });
-                        }
-
-                        if ((await SendVideoCategoryToDb(req, VideoToken, video_category_server_resp.data.video_type)) == false) {
-                            return res.status(200).json({
-                                error: true,
-                            });
-                        }
-
-                        // * Creates a 720p and 480p variant of the video
-                        // await VideoProceesor(`${req.body.VideoTitle}`, `${process.env.ACCOUNTS_FOLDER_PATH}/${req.body.UserPrivateToken}/${VideoToken}/${req.body.VideoTitle}_Source.mp4`, '1280x720').then(async () => {
-                        //     await VideoProceesor(`${req.body.VideoTitle}`, `../videos/${VideoToken}/${req.body.VideoTitle}_Source.mp4`, '480x360').then(() => {});
-                        // });
-
-                        return res.status(200).json({
-                            error: false,
-                        });
                     },
                 );
             });
@@ -259,7 +263,6 @@ const ThumbnailProceesor = async (path: string) =>
         FFmpeg(path)
             .size(`626x352`)
             .on('end', () => {
-                console.log('Image resizing complete');
                 resolve({ error: false });
             })
             .on('error', (err) => {
@@ -509,7 +512,6 @@ const ChangeVideoThumbnail = async (req: any, res: Response) => {
                 error: true,
             });
         }
-        console.log(userPublicToken);
 
         fs.rename(
             `${process.env.ACCOUNTS_FOLDER_PATH}/VideosTmp/${req.files['VideoThumbnail'][0].originalname}`,
@@ -603,7 +605,6 @@ const GetVideoHistory = async (req: CustomRequest, res: Response) => {
             error: false,
             VideoHistoryData: VideoDataResp,
         });
-
     } catch (error: any) {
         logging.error(NAMESPACE, `ERROR: ${error.message}`);
 

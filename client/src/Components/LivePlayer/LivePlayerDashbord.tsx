@@ -37,6 +37,7 @@ const LivePlayerDashbord = (props: ILivePlayerProps) => {
 
     const [liveLikes, setLiveLikes] = useState<number>(0)
     const [liveDisLikes, setLiveDisLikes] = useState<number>(0)
+    const [LiveViwers, setLiveViewrs] = useState<number>(0)
 
     useEffect(() => {
         if (VideoRef.current) {
@@ -97,6 +98,20 @@ const LivePlayerDashbord = (props: ILivePlayerProps) => {
             }
         }
     }, [])
+
+
+
+    useEffect(() => {
+
+        if (props.socket) {
+            // Emit event and manage socket interactions when `socket` changes
+            props.socket.emit('join-live', { LiveToken: LiveData.LiveToken });
+
+            props.socket.on('get-viewers', ({ viewers }) => {
+                setLiveViewrs(viewers)
+            });
+        }
+    }, [props.socket])
 
     return (
         <div className="flex h-[100vh]">
@@ -171,6 +186,12 @@ const LivePlayerDashbord = (props: ILivePlayerProps) => {
                             <img src="/assets/PlayerIcons/Dislike_icon.svg" className="cursor-pointer w-[1.6rem] ml-auto mr-[.5rem]" alt="not muted image" />
 
                             <h1 className="text-white self-center mr-[4rem]">{liveDisLikes}</h1>
+                            <img
+                                src="/assets/LiveStreamIcons/LiveViwers_icon.svg"
+                                className="cursor-pointer w-[1.6rem] ml-auto mr-[.5rem]"
+                                alt="viwers image"
+                            />
+                            <h1 className="text-white self-center mr-[4rem]">{LiveViwers}</h1>
                         </div>
                         {isLive ? (
                             <button
@@ -211,7 +232,7 @@ const LivePlayerDashbord = (props: ILivePlayerProps) => {
                 </div>
             </div>
             <Suspense fallback={<div>Loading...</div>}>
-                <LiveChatAdmin UserToken={userToken} LiveToken={LiveData.LiveToken} />
+                <LiveChatAdmin UserToken={userToken} LiveToken={LiveData.LiveToken} ClientSocket={props.socket} />
             </Suspense>
         </div>
     )

@@ -51,3 +51,4 @@ server/accounts/
 .svn/
 
 server/updateHistoryTables-server/target/
+server/live-stream-server/live-auth-server/target/

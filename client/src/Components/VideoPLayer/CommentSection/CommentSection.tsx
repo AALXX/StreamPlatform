@@ -25,11 +25,18 @@ const CommentSection = (props: IVideoPlayerProps) => {
 
     const postComment = async () => {
         const res = await axios.post(`${process.env.SERVER_BACKEND}/videos-manager/post-comment`, { UserToken: props.UserToken, VideoToken: props.VideoToken, Comment: commentInput })
+
+        if (hasComments == false) {
+            setHasComments(true)
+
+        }
         setVideoComments(videoComments => [...videoComments, { ownerToken: props.UserToken!, videoToken: props.VideoToken!, comment: commentInput, ownerName: res.data.userName }])
+
+
     }
 
     useEffect(() => {
-        ;(async () => {
+        ; (async () => {
             const getCommentsForVideo = await axios.get(`${process.env.SERVER_BACKEND}/videos-manager/get-video-comments/${props.VideoToken}`)
             if (getCommentsForVideo.data.CommentsFound === true) {
                 setHasComments(true)
@@ -51,7 +58,10 @@ const CommentSection = (props: IVideoPlayerProps) => {
                     <></>
                 )}
             </div>
-            <div className="flex h-[12%] bg-[#292929]">
+            <form className="flex h-[12%] bg-[#292929]" onSubmit={(e) => {
+                e.preventDefault()
+                postComment()
+            }}>
                 <input type="text" className="h-9 self-center ml-7 w-[75%] bg-[#373737] text-white indent-3" placeholder="Comment" onChange={e => setCommentInput(e.currentTarget.value)} />
                 <div
                     className="flex bg-[#373737] ml-3 w-10  h-9 self-center cursor-pointer hover:bg-[#444444]"
@@ -61,7 +71,7 @@ const CommentSection = (props: IVideoPlayerProps) => {
                 >
                     <Image className="ml-1 self-center" src="/assets/CommentsIcons/SendComment_icon.svg" width={30} height={30} alt="Send image" />
                 </div>
-            </div>
+            </form>
         </div>
     )
 }

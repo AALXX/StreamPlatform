@@ -39,6 +39,7 @@ const LivePlayer = (props: ILivePlayerProps) => {
     const [userDisLikedVideo, setUserDisLikedVideo] = useState<boolean>(false)
     const [liveLikes, setLiveLikes] = useState<number>(0)
     const [liveDisLikes, setLiveDisLikes] = useState<number>(0)
+    const [LiveViwers, setLiveViewrs] = useState<number>(0)
 
     useEffect(() => {
         ; (async () => {
@@ -99,12 +100,22 @@ const LivePlayer = (props: ILivePlayerProps) => {
             setLiveDisLikes(LiveData.LiveDislikes)
         })()
 
+
         return () => {
             if (hls.current) {
                 hls.current.destroy()
             }
         }
     }, [])
+
+    useEffect(() => {
+
+        if (props.socket) {
+            props.socket.on('get-viewers', ({ viewers }) => {
+                setLiveViewrs(viewers)
+            });
+        }
+    }, [props.socket])
 
     return (
         <div className="flex flex-col mt-[3rem] ml-[6rem] h-[100vh] ">
@@ -237,6 +248,12 @@ const LivePlayer = (props: ILivePlayerProps) => {
                             </>
                         )}
                         <h1 className="text-white self-center mr-[4rem]">{liveDisLikes}</h1>
+                        <img
+                            src="/assets/LiveStreamIcons/LiveViwers_icon.svg"
+                            className="cursor-pointer w-[1.6rem] ml-auto mr-[.5rem]"
+                            alt="viwers image"
+                        />
+                        <h1 className="text-white self-center mr-[4rem]">{LiveViwers}</h1>
                     </div>
                 </div>
             </div>

@@ -98,7 +98,7 @@ const GetCreatorAccountData = async (req: CustomRequest, res: Response) => {
         if (req.pool !== undefined) {
             privateToken = await UtilFunc.getUserPrivateTokenFromPublicToken(req.pool, req.params.publicToken);
         }
-      
+
         let itFollows = false;
         if (privateToken != null && req.pool !== undefined) {
             itFollows = await UtilFunc.userFollowAccountCheck(req.pool, privateToken as string, req.params.accountToken);
@@ -669,10 +669,104 @@ const ChangeUserPasswod = async (req: CustomRequest, res: Response) => {
     }
 };
 
+/**
+ * Get User Analytics
+ * @param {CustomRequest} req
+ * @param {Response} res
+ * @return {Response}
+ */
+const GetUserAnalytics = async (req: CustomRequest, res: Response) => {
+    const errors = CustomRequestValidationResult(req);
+    if (!errors.isEmpty()) {
+        errors.array().map((error) => {
+            logging.error('GET_USER_ACCOUNT_ANALYTICS_FUNC', error.errorMsg);
+        });
+
+        return res.status(200).json({ error: true, msg: errors.array() });
+    }
+
+    try {
+        const UserPublicToken = await utilFunctions.getUserPublicTokenFromPrivateToken(req.pool!, req.params.UserPrivateToken);
+        const connection = await req.pool?.promise().getConnection();
+        const GetUserHistoryQueryString = `SELECT cah.*
+        FROM users u
+        JOIN user_account_history cah ON u.id = cah.user_id
+        WHERE u.UserPublicToken="${UserPublicToken}"`;
+        const userData = await query(connection, GetUserHistoryQueryString);
+
+        const GetUserStats = `SELECT
+        users.AccountFolowers AS followers,
+        (
+            SELECT COUNT(v.id)
+            FROM videos v
+            WHERE v.OwnerToken = users.UserPublicToken
+        ) AS videos,
+        CAST((
+            SELECT SUM(v.views)
+            FROM videos v
+            WHERE v.OwnerToken = users.UserPublicToken
+        ) AS SIGNED) AS total_views
+        FROM
+        users WHERE UserPublicToken="${UserPublicToken}";`;
+        const userDataStat = await query(connection, GetUserStats);
+
+        if (Object.keys(userData).length == 0) {
+            return res.status(200).json({
+                error: true,
+            });
+        }
+        return res.status(200).json({
+            error: false,
+            userAnalyticsData: userDataStat[0],
+            UserHistoryData: userData,
+        });
+    } catch (error: any) {
+        logging.error(NAMESPACE, error.message);
+        res.status(202).json({
+            error: true,
+            msg: error.message,
+        });
+    }
+};
+
+/**
+ * Change User Password
+ * @param {CustomRequest} req
+ * @param {Response} res
+ * @return {Response}
+ */
+const GetStreamAnalytics = async (req: CustomRequest, res: Response) => {
+    const errors = CustomRequestValidationResult(req);
+    if (!errors.isEmpty()) {
+        errors.array().map((error) => {
+            logging.error('GET_STREAM_ANALYTICS_FUNC', error.errorMsg);
+        });
+
+        return res.status(200).json({ error: true, msg: errors.array() });
+    }
+
+    try {
+        const UserPublicToken = await utilFunctions.getUserPublicTokenFromPrivateToken(req.pool!, req.params.UserPrivateToken);
+        const connection = await req.pool?.promise().getConnection();
+        const GetLiveStreamAnalytics = `SELECT * FROM streams WHERE UserPublicToken="${UserPublicToken}" AND DATE(StartedAt) = '${req.params.Date}';`;
+        const userData = await query(connection, GetLiveStreamAnalytics);
+
+        console.log(userData);
+    } catch (error: any) {
+        logging.error(NAMESPACE, error.message);
+        res.status(202).json({
+            error: true,
+            msg: error.message,
+        });
+    }
+};
+
 export default {
     GetUserAccountData,
     GetAccountVideos,
+    GetStreamAnalytics,
     GetCreatorVideos,
+    GetUserAnalytics,
     ChangeUserData,
     ChangeUserIcon,
     SendPwdLinkToEmail,

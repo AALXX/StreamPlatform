@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from 'react'
-import * as d3 from 'd3';
+import { scaleBand, scaleLinear, max, timeFormat, select, axisBottom, axisLeft } from 'd3';
 
 
 export interface IGraphType {
@@ -26,20 +26,20 @@ const VideoAnalytics = (props: IVideoAnalyticsProps) => {
         const height = 360;
         const margin = { top: 30, right: 30, bottom: 30, left: 70 };
 
-        const x = d3.scaleBand()
+        const x = scaleBand()
             .domain(props.videoHistoryData.map(d => new Date(d.update_date).toISOString().substring(0, 10)))
             .range([margin.left, width - margin.right])
             .padding(0.1);
 
-        const y = d3.scaleLinear()
-            .domain([0, d3.max(props.videoHistoryData, d => d.views) as number])
+        const y = scaleLinear()
+            .domain([0, max(props.videoHistoryData, d => d.views) as number])
             .nice()
             .range([height - margin.bottom, margin.top]);
 
 
-        const dateFormatter = d3.timeFormat('%Y-%m-%d');
+        const dateFormatter = timeFormat('%Y-%m-%d');
 
-        const svg = d3.select(chartRef.current)
+        const svg = select(chartRef.current)
             .append('svg')
             .attr('width', width)
             .attr('height', height);
@@ -72,11 +72,11 @@ const VideoAnalytics = (props: IVideoAnalyticsProps) => {
 
         svg.append('g')
             .attr('transform', `translate(0, ${height - margin.bottom})`)
-            .call(d3.axisBottom(x).tickFormat(d => dateFormatter(new Date(d))));
+            .call(axisBottom(x).tickFormat(d => dateFormatter(new Date(d))));
 
         svg.append('g')
             .attr('transform', `translate(${margin.left}, 0)`)
-            .call(d3.axisLeft(y));
+            .call(axisLeft(y));
 
 
     }, [chartRef]);

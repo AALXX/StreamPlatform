@@ -1,48 +1,30 @@
 'use client'
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import Image from 'next/image'
 
 import Message from './Message'
-import { useEffect } from 'react'
-import { io, Socket } from 'socket.io-client'
 import { getCookie } from 'cookies-next'
-import { isLoggedIn } from '@/security/Accounts'
 import Link from 'next/link'
 import { ICommentProps, ILiveChatProps } from '../ILiveChat'
 
 const LiveChat = (props: ILiveChatProps) => {
     const [commentInput, setCommentInput] = useState<string>('')
     const [liveMessages, setliveMessages] = useState<Array<ICommentProps>>([])
-    const [socket, setSocket] = useState<Socket | null>(null)
 
-    const [userLoggedIn, setUserLoggedIn] = useState<boolean>(false)
 
     useEffect(() => {
-        const loginAync = async () => {
-            const usrLoggedIn = await isLoggedIn()
-            setUserLoggedIn(usrLoggedIn)
+
+        if (props.ClientSocket) {
+            props.ClientSocket.on('recived-message', ({ message, ownerName, ownerToken, isStreamer }) => {
+                setliveMessages(liveMessages => [...liveMessages, { ownerToken, message, ownerName, isStreamer }]);
+            });
         }
-        loginAync()
+    }, [props.ClientSocket])
 
-        // Connect to the Socket.IO server
-        const newSocket = io(process.env.LIVE_CHAT_SERVER as string) // Replace with your server URL
-        setSocket(newSocket)
-
-        newSocket.emit('join-live', { LiveToken: props.LiveToken })
-
-        newSocket.on('recived-message', ({ message, ownerName, ownerToken, isStreamer }) => {
-            setliveMessages(liveMessages => [...liveMessages, { ownerToken: ownerToken, message: message, ownerName: ownerName, isStreamer: isStreamer }])
-        })
-
-        // Cleanup on unmount
-        return () => {
-            newSocket.disconnect()
-        }
-    }, [])
 
     const postMessage = (e: any) => {
         e.preventDefault()
-        socket?.emit('send-message', { message: commentInput, LiveToken: props.LiveToken, UserPrivateToken: getCookie('userToken') as string })
+        props.ClientSocket?.emit('send-message', { message: commentInput, LiveToken: props.LiveToken, UserPrivateToken: getCookie('userToken') as string })
     }
 
     return (
@@ -51,14 +33,14 @@ const LiveChat = (props: ILiveChatProps) => {
                 {Object.keys(liveMessages).length > 0 ? (
                     <>
                         {liveMessages.map((comment: ICommentProps, index: number) => (
-                            <Message key={index} ownerToken={comment.ownerToken} message={comment.message} ownerName={comment.ownerName} isStreamer={comment.isStreamer}/>
+                            <Message key={index} ownerToken={comment.ownerToken} message={comment.message} ownerName={comment.ownerName} isStreamer={comment.isStreamer} />
                         ))}
                     </>
                 ) : (
                     <></>
                 )}
             </div>
-            {userLoggedIn ? (
+            {props.userLoggedIn ? (
                 <form className="flex h-[12%] bg-[#292929]" onSubmit={postMessage}>
                     <input type="text" className="h-9 self-center ml-7 w-[75%] bg-[#373737] text-white indent-3" placeholder="Comment" onChange={e => setCommentInput(e.currentTarget.value)} />
                     <label className="flex bg-[#373737] ml-3 w-10  h-9 self-center cursor-pointer hover:bg-[#444444]" htmlFor="PostButton">

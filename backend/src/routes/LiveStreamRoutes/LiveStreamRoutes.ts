@@ -16,5 +16,4 @@ router.post('/start-stop-live', body('UserPrivateToken').not().isEmpty().trim(),
 //* client stream
 router.post('/like-dislike-live', body('userToken').not().isEmpty().trim(), body('streamToken').not().isEmpty().trim(), LiveStreamServices.LikeDislikeLiveFunc);
 
-
 export = router;

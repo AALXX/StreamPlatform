@@ -31,10 +31,15 @@ services:
     container_name: categorize-server
     ports:
       - "6200:6200"
+  live-auth-server:
+    image: live-auth-server:latest 
+    container_name: live-auth-container
+    ports:
+      - "7555:7555"
   rtmp:
     image: stream-server-img:latest 
     ports:
-      - "1935:1935"
+      - "7550:7550"
     container_name: rtmp_server
     volumes:
       - videos-driver:/accounts:rw

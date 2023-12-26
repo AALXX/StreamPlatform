@@ -90,6 +90,7 @@ const AccountProfile = () => {
         case 'About':
             component = <AboutChanelTab userDescription={userData.UserDescription} />
             break
+
         default:
             component = <div>No matching component found</div>
     }

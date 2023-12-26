@@ -63,7 +63,7 @@ const io = new Server(httpServer, {
 
 io.on('connection', (socket) => {
     socket.on('join-live', ({ LiveToken }) => {
-        LiveServices.JoinLive(LiveToken, socket);
+        return LiveServices.JoinLive(io, LiveToken, socket);
     });
 
     socket.on('send-message', async ({ message, LiveToken, UserPrivateToken }) => {

@@ -48,7 +48,6 @@ const EditVideoComponent = ({ videoToken }: { videoToken: string }) => {
 
             const histres = await axios.get(`${process.env.SERVER_BACKEND}/videos-manager/get-video-history-data/${getCookie('userToken')}/${videoToken}`)
             setVideoHistoryData(histres.data.VideoHistoryData)
-            console.log(histres.data.VideoHistoryData)
         })()
 
     }, [])

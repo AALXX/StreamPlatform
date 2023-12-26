@@ -7,7 +7,8 @@ import (
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
     "github.com/joho/godotenv"
-
+	
+	"os"
 	"log"
 )
 
@@ -17,6 +18,17 @@ func main() {
     if err != nil {
         log.Fatalf("Error loading .env file: %v", err)
     }
+
+		// Specify the folder path you want to delete
+	folderPath := "videos_index/"
+
+	// Attempt to remove the folder and its contents
+	ferr := os.RemoveAll(folderPath)
+	if ferr != nil {
+		log.Fatal(err)
+
+		return
+	}
 
 	// Initialize the database connection
 	db, err := config.InitDB()

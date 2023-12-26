@@ -34,5 +34,7 @@ router.post('/change-user-icon', UserAccountServices.ChangeUserIcon);
 router.post('/follow', body('accountToken').not().isEmpty(), UserAccountServices.FollowAccount);
 router.get('/get-creator-data/:publicToken/:accountToken', UserAccountServices.GetCreatorAccountData);
 router.get('/get-creator-videos/:ownerToken', param('ownerToken').not().isEmpty(), UserAccountServices.GetCreatorVideos);
+router.get('/get-creator-analytics-data/:UserPrivateToken', param('UserPrivateToken').not().isEmpty(), UserAccountServices.GetUserAnalytics);
+router.get('/get-stream-analytics-data/:UserPrivateToken/:Date', param('UserPrivateToken').not().isEmpty(), UserAccountServices.GetStreamAnalytics);
 
 export = router;

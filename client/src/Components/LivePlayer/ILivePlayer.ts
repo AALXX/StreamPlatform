@@ -1,4 +1,4 @@
-import { Dispatch, SetStateAction } from "react"
+import { Socket } from 'socket.io-client';
 
 interface IDasbordLiveDataResponse {
     error: boolean
@@ -39,6 +39,7 @@ interface ILiveData {
 
 interface ILivePlayerProps {
     userStreamToken: string
+    socket:Socket
 }
 
 export type { ILiveData, ILivePlayerProps, IDasbordLiveData, IDasbordLiveDataResponse }

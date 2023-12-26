@@ -27,6 +27,7 @@ const CustomRequestValidationResult = validationResult.withDefaults({
  * @return {Response}
  */
 const LiveStreamAuth = async (req: CustomRequest, res: Response) => {
+    console.log(req.body);
     try {
         const connection = await req.pool?.promise().getConnection();
         const GetUserDataQueryString = `SELECT StreamKey FROM users WHERE UserPublicToken="${req.body.name}";`;
@@ -69,7 +70,6 @@ const GetLiveAdminData = async (req: CustomRequest, res: Response) => {
         WHERE u.UserPublicToken = "${UserPublicToken}";`;
 
         const results = await query(connection, GetLiveAdminDataQueryString);
-
         const data = JSON.parse(JSON.stringify(results));
         if (data[0].StreamTitle == null || data[0].Likes == null || data[0].StreamTitle == null || data[0].Active === 0) {
             return res.status(200).json({
@@ -199,7 +199,6 @@ const GetLiveData = async (req: CustomRequest, res: Response) => {
  * @return {Response}
  */
 const StartStopLive = async (req: CustomRequest, res: Response) => {
-    console.log(req.body);
     try {
         const IsLiveCheck: { isLive: boolean; error: boolean } = await utilFunctions.CheckIfLive(req.pool!, req.body.UserPrivateToken, req.body.StreamToken);
         // console.log(IsLiveCheck);
@@ -329,8 +328,11 @@ const LikeDislikeLiveFunc = async (req: CustomRequest, res: Response) => {
     }
 };
 
-const JoinLive = (LiveToken: string, socket: Socket) => {
+const JoinLive = (io: Server, LiveToken: string, socket: Socket) => {
     socket.join(LiveToken);
+    const room = io.sockets.adapter.rooms.get(LiveToken);
+    const viewers = room ? room.size : 0;
+    socket.emit('get-viewers', { viewers: viewers });
 };
 
 const delayBetweenCustomRequests = 2000; // Adjust this to set the delay in milliseconds
