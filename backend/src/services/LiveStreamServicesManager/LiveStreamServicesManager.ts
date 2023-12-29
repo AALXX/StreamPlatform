@@ -328,19 +328,47 @@ const LikeDislikeLiveFunc = async (req: CustomRequest, res: Response) => {
     }
 };
 
-const JoinLive = (io: Server, LiveToken: string, socket: Socket) => {
+const userPublicTokensMap = new Map<string, Set<string>>(); // Map<LiveToken, Set<UserPublicToken>>
+const JoinLive = async (pool: mysql.Pool, io: Server, LiveToken: string, UserPublicToken: string, socket: Socket) => {
     socket.join(LiveToken);
-    const room = io.sockets.adapter.rooms.get(LiveToken);
-    const viewers = room ? room.size : 0;
-    socket.emit('get-viewers', { viewers: viewers });
+    const GetLiveDataQueryString = `SELECT MaxViwers FROM streams WHERE StreamToken="${LiveToken}";`;
+    const connection = await pool.promise().getConnection();
+
+    try {
+        let userTokens = userPublicTokensMap.get(LiveToken);
+        if (!userTokens) {
+            userTokens = new Set<string>();
+            userPublicTokensMap.set(LiveToken, userTokens);
+        }
+
+        // Check if the UserPublicToken is already in the room
+        if (userTokens.has(UserPublicToken)) {
+            // UserPublicToken already exists in the room
+            socket.emit('get-viewers', { viewers: userTokens.size });
+        } else {
+            // Add the UserPublicToken to the room
+
+            const results = await query(connection, GetLiveDataQueryString);
+            const live = io.sockets.adapter.rooms.get(LiveToken);
+            const viewers = live ? live.size : 0;
+            if (viewers > results[0].MaxViwers) {
+                const GetLiveDataQueryString = `UPDATE streams SET MaxViwers="${viewers}" WHERE StreamToken="${LiveToken}";`;
+
+                await query(connection, GetLiveDataQueryString);
+            }
+            socket.emit('get-viewers', { viewers: viewers });
+            userTokens.add(UserPublicToken);
+        }
+    } catch (error) {
+        logging.error(NAMESPACE, 'querry error');
+    }
 };
 
 const delayBetweenCustomRequests = 2000; // Adjust this to set the delay in milliseconds
 const lastMessageTimes = new Map(); // Map to store last message times per socket ID
 const SendMessage = async (pool: mysql.Pool, io: Server, socket: Socket, Message: string, LiveToken: string, UserPrivateToken: string) => {
     const currentTime = Date.now();
-    const socketId = socket.id;
-    const lastMessageTime = lastMessageTimes.get(socketId) || 0;
+    const lastMessageTime = lastMessageTimes.get(socket.data.UserPublicToken) || 0;
     try {
         if (currentTime - lastMessageTime < delayBetweenCustomRequests) {
             const timeToWait = delayBetweenCustomRequests - (currentTime - lastMessageTime);
@@ -362,7 +390,7 @@ const SendMessage = async (pool: mysql.Pool, io: Server, socket: Socket, Message
 
             const results = await query(connection, GetLiveDataQueryString);
             const data = JSON.parse(JSON.stringify(results));
-            lastMessageTimes.set(socketId, currentTime);
+            lastMessageTimes.set(socket.data.UserPublicToken, currentTime);
             await SCYquery(`INSERT INTO LiveMessages (Id, livetoken, OwnerToken, Message, SentAt)
             VALUES (uuid(), '${LiveToken}','${UserPublicToken}', '${Message}.', toTimestamp(now()));`);
             io.to(LiveToken).emit('recived-message', { message: Message, ownerName: data[0].UserName, ownerToken: UserPublicToken, isStreamer: UserPublicToken == data[0].UserPublicToken });

@@ -30,6 +30,7 @@ const CustomRequestValidationResult = validationResult.withDefaults({
  */
 const storage = multer.diskStorage({
     destination: (req: CustomRequest, file: any, callback: any) => {
+        callback(null, `${process.env.ACCOUNTS_FOLDER_PATH}/VideosTmp`);
     },
 
     filename: (req: CustomRequest, file, cb: any) => {

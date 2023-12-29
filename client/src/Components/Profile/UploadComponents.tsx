@@ -63,7 +63,7 @@ const UploadComopnents = () => {
     const [progress, setProgress] = useState(0)
 
     //* Uploads Video to server
-    const uploadFile = () => {
+    const uploadFile = async () => {
         if (videoFile![0] == null) {
             return window.alert('No Video file inputed')
         }
@@ -89,16 +89,13 @@ const UploadComopnents = () => {
             }
         }
 
-        axios
-            .post(`${process.env.SERVER_BACKEND}/videos-manager/upload-video`, formData, config)
-            .then(res => {
-                console.log(res.data)
-            })
-            .catch(err => {
-                if (err) {
-                    console.log(err)
-                }
-            })
+        try {
+
+            const res = await axios.post(`${process.env.SERVER_BACKEND}/videos-manager/upload-video`, formData, config);
+            console.log(res)
+        } catch (error) {
+            console.log(error)
+        }
     }
 
     const captureFrame = () => {
@@ -232,8 +229,8 @@ const UploadComopnents = () => {
 
                         <button
                             className="text-white mt-5 bg-[#414141] w-[20rem]"
-                            onClick={() => {
-                                uploadFile()
+                            onClick={async () => {
+                                await uploadFile()
                             }}
                         >
                             Upload

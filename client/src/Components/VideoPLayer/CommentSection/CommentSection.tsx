@@ -31,8 +31,6 @@ const CommentSection = (props: IVideoPlayerProps) => {
 
         }
         setVideoComments(videoComments => [...videoComments, { ownerToken: props.UserToken!, videoToken: props.VideoToken!, comment: commentInput, ownerName: res.data.userName }])
-
-
     }
 
     useEffect(() => {
@@ -46,7 +44,7 @@ const CommentSection = (props: IVideoPlayerProps) => {
     }, [])
 
     return (
-        <div className="flex flex-col ml-[.5rem] mt-[3rem] h-[85.4vh] w-[22vw] bg-[#2e2e2e] ">
+        <div className="flex flex-col ml-[.5rem] mt-[3rem] h-[83vh] w-[22vw] bg-[#2e2e2e] ">
             <div className="flex flex-col h-[88%] overflow-y-scroll">
                 {hasComments ? (
                     <>

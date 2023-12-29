@@ -33,7 +33,8 @@ const LivePage = () => {
     useEffect(() => {
         // Emit event and manage socket interactions when `socket` changes
         if (socket) {
-            socket.emit('join-live', { LiveToken: urlParams.get('t') as string });
+            socket.emit('join-live', { LiveToken: urlParams.get('t') as string, UserPublicToken: getCookie('userPublicToken') as string })
+
         }
 
     }, [socket, urlParams]);

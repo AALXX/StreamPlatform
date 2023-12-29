@@ -52,3 +52,4 @@ server/accounts/
 
 server/updateHistoryTables-server/target/
 server/live-stream-server/live-auth-server/target/
+mobile/

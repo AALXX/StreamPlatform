@@ -103,15 +103,15 @@ const LivePlayerDashbord = (props: ILivePlayerProps) => {
 
     useEffect(() => {
 
-        if (props.socket) {
+        if (props.socket && LiveData.LiveToken) {
             // Emit event and manage socket interactions when `socket` changes
-            props.socket.emit('join-live', { LiveToken: LiveData.LiveToken });
+            props.socket.emit('join-live', { LiveToken: LiveData.LiveToken, UserPublicToken: getCookie('userPublicToken') as string })
 
             props.socket.on('get-viewers', ({ viewers }) => {
                 setLiveViewrs(viewers)
             });
         }
-    }, [props.socket])
+    }, [props.socket, LiveData.LiveToken])
 
     return (
         <div className="flex h-[100vh]">
@@ -191,7 +191,7 @@ const LivePlayerDashbord = (props: ILivePlayerProps) => {
                                 className="cursor-pointer w-[1.6rem] ml-auto mr-[.5rem]"
                                 alt="viwers image"
                             />
-                            <h1 className="text-white self-center mr-[4rem]">{LiveViwers}</h1>
+                            <h1 className="text-white self-center mr-[4rem]">{LiveViwers - 1}</h1>
                         </div>
                         {isLive ? (
                             <button

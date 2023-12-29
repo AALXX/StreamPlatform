@@ -24,7 +24,7 @@ interface IOverlayProps {
 export default function PlayerOverlay(props: IOverlayProps) {
     return (
         <div
-            className="flex  absolute w-[66.8vw] h-[74%] "
+            className="flex  absolute w-[66.8vw] h-[71.4vh] "
             onMouseEnter={() => {
                 props.setShowOverlay(true)
             }}

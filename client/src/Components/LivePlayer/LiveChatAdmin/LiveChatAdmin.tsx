@@ -12,7 +12,7 @@ const LiveChatAdmin = (props: ILiveChatProps) => {
 
 
     useEffect(() => {
-        if (props.ClientSocket) {
+        if (props.ClientSocket && props.LiveToken) {
 
             props.ClientSocket.on('recived-message', ({ message, ownerName, ownerToken, isStreamer }) => {
                 console.log(message)
