@@ -81,6 +81,7 @@ const UploadVideoFileToServer = async (req: any, res: Response) => {
     logging.info(NAMESPACE, 'Posting Video service called');
 
     videoUpload(req, res, async (err: any) => {
+        console.log(req);
         if (err) {
             logging.error(NAMESPACE, err.message);
 
@@ -261,17 +262,19 @@ const SendVideoCategoryToDb = async (req: CustomRequest, videoToken: string, Cat
  */
 const ThumbnailProceesor = async (path: string) =>
     new Promise((resolve, reject) => {
-        FFmpeg(path)
-            .size(`626x352`)
-            .on('end', () => {
-                resolve({ error: false });
-            })
-            .on('error', (err) => {
-                console.error('Error:', err);
-                reject(err);
-            })
-            .save(path)
-            .run();
+        try {
+            FFmpeg(path)
+                .size(`626x352`)
+                .on('end', () => {
+                    resolve({ error: false });
+                })
+                .on('error', (err) => {
+                    console.error('Error:', err);
+                    reject(err);
+                })
+                .save(path)
+                .run();
+        } catch {}
     });
 
 /**

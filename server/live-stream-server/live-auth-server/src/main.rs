@@ -19,8 +19,6 @@ struct UserTable {
 
 // Handler for /live_stream_auth
 async fn live_stream_auth(req: LiveStreamAuthRequest, pool:Pool) -> Result<impl warp::Reply, warp::Rejection> {
-    println!("{}", req.name);
-    println!("{}", req.key);
     let mut connection = pool.get_conn().unwrap(); // Replace with your connection logic
 
     let get_user_data_query_string = format!("SELECT StreamKey FROM users WHERE UserPublicToken=\"{}\";", req.name);

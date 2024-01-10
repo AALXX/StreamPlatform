@@ -22,62 +22,65 @@ const VideoAnalytics = (props: IVideoAnalyticsProps) => {
 
 
     useEffect(() => {
-        const width = 1220;
-        const height = 360;
-        const margin = { top: 30, right: 30, bottom: 30, left: 70 };
+        if (Object.keys(props).length == 0) {
 
-        const x = scaleBand()
-            .domain(props.videoHistoryData.map(d => new Date(d.update_date).toISOString().substring(0, 10)))
-            .range([margin.left, width - margin.right])
-            .padding(0.1);
+            const width = 1220;
+            const height = 360;
+            const margin = { top: 30, right: 30, bottom: 30, left: 70 };
 
-        const y = scaleLinear()
-            .domain([0, max(props.videoHistoryData, d => d.views) as number])
-            .nice()
-            .range([height - margin.bottom, margin.top]);
+            const x = scaleBand()
+                .domain(props.videoHistoryData.map(d => new Date(d.update_date).toISOString().substring(0, 10)))
+                .range([margin.left, width - margin.right])
+                .padding(0.1);
+
+            const y = scaleLinear()
+                .domain([0, max(props.videoHistoryData, d => d.views) as number])
+                .nice()
+                .range([height - margin.bottom, margin.top]);
 
 
-        const dateFormatter = timeFormat('%Y-%m-%d');
+            const dateFormatter = timeFormat('%Y-%m-%d');
 
-        const svg = select(chartRef.current)
-            .append('svg')
-            .attr('width', width)
-            .attr('height', height);
+            const svg = select(chartRef.current)
+                .append('svg')
+                .attr('width', width)
+                .attr('height', height);
 
-        svg
-            .selectAll('rect')
-            .data(props.videoHistoryData)
-            .enter()
-            .append('rect')
-            .attr('x', d => x(new Date(d.update_date).toISOString().substring(0, 10)) || 0)
-            .attr('y', d => y(d.views))
-            .attr('width', x.bandwidth())
-            .attr('height', d => height - y(d.views) - margin.bottom)
-            .attr('fill', 'steelblue')
-            .on('mouseover', (event, d) => {
-                // Display tooltip on mouseover
-                const tooltip = svg.append('g').attr('class', 'tooltip');
-                tooltip
-                    .append('text')
-                    .attr('x', x(new Date(d.update_date).toISOString().substring(0, 10))! + x.bandwidth() / 2)
-                    .attr('y', y(d.views) - 10)
-                    .attr('text-anchor', 'middle')
-                    .style('font-size', '12px')
-                    .text(`Likes: ${d.likes}, Dislikes: ${d.dislikes}`);
-            })
-            .on('mouseout', () => {
-                // Remove tooltip on mouseout
-                svg.select('.tooltip').remove();
-            });
+            svg
+                .selectAll('rect')
+                .data(props.videoHistoryData)
+                .enter()
+                .append('rect')
+                .attr('x', d => x(new Date(d.update_date).toISOString().substring(0, 10)) || 0)
+                .attr('y', d => y(d.views))
+                .attr('width', x.bandwidth())
+                .attr('height', d => height - y(d.views) - margin.bottom)
+                .attr('fill', 'steelblue')
+                .on('mouseover', (event, d) => {
+                    // Display tooltip on mouseover
+                    const tooltip = svg.append('g').attr('class', 'tooltip');
+                    tooltip
+                        .append('text')
+                        .attr('x', x(new Date(d.update_date).toISOString().substring(0, 10))! + x.bandwidth() / 2)
+                        .attr('y', y(d.views) - 10)
+                        .attr('text-anchor', 'middle')
+                        .style('font-size', '12px')
+                        .text(`Likes: ${d.likes}, Dislikes: ${d.dislikes}`);
+                })
+                .on('mouseout', () => {
+                    // Remove tooltip on mouseout
+                    svg.select('.tooltip').remove();
+                });
 
-        svg.append('g')
-            .attr('transform', `translate(0, ${height - margin.bottom})`)
-            .call(axisBottom(x).tickFormat(d => dateFormatter(new Date(d))));
+            svg.append('g')
+                .attr('transform', `translate(0, ${height - margin.bottom})`)
+                .call(axisBottom(x).tickFormat(d => dateFormatter(new Date(d))));
 
-        svg.append('g')
-            .attr('transform', `translate(${margin.left}, 0)`)
-            .call(axisLeft(y));
+            svg.append('g')
+                .attr('transform', `translate(${margin.left}, 0)`)
+                .call(axisLeft(y));
 
+        }
 
     }, [chartRef]);
 

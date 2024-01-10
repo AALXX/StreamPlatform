@@ -5,6 +5,7 @@ import jwt from 'jsonwebtoken';
 import fs from 'fs';
 import utilFunctions from '../util/utilFunctions';
 import mysql from 'mysql2';
+import axios from 'axios';
 
 //* /////////////////////////////
 //*      Account related       //
@@ -29,6 +30,16 @@ const HashPassword = async (password: string) => {
 
     // Return null if error
     return null;
+};
+
+const GenerateRandomStreamKey = (): String => {
+    const charset = 'abcdefghijklmnopqrstuvwxyz0123456789';
+    const passwordLength = 8;
+
+    const randomValues = crypto.getRandomValues(new Uint32Array(passwordLength));
+    const password = Array.from(randomValues, (value) => charset[value % charset.length]).join('');
+
+    return password;
 };
 
 /**
@@ -303,6 +314,9 @@ const StartLive = async (pool: mysql.Pool, LiveTitle: string, userPrivateToken: 
 
         const results = await query(connection, StatALiveQueryString);
 
+        const resp = await axios.post('http://localhost:7556/start-snapshot', { StreamToken: StreamToken });
+        console.log(resp);
+
         const data = JSON.parse(JSON.stringify(results));
         if (data.affectedRows == 0) {
             return { error: true, LiveToken: '' };
@@ -350,6 +364,7 @@ const EndLive = async (pool: mysql.Pool, userPrivateToken: string, streamToken: 
 
 export default {
     HashPassword,
+    GenerateRandomStreamKey,
     UserNameAndEmailExistCheck,
     CreateVideoToken,
     userFollowAccountCheck,

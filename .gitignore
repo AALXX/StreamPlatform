@@ -52,4 +52,5 @@ server/accounts/
 
 server/updateHistoryTables-server/target/
 server/live-stream-server/live-auth-server/target/
+server/live-stream-server/live-snaphots/target/
 mobile/

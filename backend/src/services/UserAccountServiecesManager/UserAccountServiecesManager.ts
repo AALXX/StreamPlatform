@@ -416,10 +416,12 @@ const RegisterUser = async (req: CustomRequest, res: Response) => {
 
     const userPrivateToken = jwt.sign(privateData, jwtSecretKey);
 
-    const userPublicToken = jwt.sign(publicData, 'secret');
+    const userPublicToken = jwt.sign(publicData, `${process.env.ACCOUNT_REGISTER_SECRET}`);
 
-    const InsertUserQueryString = `INSERT INTO users (UserName, UserEmail, UserPwd, UserPrivateToken, UserPublicToken) VALUES 
-        ('${req.body.userName}', '${req.body.userEmail}', '${hashedpwd}','${userPrivateToken}','${userPublicToken}');`;
+    const StreamKey = UtilFunc.GenerateRandomStreamKey();
+
+    const InsertUserQueryString = `INSERT INTO users (UserName, UserDescription, UserEmail, UserPwd, UserPrivateToken, UserPublicToken, StreamKey) VALUES 
+        ('${req.body.userName}', '', '${req.body.userEmail}', '${hashedpwd}','${userPrivateToken}','${userPublicToken}', '${StreamKey}');`;
 
     try {
         const connection = await req.pool?.promise().getConnection();
@@ -748,10 +750,25 @@ const GetStreamAnalytics = async (req: CustomRequest, res: Response) => {
     try {
         const UserPublicToken = await utilFunctions.getUserPublicTokenFromPrivateToken(req.pool!, req.params.UserPrivateToken);
         const connection = await req.pool?.promise().getConnection();
-        const GetLiveStreamAnalytics = `SELECT * FROM streams WHERE UserPublicToken="${UserPublicToken}" AND DATE(StartedAt) = '${req.params.Date}';`;
-        const userData = await query(connection, GetLiveStreamAnalytics);
+        const GetLiveStreamAnalytics = `SELECT StreamTitle, Likes, Dislikes, StartedAt, FinishedAt, MaxViwers, StreamToken 
+        FROM streams 
+        WHERE UserPublicToken = "${UserPublicToken}" AND DATE(StartedAt) = '${req.params.Date}';`;
+        const liveData = await query(connection, GetLiveStreamAnalytics);
 
-        console.log(userData);
+        let views: Array<{ views: number; snap_time: string }> = [];
+
+        //find a more efficeint way
+        for (let index = 0; index < Object.keys(liveData).length; index++) {
+            const streamToken = liveData[index].StreamToken;
+            const GetLiveStreamAnalytics = `            
+            SELECT views, snap_time 
+            FROM Live_Snapshots 
+            WHERE streamToken = "${streamToken}";`;
+            const liveViews = await query(connection, GetLiveStreamAnalytics);
+            views.push(liveViews);
+        }
+
+        return res.status(200).json({ error: false, liveData: liveData, liveViwes: views });
     } catch (error: any) {
         logging.error(NAMESPACE, error.message);
         res.status(202).json({

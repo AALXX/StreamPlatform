@@ -53,7 +53,7 @@ const AccountProfile = () => {
         /**
          * Get user profile Data
          */
-        ;(async () => {
+        ; (async () => {
             const userToken = getCookie('userToken')
 
             const profileData = await getProfileData(userToken)
@@ -73,13 +73,13 @@ const AccountProfile = () => {
             break
         case 'Videos':
             component = (
-                <div className="grid xl:grid-cols-6 lg:grid-cols-5 gap-4  ">
+                <div>
                     {hasVideos ? (
-                        <>
+                        <div className="grid xl:grid-cols-6 lg:grid-cols-5 gap-4 ">
                             {videosData.map((video: IVideoTemplateProps, index: number) => (
                                 <VideoTamplate key={index} VideoTitle={video.VideoTitle} VideoToken={video.VideoToken} Likes={video.Likes} Dislikes={video.Dislikes} />
                             ))}
-                        </>
+                        </div>
                     ) : (
                         <></>
                     )}

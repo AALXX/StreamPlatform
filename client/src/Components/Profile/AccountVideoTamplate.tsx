@@ -17,7 +17,7 @@ export const VideoTamplate = (props: IVideoTemplateProps) => {
 
     return (
         <>
-            <Link href={`/watch?vt=${props.VideoToken}`} className="w-[15vw] h-[20vh]" >
+            <Link href={`/watch?vt=${props.VideoToken}`} className="w-[15vw] h-[20vh] " >
                 <div
                     className="flex flex-col bg-white w-[15vw] h-[20vh] cursor-pointer"
                     onMouseEnter={() => {

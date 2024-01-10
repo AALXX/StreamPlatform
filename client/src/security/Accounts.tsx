@@ -3,7 +3,7 @@ import { setCookie, getCookie, deleteCookie } from 'cookies-next'
 
 const accRegisterFunc = async (userName: string, userEmail: string, password: string, repeatedPassword: string) => {
     if (password !== repeatedPassword) {
-        console.log('object')
+        window.alert("Passwords don't match!")
         return false
     }
 

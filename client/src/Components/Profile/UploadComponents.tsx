@@ -7,10 +7,11 @@ import UtilFunctions from '../Util/UtilFunctions'
 interface IClipProps {
     url: string
     videoRef: React.RefObject<HTMLVideoElement>
+    canvasRef: React.RefObject<HTMLCanvasElement>
 }
 
 //* Video PriviewComponent
-const Clip = ({ url, videoRef }: IClipProps) => {
+const Clip = ({ url, videoRef, canvasRef }: IClipProps) => {
     const previousUrl = useRef(url)
 
     useEffect(() => {
@@ -24,6 +25,8 @@ const Clip = ({ url, videoRef }: IClipProps) => {
 
         previousUrl.current = url
     }, [url])
+
+
 
     if (url == '') {
         return (
@@ -107,7 +110,7 @@ const UploadComopnents = () => {
 
         // Generate a random time in the video
         const randomTime = Math.random() * maxFrame
-        videoRef.current.currentTime = randomTime
+        videoRef.current.currentTime = 2 * 60
         const context = canvasRef.current.getContext('2d')
 
         // Draw the frame on the canvas
@@ -204,7 +207,7 @@ const UploadComopnents = () => {
                                 captureFrame()
                             }, 300)
                         }}
-                        accept=".mov,.mp4"
+                        accept=".mov,.mp4,.mkv"
                     />
                     <img src="/assets/UploadPageIcons/VideoUploadIcon.svg" alt="AccountImageButton" className="m-auto w-[7rem] h-[2rem]" />
                 </label>

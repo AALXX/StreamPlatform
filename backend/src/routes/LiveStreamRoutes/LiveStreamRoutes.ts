@@ -12,6 +12,7 @@ router.post('/stream-auth', LiveStreamServices.LiveStreamAuth);
 router.get('/get-live-admin-data/:userPrivateToken', param('userPrivateToken').not().isEmpty().trim(), LiveStreamServices.GetLiveAdminData);
 router.get('/get-live-data/:streamToken/:userPrivateToken', param('streamToken').not().isEmpty().trim(), param('userPrivateToken').not().isEmpty().trim(), LiveStreamServices.GetLiveData);
 router.post('/start-stop-live', body('UserPrivateToken').not().isEmpty().trim(), body('LiveTitle').not().isEmpty().trim(), body('StreamToken').not().isEmpty().trim(), LiveStreamServices.StartStopLive);
+router.get('/get-stream-viwers/:LiveToken', param('LiveToken').not().isEmpty(), LiveStreamServices.GetLiveViwes);
 
 //* client stream
 router.post('/like-dislike-live', body('userToken').not().isEmpty().trim(), body('streamToken').not().isEmpty().trim(), LiveStreamServices.LikeDislikeLiveFunc);

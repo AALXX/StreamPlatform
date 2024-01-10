@@ -16,6 +16,15 @@ import { createPool } from '../config/mysql';
 const NAMESPACE = 'StreamPlatform_API';
 const router = express();
 
+const httpServer = http.createServer(router);
+
+const io = new Server(httpServer, {
+    cors: {
+        origin: ['http://localhost:3000', 'http://127.0.0.1:7556'],
+    },
+});
+
+
 router.use(express.urlencoded({ extended: false }));
 router.use(express.json());
 
@@ -27,6 +36,7 @@ router.use((req: any, res: any, next: NextFunction) => {
     res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
 
     req.pool = pool;
+    req.ioServer = io;
 
     if (req.method == 'OPTIONS') {
         res.header('Acces-Control-Allow-Methods', 'GET POST PATCH DELETE PUT');
@@ -50,19 +60,14 @@ router.use((req: express.Request, res: any, next: NextFunction) => {
 });
 
 //* Create The Api
-const httpServer = http.createServer(router);
 httpServer.listen(config.server.port, () => {
     logging.info(NAMESPACE, `Api is runing on: ${config.server.hostname}:${config.server.port}`);
 });
 
-const io = new Server(httpServer, {
-    cors: {
-        origin: ['http://localhost:3000'],
-    },
-});
 
 io.on('connection', (socket) => {
-    socket.on('join-live', async ({ LiveToken, test, UserPublicToken }) => {
+
+    socket.on('join-live', async ({ LiveToken, UserPublicToken }) => {
         return LiveServices.JoinLive(pool, io, LiveToken, UserPublicToken, socket);
     });
 

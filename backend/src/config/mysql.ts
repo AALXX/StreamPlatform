@@ -2,6 +2,7 @@ import mysql from 'mysql2';
 import config from './config';
 import logging from './logging';
 import express from 'express';
+import { Server } from 'socket.io';
 
 const params = {
     multipleStatements: true,
@@ -13,6 +14,7 @@ const params = {
 
 interface CustomRequest extends express.Request {
     pool?: mysql.Pool;
+    ioServer?: Server;
 }
 
 

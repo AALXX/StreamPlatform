@@ -15,7 +15,7 @@ router.get('/search-video/:search_query', param('search_query').not().isEmpty(),
 router.get('/get-creator-video-data/:UserPrivateToken/:VideoToken', param('VideoToken').not().isEmpty(), AccountVideoServices.GetCreatorVideoData);
 router.post(
     '/update-creator-video-data',
-    body('VideoTitle').not().isEmpty().isLength({ max: 20 }),
+    body('VideoTitle').not().isEmpty().isLength({ max: 40 }),
     body('VideoVisibility').not().isEmpty(),
     body('ShowComments').not().isEmpty(),
     body('ShowLikesDislikes').not().isEmpty(),

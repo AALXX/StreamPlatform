@@ -344,10 +344,10 @@ const JoinLive = async (pool: mysql.Pool, io: Server, LiveToken: string, UserPub
         // Check if the UserPublicToken is already in the room
         if (userTokens.has(UserPublicToken)) {
             // UserPublicToken already exists in the room
-            socket.emit('get-viewers', { viewers: userTokens.size });
+            //sends viwers number to front end
+            return socket.emit('get-viewers', { viewers: userTokens.size });
         } else {
             // Add the UserPublicToken to the room
-
             const results = await query(connection, GetLiveDataQueryString);
             const live = io.sockets.adapter.rooms.get(LiveToken);
             const viewers = live ? live.size : 0;
@@ -357,7 +357,7 @@ const JoinLive = async (pool: mysql.Pool, io: Server, LiveToken: string, UserPub
                 await query(connection, GetLiveDataQueryString);
             }
             socket.emit('get-viewers', { viewers: viewers });
-            userTokens.add(UserPublicToken);
+            return userTokens.add(UserPublicToken);
         }
     } catch (error) {
         logging.error(NAMESPACE, 'querry error');
@@ -401,6 +401,23 @@ const SendMessage = async (pool: mysql.Pool, io: Server, socket: Socket, Message
     }
 };
 
+const GetLiveViwes = async (req: CustomRequest, res: Response) => {
+    try {
+        let userTokens = userPublicTokensMap.get(req.params.LiveToken);
+        if (!userTokens) {
+            userTokens = new Set<string>();
+            userPublicTokensMap.set(req.params.LiveToken, userTokens);
+        }
+
+        return res.status(202).json({
+            error: false,
+            views: userTokens.size,
+        });
+    } catch (error) {
+        logging.error(NAMESPACE, 'querry error');
+    }
+};
+
 const LeaveLive = (LiveToken: string, io: Server) => {
     io.socketsLeave(LiveToken);
     console.log(`Discenect from: ${LiveToken}`);
@@ -408,6 +425,7 @@ const LeaveLive = (LiveToken: string, io: Server) => {
 
 export default {
     LiveStreamAuth,
+    GetLiveViwes,
     GetLiveAdminData,
     StartStopLive,
     GetLiveData,
