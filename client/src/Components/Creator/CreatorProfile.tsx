@@ -1,10 +1,11 @@
 import React, { Dispatch, SetStateAction, useState } from 'react'
 import ProfileCards from '@/Components/Profile/utils/ProfileCards'
 import { followAccount } from '@/Components/VideoPLayer/UtilFunc'
-import VideoTamplate, { IVideoTemplateProps } from '@/Components/VideoTemplate/VideoTemplate'
+import VideoTamplate, { IVideoTemplateProps } from '@/Components/CreatorTemplates/VideoTemplate'
 
 import AboutChanelTab from '@/Components/Profile/AboutChanelTab'
 import { getCookie } from 'cookies-next'
+import Livetemplate from '../CreatorTemplates/LiveTemplate'
 
 export interface UserData {
     UserName: string
@@ -12,9 +13,18 @@ export interface UserData {
     AccountFolowers: number
 }
 
+export interface ILiveDataProps {
+    StreamTitle: string
+    Likes: number
+    Dislikes: number
+    StreamToken: string
+    StartedAt: string
+}
+
 interface ICreatorProfileProps {
     userData: UserData
     userFollwsAccount: boolean
+    liveData: ILiveDataProps | null
     hasVideos: boolean
     videosData: Array<IVideoTemplateProps>
     videoToken: string
@@ -27,20 +37,38 @@ const CreatorProfile = (props: ICreatorProfileProps) => {
     let component
     switch (componentToShow) {
         case 'LandingPage':
-            component = <div className="grid xl:grid-cols-6 lg:grid-cols-5 gap-4"></div>
+            component = <div className="grid xl:grid-cols-6 lg:grid-cols-5 gap-4 ">
+                {props.liveData == null ? (
+                    null
+
+                ) : (
+                    <div>
+                        <Livetemplate
+                            StreamTitle={props.liveData.StreamTitle}
+                            Likes={props.liveData.Likes}
+                            Dislikes={props.liveData.Dislikes}
+                            StreamToken={props.liveData.StreamToken}
+                            StartedAt={props.liveData.StartedAt}
+                        />
+                    </div>
+                )}
+            </div>
             break
         case 'Videos':
             component = (
-                <div className="grid xl:grid-cols-6 lg:grid-cols-5 gap-4">
+                <div>
                     {props.hasVideos ? (
-                        <>
-                            {props.videosData.map((video: IVideoTemplateProps, index: number) => (
-                                <VideoTamplate key={index} VideoTitle={video.VideoTitle} VideoToken={video.VideoToken} OwnerName={props.userData.UserName} OwnerToken={video.OwnerToken} />
-                            ))}
-                        </>
+                        <div className="grid xl:grid-cols-6 lg:grid-cols-5 gap-4">
+                            <>
+                                {props.videosData.map((video: IVideoTemplateProps, index: number) => (
+                                    <VideoTamplate key={index} VideoTitle={video.VideoTitle} VideoToken={video.VideoToken} OwnerName={props.userData.UserName} OwnerToken={video.OwnerToken} />
+                                ))}
+                            </>
+                        </div>
                     ) : (
                         <></>
-                    )}
+                    )
+                    }
                 </div>
             )
 

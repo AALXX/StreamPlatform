@@ -1,11 +1,11 @@
 import React, { useEffect, useState } from 'react'
-import VideoTamplate, { IVideoTemplateProps } from '../VideoTemplate/VideoTemplate'
+import VideoTamplate, { IVideoTemplateProps } from '../CreatorTemplates/VideoTemplate'
 import axios from 'axios'
 
 const SearchResults = ({ videoToken }: { videoToken: string }) => {
     const [videosList, setVideoList] = useState<Array<IVideoTemplateProps>>([])
     useEffect(() => {
-        ;(async () => {
+        ; (async () => {
             if (videoToken == '') {
                 setVideoList([])
             } else {
@@ -14,7 +14,7 @@ const SearchResults = ({ videoToken }: { videoToken: string }) => {
             }
         })()
     }, [])
-    
+
     return (
         <>
             {Object.keys(videosList).length === 0 ? (

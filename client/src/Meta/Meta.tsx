@@ -1,3 +1,4 @@
+import React from "react"
 const Meta = ({ title, keywords, description }: any) => {
     return (
         <head>

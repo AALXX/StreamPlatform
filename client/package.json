@@ -9,35 +9,35 @@
         "lint": "next lint"
     },
     "dependencies": {
-        "@next/font": "^14.0.0",
+        "@next/font": "^14.0.4",
         "@types/d3": "^7.4.3",
-        "@types/node": "^20.10.5",
+        "@types/node": "^20.11.0",
         "@types/react-dom": "^18.2.18",
         "@types/socket.io-client": "^3.0.0",
-        "axios": "^1.6.2",
+        "axios": "^1.6.5",
         "cookies-next": "^4.1.0",
         "d3": "^7.8.5",
-        "hls.js": "^1.4.14",
+        "hls.js": "^1.5.1",
         "next": "^14.0.4",
         "react": "18.2.0",
-        "react-cookie": "^6.1.1",
+        "react-cookie": "^7.0.1",
         "react-dom": "18.2.0",
-        "socket.io-client": "^4.7.2"
+        "socket.io-client": "^4.7.4"
     },
     "devDependencies": {
         "@types/hls.js": "^1.0.0",
-        "@types/react": "^18.2.45",
-        "@typescript-eslint/eslint-plugin": "^6.15.0",
-        "@typescript-eslint/parser": "^6.15.0",
+        "@types/react": "^18.2.47",
+        "@typescript-eslint/eslint-plugin": "^6.18.1",
+        "@typescript-eslint/parser": "^6.18.1",
         "autoprefixer": "^10.4.16",
         "eslint": "^8.56.0",
         "eslint-config-google": "^0.14.0",
         "eslint-config-next": "^14.0.4",
         "eslint-config-prettier": "^9.1.0",
         "eslint-plugin-react": "^7.33.2",
-        "postcss": "^8.4.32",
-        "prettier": "^3.1.1",
-        "tailwindcss": "^3.3.7",
+        "postcss": "^8.4.33",
+        "prettier": "^3.2.0",
+        "tailwindcss": "^3.4.1",
         "typescript": "^5.3.3"
     }
 }

@@ -8,6 +8,7 @@ import AccoutSettingsPopup from './utils/UserAccountSettingsPopUp'
 import ChangeAccountIconPopUp from './utils/ChangeAccountIconPopUp'
 import ProfileCards from './utils/ProfileCards'
 import AboutChanelTab from './AboutChanelTab'
+import AccountLivetemplate from './AccountLiveTempolate'
 
 interface IUserDataProps {
     UserName: string
@@ -16,10 +17,19 @@ interface IUserDataProps {
     AccountFolowers: string
 }
 
+interface ILiveDataProps {
+    StreamTitle: string
+    Likes: number
+    Dislikes: number
+    StreamToken: string
+    StartedAt: string
+}
+
 const AccountProfile = () => {
     const userToken: string = getCookie('userToken') as string
 
     const [userData, setUserData] = useState<IUserDataProps>({ UserName: '', UserDescription: '', UserEmail: '', AccountFolowers: '' })
+    const [liveData, setLiveData] = useState<ILiveDataProps | null>(null)
     const [hasVideos, setHasVideos] = useState<boolean>(false)
     const [videosData, setVideosData] = useState<Array<IVideoTemplateProps>>([])
 
@@ -36,8 +46,7 @@ const AccountProfile = () => {
         if (resData.data.error == true) {
             return console.error('ERROR GET PROFILE DATA FAILED')
         }
-        console.log(resData.data.userData)
-        return resData.data.userData
+        return resData.data
     }
 
     const getProfileVideos = async (userToken: CookieValueTypes) => {
@@ -54,10 +63,10 @@ const AccountProfile = () => {
          * Get user profile Data
          */
         ; (async () => {
-            const userToken = getCookie('userToken')
 
             const profileData = await getProfileData(userToken)
-            setUserData(profileData)
+            setUserData(profileData.userData)
+            setLiveData(profileData.liveData)
 
             const profileVideos = await getProfileVideos(userToken)
             if (Object.keys(profileVideos).length !== 0) {
@@ -69,7 +78,22 @@ const AccountProfile = () => {
 
     switch (componentToShow) {
         case 'LandingPage':
-            component = <div className="grid xl:grid-cols-6 lg:grid-cols-5 gap-4 "></div>
+            component = <div className="grid xl:grid-cols-6 lg:grid-cols-5 gap-4 ">
+                {liveData == null ? (
+                    null
+
+                ) : (
+                    <div>
+                        <AccountLivetemplate
+                            StreamTitle={liveData.StreamTitle}
+                            Likes={liveData.Likes}
+                            Dislikes={liveData.Dislikes}
+                            StreamToken={liveData.StreamToken}
+                            StartedAt={liveData.StartedAt}
+                        />
+                    </div>
+                )}
+            </div>
             break
         case 'Videos':
             component = (

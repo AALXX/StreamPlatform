@@ -113,7 +113,6 @@ const GetLiveAdminData = async (req: CustomRequest, res: Response) => {
 const GetLiveData = async (req: CustomRequest, res: Response) => {
     try {
         const connection = await req.pool?.promise().getConnection();
-
         const GetLiveDataQueryString = `
         SELECT s.StreamTitle, s.Likes, s.Dislikes, s.Active, u.UserName, u.AccountFolowers AS UserAccountFolowers, u.UserPublicToken 
         FROM streams AS s

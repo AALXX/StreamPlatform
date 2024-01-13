@@ -33,7 +33,7 @@ const LivePlayer = (props: ILivePlayerProps) => {
     const [CurrentSeconds, setCurrentSeconds] = useState(0)
     const [DurationMinutes, setDurationMinutes] = useState(0)
     const [DurationSeconds, setDurationSeconds] = useState(0)
-
+    
     const [userFollwsAccount, setUserFollwsAccount] = useState<boolean>(false)
     const [userLikedVideo, setUserLikedVideo] = useState<boolean>(false)
     const [userDisLikedVideo, setUserDisLikedVideo] = useState<boolean>(false)
@@ -144,7 +144,7 @@ const LivePlayer = (props: ILivePlayerProps) => {
                     </div>
                 )}
                 <div className="flex mt-[.5vh] h-[11vh] w-[66.8vw] bg-[#292929]">
-                    <Link className="ml-4 self-center" href={`/user?id=${props.userStreamToken}`}>
+                    <Link className="ml-4 self-center" href={`/user?id=${liveData.OwnerToken}`}>
                         <img className="z-10 rounded-full" src={`${process.env.FILE_SERVER}/${liveData.OwnerToken}/Main_icon.png`} width={50} height={50} alt="Picture of the author" />
                     </Link>
                     <div className="flex flex-col ml-4 self-center">

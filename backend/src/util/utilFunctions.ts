@@ -110,6 +110,7 @@ const getUserPrivateTokenFromPublicToken = async (pool: mysql.Pool, userToken: s
 /**
  * Get User Public token by provided private Token
  * @param {string} userPrivateToken
+ * @param {mysql.Pool} pool
  * @return {Promise<string | null>}
  */
 const getUserPublicTokenFromPrivateToken = async (pool: mysql.Pool, userPrivateToken: string): Promise<string | null> => {

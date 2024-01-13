@@ -5,19 +5,20 @@ import Link from 'next/link'
 import { abbreviateNumber } from './utils/NumberAbrev'
 import { getCookie } from 'cookies-next'
 
-export interface IVideoTemplateProps {
-    VideoTitle: string
+export interface ILiveStreamProps {
+    StreamTitle: string
     Likes: number
     Dislikes: number
-    VideoToken: string
+    StreamToken: string
+    StartedAt: string
 }
 
-export const Livetemplate = (props: IVideoTemplateProps) => {
+export const AccountLivetemplate = (props: ILiveStreamProps) => {
     const [isHovered, setIsHovered] = useState<boolean>(false)
 
     return (
         <>
-            <Link href={`/live?vt=${props.VideoToken}`} className="w-[15vw] h-[20vh] " >
+            <Link href={`/live?t=${props.StreamToken}`} className="w-[15vw] h-[20vh] " >
                 <div
                     className="flex flex-col bg-white w-[15vw] h-[20vh] cursor-pointer"
                     onMouseEnter={() => {
@@ -27,20 +28,20 @@ export const Livetemplate = (props: IVideoTemplateProps) => {
                         setIsHovered(false)
                     }}
                 >
-                    <img src={`${process.env.FILE_SERVER}/${getCookie('userPublicToken')}/${props.VideoToken}/Thumbnail_image.jpg`} className="absolute  w-[15vw] h-[20vh]" />
+                    <img src={`${process.env.FILE_SERVER}/${getCookie('userPublicToken')}/${props.StreamToken}/Thumbnail_image.jpg`} className="absolute  w-[15vw] h-[20vh]" />
                     {isHovered ? (
                         <div className="flex flex-col h-full z-10">
                             {/* top side */}
                             <div className="flex flex-row mb-auto bg-[#00000088] h-[30%]">
                                 <div className="flex ml-auto mr-[1rem] z-30 ">
-                                    <Link href={`/account/edit-video?vt=${props.VideoToken}`} className="self-center">
+                                    <Link href={`/account/live-dashbord`} className="self-center">
                                         <Image src="/assets/AccountIcons/Settings_icon.svg" width={20} height={20} alt="DisLikeIcon" />
                                     </Link>
                                 </div>
                             </div>
                             {/* bottom side */}
                             <div className="flex flex-row mt-auto bg-[#00000088] h-[30%]">
-                                <h1 className="text-white text-lg self-center ml-3 truncate">{props.VideoTitle}</h1>
+                                <h1 className="text-white text-lg self-center ml-3 truncate">{props.StreamTitle}</h1>
 
                                 <div className="flex ml-auto">
                                     <Image src="/assets/PlayerIcons/Like_icon.svg" width={20} height={20} alt="LikeIcon" />
@@ -58,4 +59,4 @@ export const Livetemplate = (props: IVideoTemplateProps) => {
     )
 }
 
-export default Livetemplate
+export default AccountLivetemplate

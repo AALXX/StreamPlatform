@@ -41,24 +41,31 @@ const GetUserAccountData = async (req: CustomRequest, res: Response) => {
 
     try {
         const connection = await req.pool?.promise().getConnection();
-
-        const GetUserDataQueryString = `SELECT UserName, UserDescription, AccountFolowers, UserEmail FROM users WHERE UserPrivateToken='${req.params.privateToken}';`;
+        const UserPublicToken = await UtilFunc.getUserPublicTokenFromPrivateToken(req.pool!, req.params.privateToken);
+        const GetUserDataQueryString = `SELECT UserName, UserDescription, AccountFolowers, UserEmail FROM users WHERE UserPrivateToken='${req.params.privateToken}';
+        SELECT StreamTitle, Likes, Dislikes, StreamToken, StartedAt FROM streams WHERE UserPublicToken='${UserPublicToken}' AND  Active=1;`;
 
         const data = await query(connection, GetUserDataQueryString);
-
-        // console.log(data);
-        let accData = JSON.parse(JSON.stringify(data));
-
-        if (Object.keys(accData).length === 0) {
+        if (Object.keys(data).length === 0) {
             return res.status(200).json({
                 error: false,
                 userData: null,
+                liveData: null,
+            });
+        }
+
+        if (Object.keys(data[1]).length === 0) {
+            return res.status(200).json({
+                error: false,
+                userData: data[0][0],
+                liveData: null,
             });
         }
 
         return res.status(200).json({
             error: false,
-            userData: accData[0],
+            userData: data[0][0],
+            liveData: data[1][0],
         });
     } catch (error: any) {
         logging.error(NAMESPACE, error.message);
@@ -89,7 +96,8 @@ const GetCreatorAccountData = async (req: CustomRequest, res: Response) => {
     try {
         const connection = await req.pool?.promise().getConnection();
 
-        const GetUserDataQueryString = `SELECT UserName, UserDescription, AccountFolowers, userVisibility FROM users WHERE UserPublicToken='${req.params.accountToken}';`;
+        const GetUserDataQueryString = `SELECT UserName, UserDescription, AccountFolowers, userVisibility FROM users WHERE UserPublicToken='${req.params.accountToken}';
+        SELECT StreamTitle, Likes, Dislikes, StreamToken, StartedAt FROM streams WHERE UserPublicToken='${req.params.accountToken}' AND  Active=1;`;
         const data = await query(connection, GetUserDataQueryString);
 
         let accData = JSON.parse(JSON.stringify(data));
@@ -108,15 +116,27 @@ const GetCreatorAccountData = async (req: CustomRequest, res: Response) => {
             return res.status(200).json({
                 error: false,
                 userData: null,
+                liveData: null,
                 userFollowsCreator: false,
+            });
+        }
+
+        if (Object.keys(data[1]).length === 0) {
+            return res.status(200).json({
+                error: false,
+                userData: accData[0],
+                userFollowsCreator: itFollows,
+                liveData: null,
             });
         }
 
         return res.status(200).json({
             error: false,
-            userData: accData[0],
+            userData: accData[0][0],
+            liveData: accData[1][0],
             userFollowsCreator: itFollows,
         });
+
     } catch (error: any) {
         logging.error(NAMESPACE, error.message);
 
