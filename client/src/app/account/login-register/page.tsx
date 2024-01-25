@@ -24,7 +24,7 @@ export default function LoginRegisterScreen() {
     return (
         <div className="flex justify-center items-center flex-col">
             {!registerForm ? (
-                <div className="flex  flex-col w-[40%] 3xl:h-[57vh] 2xl:h-[60vh]  mt-[5%] self-center  bg-[#2b2b2b]">
+                <div className="flex flex-col w-[40%] 3xl:h-[57vh] 2xl:h-[60vh]  mt-[5%] self-center  bg-[#2b2b2b]">
                     <form
                         className="flex w-[100%] h-[100%] flex-col items-center"
                         onSubmit={async e => {

@@ -23,9 +23,9 @@ const Profile = () => {
                 </div>
             ) : (
                 <div className="flex flex-col ">
-                    <h1 className="text-white self-center mt-[2rem]">Not logged In:</h1>
+                    <h1 className="text-white self-center mt-[2rem]">Not logged In</h1>
                     <Link className="self-center" href={'/account/login-register'}>
-                        <h1 className="text-white">Login</h1>
+                        <h1 className="text-white">Login!</h1>
                     </Link>
                 </div>
             )}

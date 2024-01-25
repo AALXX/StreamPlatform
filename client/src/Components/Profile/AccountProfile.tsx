@@ -62,8 +62,7 @@ const AccountProfile = () => {
         /**
          * Get user profile Data
          */
-        ; (async () => {
-
+        ;(async () => {
             const profileData = await getProfileData(userToken)
             setUserData(profileData.userData)
             setLiveData(profileData.liveData)
@@ -78,22 +77,15 @@ const AccountProfile = () => {
 
     switch (componentToShow) {
         case 'LandingPage':
-            component = <div className="grid xl:grid-cols-6 lg:grid-cols-5 gap-4 ">
-                {liveData == null ? (
-                    null
-
-                ) : (
-                    <div>
-                        <AccountLivetemplate
-                            StreamTitle={liveData.StreamTitle}
-                            Likes={liveData.Likes}
-                            Dislikes={liveData.Dislikes}
-                            StreamToken={liveData.StreamToken}
-                            StartedAt={liveData.StartedAt}
-                        />
-                    </div>
-                )}
-            </div>
+            component = (
+                <div className="grid xl:grid-cols-6 lg:grid-cols-5 gap-4 ">
+                    {liveData == null ? null : (
+                        <div>
+                            <AccountLivetemplate StreamTitle={liveData.StreamTitle} Likes={liveData.Likes} Dislikes={liveData.Dislikes} StreamToken={liveData.StreamToken} StartedAt={liveData.StartedAt} />
+                        </div>
+                    )}
+                </div>
+            )
             break
         case 'Videos':
             component = (
@@ -169,7 +161,7 @@ const AccountProfile = () => {
                         }}
                     />
                 </div>
-                <h1 className="text-white">Folowers: {userData.AccountFolowers}</h1>
+                <h1 className="text-white">Followers: {userData.AccountFolowers}</h1>
             </div>
             {ToggledSettingsPopUp ? (
                 <AccoutSettingsPopup

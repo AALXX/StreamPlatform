@@ -51,16 +51,26 @@ const AccoutSettingsPopup = (props: IAccoutSettingsPopupProps) => {
             return window.alert('CheckBox Not Checked')
         }
 
-        axios.post(`${process.env.LOCAL_BACKEND_URL}/user-account-manager/delete-user-account/`, { UserPrivateToken: props.UserPrivateToken }).then(res => {
-            if (res.data.error) {
-                window.alert('error')
-            }
-            // Router.reload()
-        })
+        axios
+            .post(`${process.env.SERVER_BACKEND}/user-account/delete-user-account/`, { userToken: props.UserPrivateToken })
+            .then(res => {
+                if (res.data.error) {
+                    window.alert('error')
+                }
+                
+                accLogout()
+
+                // Router.reload()
+            })
+            .catch(err => {
+                if (err) {
+                    window.alert(`error, ${err.message}`)
+                }
+            })
     }
 
     const changePassword = () => {
-        axios.post(`${process.env.SERVER_BACKEND}/user-account-manager/change-user-password-check-link`, { userEmail: props.UserEmail }).then(res => {
+        axios.post(`${process.env.SERVER_BACKEND}/user-account/change-user-password-check-link`, { userEmail: props.UserEmail }).then(res => {
             if (res.data.error) {
                 window.alert('error')
             }

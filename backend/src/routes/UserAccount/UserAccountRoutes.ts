@@ -26,7 +26,8 @@ router.post(
 router.get('/get-account-data/:privateToken', UserAccountServices.GetUserAccountData);
 router.get('/get-account-videos/:accountToken', param('accountToken').not().isEmpty(), UserAccountServices.GetAccountVideos);
 
-router.post('/change-user-data', body('userName').not().isEmpty(), body('userEmail').not().isEmpty(), body('userDescription').not().isEmpty(), body('userVisibility').not().isEmpty(), UserAccountServices.ChangeUserData);
+router.post('/change-user-data', body('userName').not().isEmpty(), body('userEmail').not().isEmpty(), body('userDescription'), body('userVisibility').not().isEmpty(), UserAccountServices.ChangeUserData);
+router.post('/delete-user-account', body('userToken').not().isEmpty(), UserAccountServices.DeleteUserAccount);
 
 router.post('/change-user-icon', UserAccountServices.ChangeUserIcon);
 

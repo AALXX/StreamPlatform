@@ -30,7 +30,6 @@
         "ts-node-dev": "^2.0.0"
     },
     "dependencies": {
-        "typescript": "^5.2.2",
         "@types/fluent-ffmpeg": "^2.1.20",
         "@types/nodemailer": "^6.4.9",
         "agenda": "5.0.0",
@@ -50,6 +49,7 @@
         "nodemailer": "^6.9.4",
         "path": "^0.12.7",
         "rimraf": "^5.0.5",
-        "socket.io": "^4.7.2"
+        "socket.io": "^4.7.2",
+        "typescript": "^5.2.2"
     }
 }

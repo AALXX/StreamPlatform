@@ -136,7 +136,6 @@ const GetCreatorAccountData = async (req: CustomRequest, res: Response) => {
             liveData: accData[1][0],
             userFollowsCreator: itFollows,
         });
-
     } catch (error: any) {
         logging.error(NAMESPACE, error.message);
 
@@ -465,6 +464,43 @@ const RegisterUser = async (req: CustomRequest, res: Response) => {
         return res.status(500).json({
             message: error.message,
             error: true,
+        });
+    }
+};
+
+/**
+ * Deletes The user Account and all the videos with it
+ */
+const DeleteUserAccount = async (req: CustomRequest, res: Response) => {
+    const errors = CustomRequestValidationResult(req);
+    if (!errors.isEmpty()) {
+        errors.array().map((error) => {
+            logging.error('LOGiN_USER_FUNC', error.errorMsg);
+        });
+
+        return res.status(200).json({ error: true, errors: errors.array() });
+    }
+
+    try {
+        const connection = await req.pool?.promise().getConnection();
+        const UserPublicToken = await utilFunctions.getUserPublicTokenFromPrivateToken(req.pool!, req.body.userToken);
+        const DeleteUserAccount = `
+        DELETE FROM users WHERE UserPrivateToken='${req.body.userToken}';
+        DELETE FROM videos WHERE OwnerToken='${UserPublicToken}';
+        DELETE FROM comments WHERE ownerToken='${UserPublicToken}';
+        DELETE FROM streams WHERE UserPublicToken='${UserPublicToken}';`;
+        
+        const resp = await query(connection, DeleteUserAccount);
+
+        res.status(202).json({
+            error: false,
+        });
+    } catch (error: any) {
+        logging.error(NAMESPACE, error.message);
+
+        res.status(202).json({
+            error: true,
+            errmsg: error.message,
         });
     }
 };
@@ -810,6 +846,7 @@ export default {
     CheckResetPasswordLinkValability,
     ChangeUserPasswod,
     RegisterUser,
+    DeleteUserAccount,
     FollowAccount,
     LoginUser,
     GetCreatorAccountData,

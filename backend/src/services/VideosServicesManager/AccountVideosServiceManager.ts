@@ -109,7 +109,7 @@ const UploadVideoFileToServer = async (req: any, res: Response) => {
             }
 
             //* Directory Created Succesfully
-            fs.rename(`${process.env.ACCOUNTS_FOLDER_PATH}/VideosTmp/${req.files['VideoFile'][0].originalname}`, `${process.env.ACCOUNTS_FOLDER_PATH}/${userPublicToken}/${VideoToken}/Source.mp4`, async (err) => {
+            fs.rename(`${process.env.ACCOUNTS_FOLDER_PATH}/VideosTmp/${req.files['VideoFile'][0].originalname}`, `${process.env.ACCOUNTS_FOLDER_PATH}/${userPublicToken}/${VideoToken}/Original.mp4`, async (err) => {
                 if (err) {
                     logging.error(NAMESPACE, err.message);
 
@@ -130,6 +130,13 @@ const UploadVideoFileToServer = async (req: any, res: Response) => {
                             });
                         }
 
+                        await VideoProceesor(
+                            `${process.env.ACCOUNTS_FOLDER_PATH}/${userPublicToken}/${VideoToken}/Original.mp4`,
+                            `${process.env.ACCOUNTS_FOLDER_PATH}/${userPublicToken}/${VideoToken}/Source.mp4`,
+                            '1920x1080',
+                            16,
+                        );
+
                         //*Save video data to db
                         const success = await SendVideoDataToDb(req, userPublicToken as string, VideoToken, req.body.VideoTitle, req.body.VideoVisibility);
                         if (success == false) {
@@ -138,14 +145,18 @@ const UploadVideoFileToServer = async (req: any, res: Response) => {
                             });
                         }
 
-                        await ThumbnailProceesor(`${process.env.ACCOUNTS_FOLDER_PATH}/${userPublicToken}/${VideoToken}/Thumbnail_image.jpg`);
-                        const file = fs.readFileSync(`${process.env.ACCOUNTS_FOLDER_PATH}/${userPublicToken}/${VideoToken}/Source.mp4`);
+                        // await ThumbnailProceesor(`${process.env.ACCOUNTS_FOLDER_PATH}/${userPublicToken}/${VideoToken}/Thumbnail_image.jpg`);
+                        const file = fs.readFileSync(`${process.env.ACCOUNTS_FOLDER_PATH}/${userPublicToken}/${VideoToken}/Original.mp4`);
 
                         // Encode the binary data as Base64
-                        const base64Video = Buffer.from(file).toString('base64');
-
+                        // const base64Video = Buffer.from(file).toString('base64');
+                        
                         const formData = new FormData();
-                        formData.append('file', base64Video);
+                        // formData.append('file', file, {
+                        //     filename: 'Original.mp4',
+                        //     contentType: 'video/mp4', // Adjust the content type based on your file type
+                        // });
+                        // formData.append('file', file);
                         formData.append('video_name', `${req.body.VideoTitle}.mp4`);
 
                         try {
@@ -283,19 +294,21 @@ const ThumbnailProceesor = async (path: string) =>
  * @param {string} path
  * @param {string} VideoSize
  */
-const VideoProceesor = async (Title: string, path: string, VideoSize: string) =>
+const VideoProceesor = async (srcPath: string, dstPath: string, VideoSize: string, numThreads: number) =>
     new Promise((resolve, reject) => {
-        FFmpeg(path)
+        FFmpeg(srcPath)
             .videoCodec('libx264')
-            .audioCodec('libmp3lame')
+            .audioCodec('aac')
+            .addOption('-threads', numThreads.toString()) // Set the number of threads
             .on('progress', (progress) => {
                 console.log('Processing: ' + progress.timemark);
             })
             .size(VideoSize)
             .on('error', (err) => {
+                logging.error('FFmpeg Error:', err);
                 reject(err);
             })
-            .save(`/${Title}/${Title}_${VideoSize}.mp4`)
+            .save(dstPath)
             .on('end', () => {
                 resolve({ error: false });
             });

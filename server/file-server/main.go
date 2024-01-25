@@ -137,7 +137,7 @@ func main() {
 	http.Handle("/", fileServer)
 
 	// Define the server address and port.
-	addr := "localhost:5500"
+	addr := "192.168.72.81:5600"
 
 	log.Printf("Server started on %s\n", addr)
 	// Start the HTTP server.
