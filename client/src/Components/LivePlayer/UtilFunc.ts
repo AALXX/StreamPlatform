@@ -17,7 +17,8 @@ const getDashbordData = async (userToken: string): Promise<IDasbordLiveDataRespo
         AccountFolowers: dashbordData.data.AccountFolowers,
         LiveTitle: dashbordData.data.LiveTitle,
         LiveLikes: dashbordData.data.LiveLikes,
-        LiveDislikes: dashbordData.data.LiveDislikes
+        LiveDislikes: dashbordData.data.LiveDislikes,
+        UserRole: dashbordData.data.UserRole,
     }
 }
 
@@ -34,7 +35,8 @@ const getLiveData = async (useroken: string, StreamToken: string): Promise<ILive
         OwnerToken: livedData.data.OwnerToken,
         LiveDislikes: livedData.data.LiveDislikes,
         UserLikedVideo: livedData.data.UserLikedVideo,
-        UserLikedOrDislikedLive: livedData.data.UserLikedOrDislikedLive
+        UserLikedOrDislikedLive: livedData.data.UserLikedOrDislikedLive,
+        UserRole: livedData.data.UserRole,
     }
 }
 

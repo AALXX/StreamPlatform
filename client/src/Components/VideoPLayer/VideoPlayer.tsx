@@ -144,7 +144,7 @@ const VideoPlayer = (props: IVideoPlayerProps) => {
         <div className="flex flex-col mt-[3rem] ml-[6rem] h-[100vh] ">
             {/*  VideoPlayer Border */}
 
-            <div className=" w-[66.8vw] h-[71.4vh] ">
+            <div className=" w-[66.8vw] h-[71.8vh] ">
                 {/* TODO  make video controll bar */}
                 {showOverlay ? (
                     <PlayerOverlay
@@ -273,7 +273,7 @@ const VideoPlayer = (props: IVideoPlayerProps) => {
                     ) : (
                         <>
                             <img
-                                src="/assets/PlayerIcons/Dislike_icon.svg"
+                                src="/assets/PlayerIcons/Dislike_icon.svg"  
                                 className="cursor-pointer w-[1.6rem] ml-auto mr-[.5rem]"
                                 alt="not muted image"
                                 onClick={async () => {

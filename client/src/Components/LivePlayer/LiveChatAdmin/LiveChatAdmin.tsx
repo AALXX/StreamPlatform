@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import Image from 'next/image'
 
-import Comment from './MessageAdmin'
+import Message from '../LiveChat/Message'
 import { useEffect } from 'react'
 import { getCookie } from 'cookies-next'
 import { ICommentProps, ILiveChatProps } from '../ILiveChat'
@@ -10,21 +10,17 @@ const LiveChatAdmin = (props: ILiveChatProps) => {
     const [commentInput, setCommentInput] = useState<string>('')
     const [liveMessages, setliveMessages] = useState<Array<ICommentProps>>([])
 
-
     useEffect(() => {
         if (props.ClientSocket && props.LiveToken) {
-
-            props.ClientSocket.on('recived-message', ({ message, ownerName, ownerToken, isStreamer }) => {
-                console.log(message)
-                setliveMessages(liveMessages => [...liveMessages, { ownerToken: ownerToken, message: message, ownerName: ownerName, isStreamer: isStreamer }])
+            props.ClientSocket.on('recived-message', ({ message, ownerName, ownerToken, userRole }) => {
+                setliveMessages(liveMessages => [...liveMessages, { ownerToken: ownerToken, message: message, ownerName: ownerName, commentatorRole: userRole }])
             })
         }
-
     }, [props.LiveToken, props.ClientSocket])
 
     const postMessage = (e: any) => {
         e.preventDefault()
-        props.ClientSocket?.emit('send-message', { message: commentInput, LiveToken: props.LiveToken, UserPrivateToken: getCookie('userToken') as string })
+        props.ClientSocket?.emit('send-message', { message: commentInput, LiveToken: props.LiveToken, UserPrivateToken: getCookie('userToken') as string, userRole: props.UserRole })
     }
 
     return (
@@ -33,7 +29,7 @@ const LiveChatAdmin = (props: ILiveChatProps) => {
                 {Object.keys(liveMessages).length > 0 ? (
                     <>
                         {liveMessages.map((comment: ICommentProps, index: number) => (
-                            <Comment key={index} ownerToken={comment.ownerToken} message={comment.message} ownerName={comment.ownerName} isStreamer={comment.isStreamer} />
+                            <Message key={index} ownerToken={comment.ownerToken} message={comment.message} ownerName={comment.ownerName} commentatorRole={comment.commentatorRole} viewerRole={props.UserRole} />
                         ))}
                     </>
                 ) : (
@@ -47,7 +43,6 @@ const LiveChatAdmin = (props: ILiveChatProps) => {
                     <input type="submit" className="hidden" id="PostButton" />
                 </label>
             </form>
-
         </div>
     )
 }

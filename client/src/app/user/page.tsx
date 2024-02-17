@@ -25,6 +25,7 @@ export default function CreatorAccountPage() {
         ; (async () => {
             const res = await axios.get(`${process.env.SERVER_BACKEND}/user-account/get-creator-data/${getCookie('userPublicToken')}/${urlParams.get('id')}`)
             setUserData(res.data.userData)
+            console.log(res.data.userData)
             setLiveData(res.data.liveData)
             setUserFollwsAccount(res.data.userFollowsCreator)
 

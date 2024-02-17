@@ -12,7 +12,7 @@ export default function WatchVideoPage() {
 
     return (
         <>
-            <SearchResults videoToken={urlParams.get('q') as string} />
+            <SearchResults searchInput={urlParams.get('q') as string} />
         </>
     )
 }

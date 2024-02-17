@@ -10,7 +10,7 @@ import { CustomRequest, query } from '../../config/mysql';
 import UtilFunc from '../../util/utilFunctions';
 import axios from 'axios';
 import utilFunctions from '../../util/utilFunctions';
-import { validationResult, param } from 'express-validator';
+import { validationResult, param, body } from 'express-validator';
 
 const NAMESPACE = 'AccountUploadServiceManager';
 
@@ -81,7 +81,12 @@ const UploadVideoFileToServer = async (req: any, res: Response) => {
     logging.info(NAMESPACE, 'Posting Video service called');
 
     videoUpload(req, res, async (err: any) => {
-        console.log(req);
+        if (req.body.VideoTitle === '') {
+            return res.status(200).json({
+                error: true,
+            });
+        }
+
         if (err) {
             logging.error(NAMESPACE, err.message);
 
@@ -100,6 +105,7 @@ const UploadVideoFileToServer = async (req: any, res: Response) => {
         const VideoToken = UtilFunc.CreateVideoToken();
         //* video file does not exist
         fs.mkdir(`${process.env.ACCOUNTS_FOLDER_PATH}/${userPublicToken}/${VideoToken}`, (err) => {
+            console.log('first');
             if (err) {
                 logging.error(NAMESPACE, err.message);
 
@@ -150,7 +156,7 @@ const UploadVideoFileToServer = async (req: any, res: Response) => {
 
                         // Encode the binary data as Base64
                         // const base64Video = Buffer.from(file).toString('base64');
-                        
+
                         const formData = new FormData();
                         // formData.append('file', file, {
                         //     filename: 'Original.mp4',
@@ -190,10 +196,7 @@ const UploadVideoFileToServer = async (req: any, res: Response) => {
                                 });
                             }
 
-                            // * Creates a 720p and 480p variant of the video
-                            // await VideoProceesor(`${req.body.VideoTitle}`, `${process.env.ACCOUNTS_FOLDER_PATH}/${req.body.UserPrivateToken}/${VideoToken}/${req.body.VideoTitle}_Source.mp4`, '1280x720').then(async () => {
-                            //     await VideoProceesor(`${req.body.VideoTitle}`, `../videos/${VideoToken}/${req.body.VideoTitle}_Source.mp4`, '480x360').then(() => {});
-                            // });
+                            // * Create a 720p and 480p variant of the video
 
                             return res.status(200).json({
                                 error: false,
@@ -428,7 +431,6 @@ const UpdateCreatorVideoData = async (req: CustomRequest, res: Response) => {
  * delete creator video
  * @param {CustomRequest} req
  * @param {Response} res
- * @return {Response}
  */
 const DeleteCreatorVideoData = async (req: CustomRequest, res: Response) => {
     const errors = CustomRequestValidationResult(req);

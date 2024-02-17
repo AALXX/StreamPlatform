@@ -32,27 +32,26 @@ interface ICreatorProfileProps {
 }
 
 const CreatorProfile = (props: ICreatorProfileProps) => {
+    // console.log(props.userData)
     const [componentToShow, setComponentToShow] = useState<string>('LandingPage')
-
     let component
     switch (componentToShow) {
         case 'LandingPage':
-            component = <div className="grid xl:grid-cols-6 lg:grid-cols-5 gap-4 ">
-                {props.liveData == null ? (
-                    null
-
-                ) : (
-                    <div>
-                        <Livetemplate
-                            StreamTitle={props.liveData.StreamTitle}
-                            Likes={props.liveData.Likes}
-                            Dislikes={props.liveData.Dislikes}
-                            StreamToken={props.liveData.StreamToken}
-                            StartedAt={props.liveData.StartedAt}
-                        />
-                    </div>
-                )}
-            </div>
+            component = (
+                <div className="grid xl:grid-cols-6 lg:grid-cols-5 gap-4 ">
+                    {props.liveData == null ? null : (
+                        <div>
+                            <Livetemplate
+                                StreamTitle={props.liveData.StreamTitle}
+                                Likes={props.liveData.Likes}
+                                Dislikes={props.liveData.Dislikes}
+                                StreamToken={props.liveData.StreamToken}
+                                StartedAt={props.liveData.StartedAt}
+                            />
+                        </div>
+                    )}
+                </div>
+            )
             break
         case 'Videos':
             component = (
@@ -61,14 +60,21 @@ const CreatorProfile = (props: ICreatorProfileProps) => {
                         <div className="grid xl:grid-cols-6 lg:grid-cols-5 gap-4">
                             <>
                                 {props.videosData.map((video: IVideoTemplateProps, index: number) => (
-                                    <VideoTamplate key={index} VideoTitle={video.VideoTitle} VideoToken={video.VideoToken} OwnerName={props.userData.UserName} OwnerToken={video.OwnerToken} />
+                                    <VideoTamplate
+                                        key={index}
+                                        VideoTitle={video.VideoTitle}
+                                        VideoToken={video.VideoToken}
+                                        OwnerName={props.userData.UserName}
+                                        OwnerToken={video.OwnerToken}
+                                        Dislikes={video.Dislikes}
+                                        Likes={video.Likes}
+                                    />
                                 ))}
                             </>
                         </div>
                     ) : (
                         <></>
-                    )
-                    }
+                    )}
                 </div>
             )
 

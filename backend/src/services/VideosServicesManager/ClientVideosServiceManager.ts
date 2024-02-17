@@ -29,6 +29,8 @@ interface IVideoCommentsToBeSendType {
 interface ISearchVideoCards {
     VideoTitle: string;
     VideoToken: string;
+    Likes: number;
+    Dislikes: number;
     OwnerName: string;
     OwnerToken: string;
 }
@@ -332,10 +334,10 @@ const SearchVideo = async (req: CustomRequest, res: Response) => {
         for (const video in video_search_server_resp.data.videoSearchedResults) {
             if (Object.prototype.hasOwnProperty.call(video_search_server_resp.data.videoSearchedResults, video)) {
                 const videoData = video_search_server_resp.data.videoSearchedResults[video];
-                const GetVideoDataSqlQuery = `SELECT VideoTitle, OwnerToken, u.UserName FROM videos v JOIN users u ON v.OwnerToken = u.UserPublicToken WHERE VideoToken="${videoData.VideoToken}" `;
+                const GetVideoDataSqlQuery = `SELECT VideoTitle, OwnerToken, Likes, Dislikes, u.UserName FROM videos v JOIN users u ON v.OwnerToken = u.UserPublicToken WHERE VideoToken="${videoData.VideoToken}" `;
                 const getVideoData = await query(connection, GetVideoDataSqlQuery);
                 let resp = JSON.parse(JSON.stringify(getVideoData));
-                videos.push({ OwnerName: resp[0].UserName, VideoTitle: resp[0].VideoTitle, OwnerToken: resp[0].OwnerToken, VideoToken: videoData.VideoToken });
+                videos.push({ OwnerName: resp[0].UserName, VideoTitle: resp[0].VideoTitle, OwnerToken: resp[0].OwnerToken, VideoToken: videoData.VideoToken, Likes: resp[0].Likes, Dislikes: resp[0].Dislikes });
             }
         }
 

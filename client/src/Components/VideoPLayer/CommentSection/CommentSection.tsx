@@ -28,13 +28,12 @@ const CommentSection = (props: IVideoPlayerProps) => {
 
         if (hasComments == false) {
             setHasComments(true)
-
         }
         setVideoComments(videoComments => [...videoComments, { ownerToken: props.UserToken!, videoToken: props.VideoToken!, comment: commentInput, ownerName: res.data.userName }])
     }
 
     useEffect(() => {
-        ; (async () => {
+        ;(async () => {
             const getCommentsForVideo = await axios.get(`${process.env.SERVER_BACKEND}/videos-manager/get-video-comments/${props.VideoToken}`)
             if (getCommentsForVideo.data.CommentsFound === true) {
                 setHasComments(true)
@@ -44,7 +43,7 @@ const CommentSection = (props: IVideoPlayerProps) => {
     }, [])
 
     return (
-        <div className="flex flex-col ml-[.5rem] mt-[3rem] h-[83vh] w-[22vw] bg-[#2e2e2e] ">
+        <div className="flex flex-col ml-[.5rem] mt-[3rem] h-[83.2vh] w-[22vw] bg-[#2e2e2e] ">
             <div className="flex flex-col h-[88%] overflow-y-scroll">
                 {hasComments ? (
                     <>
@@ -56,10 +55,14 @@ const CommentSection = (props: IVideoPlayerProps) => {
                     <></>
                 )}
             </div>
-            <form className="flex h-[12%] bg-[#292929]" onSubmit={(e) => {
-                e.preventDefault()
-                postComment()
-            }}>
+            <form
+                className="flex h-[12%] bg-[#292929]"
+                onSubmit={e => {
+                    //* this is here to post comment on enter press in input box
+                    e.preventDefault()
+                    postComment()
+                }}
+            >
                 <input type="text" className="h-9 self-center ml-7 w-[75%] bg-[#373737] text-white indent-3" placeholder="Comment" onChange={e => setCommentInput(e.currentTarget.value)} />
                 <div
                     className="flex bg-[#373737] ml-3 w-10  h-9 self-center cursor-pointer hover:bg-[#444444]"

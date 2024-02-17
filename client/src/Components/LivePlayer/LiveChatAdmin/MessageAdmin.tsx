@@ -1,12 +1,8 @@
 import Link from 'next/link'
 import React from 'react'
+import { ICommentProps } from '../ILiveChat'
 
-interface ICommentProps {
-    ownerToken: string
-    message: string
-    ownerName: string
-    isStreamer: boolean
-}
+//TODO: DELTE THIS FILE
 
 const MessageAdmin = (props: ICommentProps) => {
     return (

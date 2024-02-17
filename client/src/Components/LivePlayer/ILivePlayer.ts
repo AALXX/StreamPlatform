@@ -1,4 +1,5 @@
-import { Socket } from 'socket.io-client';
+import { Dispatch, SetStateAction } from 'react'
+import { Socket } from 'socket.io-client'
 
 interface IDasbordLiveDataResponse {
     error: boolean
@@ -9,6 +10,7 @@ interface IDasbordLiveDataResponse {
     AccountFolowers: number
     LiveLikes: number
     LiveDislikes: number
+    UserRole: string | null
 }
 
 /**
@@ -21,6 +23,7 @@ interface IDasbordLiveData {
     AccountFolowers: number
     LiveLikes: number
     LiveDislikes: number
+    UserRole: string | null
 }
 
 interface ILiveData {
@@ -35,11 +38,13 @@ interface ILiveData {
     LiveDislikes: number
     UserLikedVideo: boolean
     UserLikedOrDislikedLive: { like_or_dislike: number; userLiked: boolean }
+    UserRole: string | null
 }
 
 interface ILivePlayerProps {
     userStreamToken: string
-    socket:Socket
+    socket: Socket
+    setUserRole?: Dispatch<SetStateAction<string | null>>
 }
 
 export type { ILiveData, ILivePlayerProps, IDasbordLiveData, IDasbordLiveDataResponse }

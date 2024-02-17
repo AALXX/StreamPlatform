@@ -26,8 +26,6 @@ const Clip = ({ url, videoRef, canvasRef }: IClipProps) => {
         previousUrl.current = url
     }, [url])
 
-
-
     if (url == '') {
         return (
             <div className="flex border-2 border-[#464646] w-[25rem] h-[15rem] flex-col mt-4">
@@ -73,6 +71,8 @@ const UploadComopnents = () => {
 
         const userToken: string = getCookie('userToken') as string
 
+        console.log(videoFile![0])
+
         const formData = new FormData()
         formData.append('VideoFile', videoFile![0])
         formData.append('VideoThumbnail', thumbnalFile!)
@@ -93,8 +93,7 @@ const UploadComopnents = () => {
         }
 
         try {
-
-            const res = await axios.post(`${process.env.SERVER_BACKEND}/videos-manager/upload-video`, formData, config);
+            const res = await axios.post(`${process.env.SERVER_BACKEND}/videos-manager/upload-video`, formData, config)
             console.log(res)
         } catch (error) {
             console.log(error)
@@ -247,7 +246,7 @@ const UploadComopnents = () => {
             <div className="flex w-[95%]">
                 <div className="flex flex-col ">
                     <h1 className="text-white text-[1.3rem] mt-4">Preview:</h1>
-                    <Clip url={ObjectUrl} videoRef={videoRef} />
+                    <Clip url={ObjectUrl} videoRef={videoRef} canvasRef={canvasRef} />
                 </div>
 
                 {videoFile == null ? null : (

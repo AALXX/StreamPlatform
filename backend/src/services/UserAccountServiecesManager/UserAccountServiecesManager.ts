@@ -124,12 +124,11 @@ const GetCreatorAccountData = async (req: CustomRequest, res: Response) => {
         if (Object.keys(data[1]).length === 0) {
             return res.status(200).json({
                 error: false,
-                userData: accData[0],
+                userData: accData[0][0],
                 userFollowsCreator: itFollows,
                 liveData: null,
             });
         }
-
         return res.status(200).json({
             error: false,
             userData: accData[0][0],
@@ -439,8 +438,14 @@ const RegisterUser = async (req: CustomRequest, res: Response) => {
 
     const StreamKey = UtilFunc.GenerateRandomStreamKey();
 
-    const InsertUserQueryString = `INSERT INTO users (UserName, UserDescription, UserEmail, UserPwd, UserPrivateToken, UserPublicToken, StreamKey) VALUES 
-        ('${req.body.userName}', '', '${req.body.userEmail}', '${hashedpwd}','${userPrivateToken}','${userPublicToken}', '${StreamKey}');`;
+    const InsertUserQueryString = `START TRANSACTION;
+    INSERT INTO users (UserName, UserDescription, UserEmail, UserPwd, UserPrivateToken, UserPublicToken, StreamKey)
+    VALUES ('${req.body.userName}', '', '${req.body.userEmail}', '${hashedpwd}', '${userPrivateToken}', '${userPublicToken}', '${StreamKey}');
+    
+    INSERT INTO channel_roles_alloc (UserPrivateToken, ChannelToken, RoleCategoryId)
+    VALUES ('${userPrivateToken}', '${userPublicToken}', ${2});
+    
+    COMMIT;`;
 
     try {
         const connection = await req.pool?.promise().getConnection();
@@ -489,7 +494,7 @@ const DeleteUserAccount = async (req: CustomRequest, res: Response) => {
         DELETE FROM videos WHERE OwnerToken='${UserPublicToken}';
         DELETE FROM comments WHERE ownerToken='${UserPublicToken}';
         DELETE FROM streams WHERE UserPublicToken='${UserPublicToken}';`;
-        
+
         const resp = await query(connection, DeleteUserAccount);
 
         res.status(202).json({

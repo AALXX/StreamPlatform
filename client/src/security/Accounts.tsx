@@ -27,7 +27,7 @@ const accLoginFunc = async (userEmail: string, password: string) => {
         userEmail,
         password
     })
-    console.log(res.data)
+
     if (!res.data.error && res.data.userprivateToken != null) {
         setCookie('userToken', res.data.userprivateToken, { maxAge: 60 * 6 * 24 })
         setCookie('userPublicToken', res.data.userpublicToken, { maxAge: 60 * 6 * 24 })
@@ -76,4 +76,19 @@ const isLoggedIn = async () => {
     }
 }
 
-export { accRegisterFunc, accLoginFunc, accLogout, isLoggedIn }
+const deleteAccount = async (sure: boolean, UserPrivateToken: string) => {
+    if (!sure) {
+        window.alert('CheckBox Not Checked')
+        return false
+    }
+
+    const res = await axios.post(`${process.env.SERVER_BACKEND}/user-account/delete-user-account/`, { userToken: UserPrivateToken })
+    if (res.data.error) {
+        window.alert('error')
+        return false
+    }
+    
+    return true;
+}
+
+export { accRegisterFunc, accLoginFunc, accLogout, isLoggedIn, deleteAccount }

@@ -21,7 +21,8 @@ const LivePlayerDashbord = (props: ILivePlayerProps) => {
         AccountName: '',
         AccountFolowers: 0,
         LiveLikes: 0,
-        LiveDislikes: 0
+        LiveDislikes: 0,
+        UserRole: null
     })
 
     const [liveTitle, setLiveTitle] = useState<string>('placeHolder')
@@ -82,7 +83,7 @@ const LivePlayerDashbord = (props: ILivePlayerProps) => {
             }
         }
 
-        ; (async () => {
+        ;(async () => {
             const dashData = await getDashbordData(getCookie('userToken') as string)
             console.log(dashData)
             setLiveData(dashData)
@@ -99,17 +100,14 @@ const LivePlayerDashbord = (props: ILivePlayerProps) => {
         }
     }, [])
 
-
-
     useEffect(() => {
-
         if (props.socket && LiveData.LiveToken) {
             // Emit event and manage socket interactions when `socket` changes
             props.socket.emit('join-live', { LiveToken: LiveData.LiveToken, UserPublicToken: getCookie('userPublicToken') as string })
 
             props.socket.on('get-viewers', ({ viewers }) => {
                 setLiveViewrs(viewers)
-            });
+            })
         }
     }, [props.socket, LiveData.LiveToken])
 
@@ -186,11 +184,7 @@ const LivePlayerDashbord = (props: ILivePlayerProps) => {
                             <img src="/assets/PlayerIcons/Dislike_icon.svg" className="cursor-pointer w-[1.6rem] ml-auto mr-[.5rem]" alt="not muted image" />
 
                             <h1 className="text-white self-center mr-[4rem]">{liveDisLikes}</h1>
-                            <img
-                                src="/assets/LiveStreamIcons/LiveViwers_icon.svg"
-                                className="cursor-pointer w-[1.6rem] ml-auto mr-[.5rem]"
-                                alt="viwers image"
-                            />
+                            <img src="/assets/LiveStreamIcons/LiveViwers_icon.svg" className="cursor-pointer w-[1.6rem] ml-auto mr-[.5rem]" alt="viwers image" />
                             <h1 className="text-white self-center mr-[4rem]">{LiveViwers - 1}</h1>
                         </div>
                         {isLive ? (
@@ -203,8 +197,8 @@ const LivePlayerDashbord = (props: ILivePlayerProps) => {
 
                                         setLiveData(prevState => ({
                                             ...prevState, // Spread the previous state
-                                            LiveToken: LiveToken, // Update the LiveLikes property
-                                        }));
+                                            LiveToken: LiveToken // Update the LiveLikes property
+                                        }))
                                     }
                                 }}
                             >
@@ -220,8 +214,8 @@ const LivePlayerDashbord = (props: ILivePlayerProps) => {
 
                                         setLiveData(prevState => ({
                                             ...prevState, // Spread the previous state
-                                            LiveToken: LiveToken, // Update the LiveLikes property
-                                        }));
+                                            LiveToken: LiveToken // Update the LiveLikes property
+                                        }))
                                     }
                                 }}
                             >
@@ -232,7 +226,7 @@ const LivePlayerDashbord = (props: ILivePlayerProps) => {
                 </div>
             </div>
             <Suspense fallback={<div>Loading...</div>}>
-                <LiveChatAdmin UserToken={userToken} LiveToken={LiveData.LiveToken} ClientSocket={props.socket} />
+                <LiveChatAdmin UserToken={userToken} LiveToken={LiveData.LiveToken} ClientSocket={props.socket} UserRole={LiveData.UserRole}/>
             </Suspense>
         </div>
     )

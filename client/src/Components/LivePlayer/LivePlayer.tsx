@@ -23,7 +23,8 @@ const LivePlayer = (props: ILivePlayerProps) => {
         LiveDislikes: 0,
         UserLikedVideo: false,
         OwnerToken: '',
-        UserLikedOrDislikedLive: { like_or_dislike: 0, userLiked: false }
+        UserLikedOrDislikedLive: { like_or_dislike: 0, userLiked: false },
+        UserRole: null
     })
 
     const [playing, setPlaying] = useState(false)
@@ -43,14 +44,14 @@ const LivePlayer = (props: ILivePlayerProps) => {
 
     useEffect(() => {
         ; (async () => {
-            const LiveData = await getLiveData(getCookie('userToken') as string, props.userStreamToken)
-
+            const LiveDataResp = await getLiveData(getCookie('userToken') as string, props.userStreamToken)
+            console.log(LiveDataResp)
             if (VideoRef.current) {
                 const video = VideoRef.current
 
                 if (Hls.isSupported()) {
                     hls.current = new Hls()
-                    hls.current.loadSource(`${process.env.VIDEO_SERVER_BACKEND}/video-manager/live-stream/${LiveData.OwnerToken}/`)
+                    hls.current.loadSource(`${process.env.VIDEO_SERVER_BACKEND}/video-manager/live-stream/${LiveDataResp.OwnerToken}/`)
                     hls.current.attachMedia(video)
                     // Add an error event listener to capture and handle HLS errors
                     hls.current.on(Hls.Events.ERROR, (event, data) => {
@@ -87,17 +88,22 @@ const LivePlayer = (props: ILivePlayerProps) => {
                 }
             }
 
-            setLiveData(LiveData)
-            setUserFollwsAccount(LiveData.UserFollwsAccount)
-            setUserLikedVideo(LiveData.UserLikedVideo)
-            if (LiveData.UserLikedOrDislikedLive.like_or_dislike === 1) {
+            setLiveData(LiveDataResp)
+            
+            if (props.setUserRole != undefined){
+                props.setUserRole(LiveDataResp.UserRole)
+            } 
+
+            setUserFollwsAccount(LiveDataResp.UserFollwsAccount)
+            setUserLikedVideo(LiveDataResp.UserLikedVideo)
+            if (LiveDataResp.UserLikedOrDislikedLive.like_or_dislike === 1) {
                 setUserLikedVideo(true)
-            } else if (LiveData.UserLikedOrDislikedLive.like_or_dislike === 2) {
+            } else if (LiveDataResp.UserLikedOrDislikedLive.like_or_dislike === 2) {
                 setUserDisLikedVideo(true)
             }
 
-            setLiveLikes(LiveData.LiveLikes)
-            setLiveDisLikes(LiveData.LiveDislikes)
+            setLiveLikes(LiveDataResp.LiveLikes)
+            setLiveDisLikes(LiveDataResp.LiveDislikes)
         })()
 
 

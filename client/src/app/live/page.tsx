@@ -13,6 +13,7 @@ const LivePage = () => {
     const [socket, setSocket] = useState<Socket | null>(null)
 
     const [userLoggedIn, setUserLoggedIn] = useState<boolean>(false)
+    const [userRole, setUserRole] = useState<string | null>(null)
 
     useEffect(() => {
         const loginAync = async () => {
@@ -22,30 +23,27 @@ const LivePage = () => {
         loginAync()
 
         // Connect to the Socket.IO server only once when the component mounts
-        const newSocket = io(process.env.LIVE_CHAT_SERVER as string); // Replace with your server URL
-        setSocket(newSocket);
+        const newSocket = io(process.env.LIVE_CHAT_SERVER as string) // Replace with your server URL
+        setSocket(newSocket)
 
         return () => {
-            newSocket.disconnect(); // Disconnect the socket on unmount
-        };
-    }, []);
+            newSocket.disconnect() // Disconnect the socket on unmount
+        }
+    }, [])
 
     useEffect(() => {
         // Emit event and manage socket interactions when `socket` changes
         if (socket) {
             socket.emit('join-live', { LiveToken: urlParams.get('t') as string, UserPublicToken: getCookie('userPublicToken') as string })
-
         }
-
-    }, [socket, urlParams]);
-
+    }, [socket, urlParams])
 
     return (
         <div className="flex flex-col">
             <div className="flex h-[100vh]">
-                <LivePlayer userStreamToken={urlParams.get('t') as string} socket={socket!} />
+                <LivePlayer userStreamToken={urlParams.get('t') as string} socket={socket!} setUserRole={setUserRole} />
                 <Suspense fallback={<div>Loading...</div>}>
-                    <LiveChat UserToken={userToken} LiveToken={urlParams.get('t') as string} ClientSocket={socket} userLoggedIn={userLoggedIn} />
+                    <LiveChat UserToken={userToken} LiveToken={urlParams.get('t') as string} ClientSocket={socket} userLoggedIn={userLoggedIn} UserRole={userRole} />
                 </Suspense>
             </div>
         </div>

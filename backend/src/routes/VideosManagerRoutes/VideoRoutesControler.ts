@@ -4,7 +4,7 @@ import AccountVideoServices from '../../services/VideosServicesManager/AccountVi
 import ClientVideosServices from '../../services/VideosServicesManager/ClientVideosServiceManager';
 const router = express.Router();
 
-router.post('/upload-video', AccountVideoServices.UploadVideoFileToServer);
+router.post('/upload-video', body('VideoTitle').not().isEmpty().trim(), AccountVideoServices.UploadVideoFileToServer);
 
 //*client video related
 router.post('/like-dislike-video/', body('userToken').not().isEmpty().trim(), body('videoToken').not().isEmpty().trim(), ClientVideosServices.LikeDislikeVideoFunc);

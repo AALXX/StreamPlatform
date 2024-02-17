@@ -10,7 +10,17 @@ const Message = (props: ICommentProps) => {
                     <img className="z-10 rounded-full" src={`${process.env.FILE_SERVER}/${props.ownerToken}/Main_Icon.png`} width={40} height={40} alt="Picture of the author" />
                 </Link>
                 <h2 className="text-white self-center ml-4">{props.ownerName}</h2>
-                {props.isStreamer ? <img src="/assets/LiveStreamIcons/streamer_crown_icon.svg" width={20} height={20} className="ml-2" /> : null}
+                {props.commentatorRole === 'chanel_owner' ? (
+                    <>
+                        <img src="/assets/LiveStreamIcons/streamer_crown_icon.svg" width={20} height={20} className="ml-2" />
+                    </>
+                ) : null}
+
+                {props.viewerRole === 'chanel_owner' ? (
+                    <>
+                        <img src="/assets/AccountIcons/Settings_icon.svg" width={25} height={25} alt="SettingsIcon" className="ml-auto mr-4" />
+                    </>
+                ) : null}
             </div>
             <hr className="mt-2" />
             <div className="flex  w-[92%] self-center  h-full">

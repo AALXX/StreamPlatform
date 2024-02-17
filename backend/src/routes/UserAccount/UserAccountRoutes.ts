@@ -4,8 +4,6 @@ import UserAccountServices from '../../services/UserAccountServiecesManager/User
 
 
 const router = express.Router();
-// MySQL Connection Pool setup
-
 
 //* Account auth
 router.post('/register-account', body('userName').not().isEmpty(), body('userEmail').isEmail().not().isEmpty(), body('password').isLength({ min: 4 }).not().isEmpty().trim(), UserAccountServices.RegisterUser);
@@ -19,8 +17,6 @@ router.post(
     body('userEmail').not().isEmpty(),
     UserAccountServices.ChangeUserPasswod,
 );
-
-
 
 //* Account data
 router.get('/get-account-data/:privateToken', UserAccountServices.GetUserAccountData);

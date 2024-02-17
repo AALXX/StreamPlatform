@@ -64,14 +64,26 @@ const GetLiveAdminData = async (req: CustomRequest, res: Response) => {
         const UserPublicToken = await utilFunctions.getUserPublicTokenFromPrivateToken(req.pool!, req.params.userPrivateToken);
         const connection = await req.pool?.promise().getConnection();
         const GetLiveAdminDataQueryString = `
-        SELECT s.StreamTitle, s.Likes, s.Dislikes, s.StreamToken, s.Active, u.UserName, u.AccountFolowers
+        SELECT u.UserName, 
+               u.AccountFolowers, 
+               s.StreamTitle, 
+               s.Likes, 
+               s.Dislikes, 
+               s.StreamToken, 
+               s.Active,
+               cra.RoleCategoryId,  -- RoleCategoryId from channel_roles_alloc
+               r.Role           -- RoleName corresponding to RoleCategoryId from Role table
         FROM users AS u
-        LEFT JOIN streams AS s ON s.UserPublicToken = u.UserPublicToken
+        LEFT JOIN streams AS s 
+            ON s.UserPublicToken = u.UserPublicToken AND s.Active = 1
+        LEFT JOIN channel_roles_alloc AS cra 
+            ON cra.UserPrivateToken = u.UserPrivateToken  -- Assuming this is the join condition between users and channel_roles_alloc
+        LEFT JOIN Roles AS r 
+            ON cra.RoleCategoryId = r.Id  -- Assuming RoleCategoryId corresponds to RoleId in the Role table
         WHERE u.UserPublicToken = "${UserPublicToken}";`;
 
-        const results = await query(connection, GetLiveAdminDataQueryString);
-        const data = JSON.parse(JSON.stringify(results));
-        if (data[0].StreamTitle == null || data[0].Likes == null || data[0].StreamTitle == null || data[0].Active === 0) {
+        const data = await query(connection, GetLiveAdminDataQueryString);
+        if (Object.keys(data).length === 0 || data[0].StreamTitle == null || data[0].Likes == null || data[0].StreamTitle == null) {
             return res.status(200).json({
                 error: false,
                 IsLive: false,
@@ -81,6 +93,7 @@ const GetLiveAdminData = async (req: CustomRequest, res: Response) => {
                 LiveTitle: 'PlaceHolder',
                 LiveLikes: 0,
                 LiveDislikes: 0,
+                UserRole: data[0].Role,
             });
         }
 
@@ -93,6 +106,7 @@ const GetLiveAdminData = async (req: CustomRequest, res: Response) => {
             LiveTitle: data[0].StreamTitle,
             LiveLikes: data[0].Likes,
             LiveDislikes: data[0].Dislikes,
+            UserRole: data[0].Role,
         });
     } catch (error: any) {
         logging.error(NAMESPACE, error.message);
@@ -113,16 +127,26 @@ const GetLiveAdminData = async (req: CustomRequest, res: Response) => {
 const GetLiveData = async (req: CustomRequest, res: Response) => {
     try {
         const connection = await req.pool?.promise().getConnection();
-        const GetLiveDataQueryString = `
-        SELECT s.StreamTitle, s.Likes, s.Dislikes, s.Active, u.UserName, u.AccountFolowers AS UserAccountFolowers, u.UserPublicToken 
-        FROM streams AS s
-        LEFT JOIN users AS u ON s.UserPublicToken = u.UserPublicToken
-        WHERE s.StreamToken = "${req.params.streamToken}";`;
-
-        const results = await query(connection, GetLiveDataQueryString);
         const userPublicToken = await utilFunctions.getUserPublicTokenFromPrivateToken(req.pool!, req.params.userPrivateToken);
 
-        const data = JSON.parse(JSON.stringify(results));
+        const GetLiveDataQueryString = `
+        SELECT s.StreamTitle, 
+               s.Likes, 
+               s.Dislikes, 
+               s.Active, 
+               u.UserName, 
+               u.AccountFolowers AS UserAccountFolowers, 
+               u.UserPublicToken,
+               cra.RoleCategoryId,  -- RoleCategoryId from channel_roles_alloc
+               r.Role               -- RoleName corresponding to RoleCategoryId from Role table
+        FROM streams AS s
+        LEFT JOIN users AS u ON s.UserPublicToken = u.UserPublicToken
+        LEFT JOIN channel_roles_alloc AS cra ON cra.UserPrivateToken = "${req.params.userPrivateToken}"
+        LEFT JOIN Roles AS r ON cra.RoleCategoryId = r.Id
+        WHERE s.StreamToken = "${req.params.streamToken}";`;
+
+        const data = await query(connection, GetLiveDataQueryString);
+
         const itFollows = await utilFunctions.userFollowAccountCheck(req.pool!, req.params.userPrivateToken, data[0].UserPublicToken);
         const getUserLikedOrDisliked = await utilFunctions.getUserLikedOrDislikedStream(req.pool!, String(userPublicToken), req.params.streamToken);
 
@@ -138,20 +162,22 @@ const GetLiveData = async (req: CustomRequest, res: Response) => {
                 UserLikedOrDislikedLive: { userLiked: false, like_or_dislike: 0 },
                 LiveLikes: 0,
                 LiveDislikes: 0,
+                UserRole: data[0].Role,
             });
         }
         if (data[0].Active == 0) {
             return res.status(200).json({
                 error: false,
                 IsLive: false,
-                OwnerToken: data[0].UserPublicToken,
                 AccountName: data[0].UserName,
                 AccountFolowers: data[0].AccountFolowers,
-                LiveTitle: 'No Name',
-                UserFollwsAccount: false,
-                UserLikedOrDislikedLive: { userLiked: false, like_or_dislike: 0 },
-                LiveLikes: 0,
-                LiveDislikes: 0,
+                OwnerToken: data[0].UserPublicToken,
+                LiveTitle: data[0].StreamTitle,
+                LiveLikes: data[0].Likes,
+                LiveDislikes: data[0].Dislikes,
+                UserFollwsAccount: itFollows,
+                UserLikedOrDislikedLive: getUserLikedOrDisliked,
+                UserRole: data[0].Role,
             });
         }
 
@@ -167,6 +193,7 @@ const GetLiveData = async (req: CustomRequest, res: Response) => {
                 LiveDislikes: data[0].Dislikes,
                 UserFollwsAccount: false,
                 UserLikedOrDislikedLive: { userLiked: false, like_or_dislike: 0 },
+                UserRole: data[0].Role,
             });
         }
 
@@ -181,6 +208,7 @@ const GetLiveData = async (req: CustomRequest, res: Response) => {
             LiveDislikes: data[0].Dislikes,
             UserFollwsAccount: itFollows,
             UserLikedOrDislikedLive: getUserLikedOrDisliked,
+            UserRole: data[0].Role,
         });
     } catch (error: any) {
         logging.error(NAMESPACE, `GET_LIVE_DATA_FUNC ERROR: ${error}`);
@@ -365,7 +393,7 @@ const JoinLive = async (pool: mysql.Pool, io: Server, LiveToken: string, UserPub
 
 const delayBetweenCustomRequests = 2000; // Adjust this to set the delay in milliseconds
 const lastMessageTimes = new Map(); // Map to store last message times per socket ID
-const SendMessage = async (pool: mysql.Pool, io: Server, socket: Socket, Message: string, LiveToken: string, UserPrivateToken: string) => {
+const SendMessage = async (pool: mysql.Pool, io: Server, socket: Socket, Message: string, LiveToken: string, UserPrivateToken: string, userRole: string | null) => {
     const currentTime = Date.now();
     const lastMessageTime = lastMessageTimes.get(socket.data.UserPublicToken) || 0;
     try {
@@ -387,12 +415,12 @@ const SendMessage = async (pool: mysql.Pool, io: Server, socket: Socket, Message
             LEFT JOIN streams s ON u.UserPublicToken = s.UserPublicToken AND s.StreamToken = "${LiveToken}"
             WHERE u.UserPublicToken = "${UserPublicToken}";`;
 
-            const results = await query(connection, GetLiveDataQueryString);
-            const data = JSON.parse(JSON.stringify(results));
+            const data = await query(connection, GetLiveDataQueryString);
             lastMessageTimes.set(socket.data.UserPublicToken, currentTime);
             await SCYquery(`INSERT INTO LiveMessages (Id, livetoken, OwnerToken, Message, SentAt)
             VALUES (uuid(), '${LiveToken}','${UserPublicToken}', '${Message}.', toTimestamp(now()));`);
-            io.to(LiveToken).emit('recived-message', { message: Message, ownerName: data[0].UserName, ownerToken: UserPublicToken, isStreamer: UserPublicToken == data[0].UserPublicToken });
+
+            io.to(LiveToken).emit('recived-message', { message: Message, ownerName: data[0].UserName, ownerToken: UserPublicToken, userRole: userRole });
             return;
         }
     } catch (error) {

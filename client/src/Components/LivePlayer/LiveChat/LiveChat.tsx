@@ -11,20 +11,18 @@ const LiveChat = (props: ILiveChatProps) => {
     const [commentInput, setCommentInput] = useState<string>('')
     const [liveMessages, setliveMessages] = useState<Array<ICommentProps>>([])
 
-
     useEffect(() => {
-
+        console.log(props.UserRole)
         if (props.ClientSocket) {
-            props.ClientSocket.on('recived-message', ({ message, ownerName, ownerToken, isStreamer }) => {
-                setliveMessages(liveMessages => [...liveMessages, { ownerToken, message, ownerName, isStreamer }]);
-            });
+            props.ClientSocket.on('recived-message', ({ message, ownerName, ownerToken, userRole }) => {
+                setliveMessages(liveMessages => [...liveMessages, { ownerToken, message, ownerName, commentatorRole: userRole }])
+            })
         }
     }, [props.ClientSocket])
 
-
     const postMessage = (e: any) => {
         e.preventDefault()
-        props.ClientSocket?.emit('send-message', { message: commentInput, LiveToken: props.LiveToken, UserPrivateToken: getCookie('userToken') as string })
+        props.ClientSocket?.emit('send-message', { message: commentInput, LiveToken: props.LiveToken, UserPrivateToken: getCookie('userToken') as string, userRole: props.UserRole })
     }
 
     return (
@@ -33,7 +31,7 @@ const LiveChat = (props: ILiveChatProps) => {
                 {Object.keys(liveMessages).length > 0 ? (
                     <>
                         {liveMessages.map((comment: ICommentProps, index: number) => (
-                            <Message key={index} ownerToken={comment.ownerToken} message={comment.message} ownerName={comment.ownerName} isStreamer={comment.isStreamer} />
+                            <Message key={index} ownerToken={comment.ownerToken} message={comment.message} ownerName={comment.ownerName} commentatorRole={comment.commentatorRole} viewerRole={props.UserRole} />
                         ))}
                     </>
                 ) : (

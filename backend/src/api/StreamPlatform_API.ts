@@ -24,7 +24,6 @@ const io = new Server(httpServer, {
     },
 });
 
-
 router.use(express.urlencoded({ extended: false }));
 router.use(express.json());
 
@@ -64,16 +63,15 @@ httpServer.listen(config.server.port, () => {
     logging.info(NAMESPACE, `Api is runing on: ${config.server.hostname}:${config.server.port}`);
 });
 
-
 io.on('connection', (socket) => {
-
     socket.on('join-live', async ({ LiveToken, UserPublicToken }) => {
         return LiveServices.JoinLive(pool, io, LiveToken, UserPublicToken, socket);
     });
 
-    socket.on('send-message', async ({ message, LiveToken, UserPrivateToken }) => {
-        return LiveServices.SendMessage(pool, io, socket, message, LiveToken, UserPrivateToken);
+    socket.on('send-message', async ({ message, LiveToken, UserPrivateToken, userRole }) => {
+        console.log(userRole);
+        return LiveServices.SendMessage(pool, io, socket, message, LiveToken, UserPrivateToken, userRole);
     });
-
+;
     socket.on('disconnect', () => {});
 });

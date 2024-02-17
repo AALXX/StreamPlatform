@@ -3,7 +3,7 @@ import axios from 'axios'
 import { useState, useEffect } from 'react'
 import React from 'react'
 import { getCookie } from 'cookies-next'
-import { accLogout } from '@/security/Accounts'
+import { accLogout, deleteAccount } from '@/security/Accounts'
 
 interface IAccoutSettingsPopupProps {
     UserName: string
@@ -38,29 +38,6 @@ const AccoutSettingsPopup = (props: IAccoutSettingsPopupProps) => {
                     window.alert('error')
                 }
                 window.location.reload()
-            })
-            .catch(err => {
-                if (err) {
-                    window.alert(`error, ${err.message}`)
-                }
-            })
-    }
-
-    const deleteAccount = () => {
-        if (!sure) {
-            return window.alert('CheckBox Not Checked')
-        }
-
-        axios
-            .post(`${process.env.SERVER_BACKEND}/user-account/delete-user-account/`, { userToken: props.UserPrivateToken })
-            .then(res => {
-                if (res.data.error) {
-                    window.alert('error')
-                }
-                
-                accLogout()
-
-                // Router.reload()
             })
             .catch(err => {
                 if (err) {
@@ -168,8 +145,11 @@ const AccoutSettingsPopup = (props: IAccoutSettingsPopupProps) => {
                 <div className="flex w-[65%]">
                     <button
                         className="bg-[#575757] border-none text-[#ad2c2c] mt-[1.5rem] h-[2.5rem] w-[60%] cursor-pointer hover:bg-[#525252] active:bg-[#2b2b2b]"
-                        onClick={() => {
-                            deleteAccount()
+                        onClick={async () => {
+                            const succesfullDeleted = await deleteAccount(sure, userToken)
+                            if (succesfullDeleted) {
+                                accLogout()
+                            }
                         }}
                     >
                         Delete Account
