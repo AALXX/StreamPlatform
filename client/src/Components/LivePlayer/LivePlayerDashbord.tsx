@@ -225,8 +225,9 @@ const LivePlayerDashbord = (props: ILivePlayerProps) => {
                     </div>
                 </div>
             </div>
+
             <Suspense fallback={<div>Loading...</div>}>
-                <LiveChatAdmin UserToken={userToken} LiveToken={LiveData.LiveToken} ClientSocket={props.socket} UserRole={LiveData.UserRole}/>
+                <LiveChatAdmin UserToken={userToken} LiveToken={LiveData.LiveToken} ClientSocket={props.socket} UserRole={LiveData.UserRole} />
             </Suspense>
         </div>
     )

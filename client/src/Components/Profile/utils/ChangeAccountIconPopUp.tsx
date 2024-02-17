@@ -2,12 +2,7 @@
 import axios from 'axios'
 import { useState, useEffect, useRef } from 'react'
 import React from 'react'
-import { getCookie } from 'cookies-next';
-
-interface IChangeAccountIconPopUpProps {
-    UserPrivateToken: string
-    closePopup: () => void
-}
+import { getCookie } from 'cookies-next'
 
 interface IconProps {
     url: string
@@ -36,7 +31,7 @@ const Icon = ({ url }: IconProps) => {
     return <img src={url} alt="" className="rounded-full" />
 }
 
-const ChangeAccountIconPopUp = (props: IChangeAccountIconPopUpProps) => {
+const ChangeAccountIconPopUp = () => {
     //* Video object states
     const [iconFile, setIconFile] = useState<FileList | null>(null)
     const [ObjectUrl, setObjectUrl] = useState<string>('')
@@ -68,45 +63,40 @@ const ChangeAccountIconPopUp = (props: IChangeAccountIconPopUpProps) => {
     }
 
     return (
-        <div className="fixed w-[100%] h-[100%] top-0 left-0 right-0 bottom-0 m-auto bg-[#0000005b] z-10">
-            <div className="flex flex-col absolute left-[25%] right-[25%] top-[25%] bottom-[25%] w-[50vw] h-[88vh] m-auto bg-[#464646] border-[2px] border-solid border-b-[#656565] z-10 overflow-y-scroll items-center">
-                <button className="text-[#ffffff] bg-transparent outline-none cursor-pointer ml-auto mt-[1vh] mr-[1vw]" onClick={props.closePopup}>
-                    &#9587;
-                </button>
-                <div className="flex flex-col w-full items-center">
-                    <h1 className="text-[#ffffff] text-xl">Change Icon</h1>
-                    <hr color="#656565" className="w-[85%] mt-[1rem]" />
-                    <div className="flex w-[85%] mt-14">
-                        <label htmlFor="iconFile" className="flex border-2  border-[#757575] border-solid w-[20rem] h-[10rem]  cursor-pointer">
-                            <input
-                                type="file"
-                                className="hidden"
-                                id="iconFile"
-                                onChange={e => {
-                                    setIconFile(e.target.files)
-                                    previewIcon(e)
-                                }}
-                                accept=".jpg,.png"
-                            />
-                            <img src="/assets/UploadPageIcons/VideoUploadIcon.svg" alt="AccountImageButton" className="m-auto w-[7rem] h-[2rem]" />
-                        </label>
+        <div className="flex flex-col w-full h-full">
+            <div className="flex flex-col w-full items-center">
+                <h1 className="text-[#ffffff] text-xl">Change Icon</h1>
+                <hr color="#656565" className="w-[85%] mt-[1rem]" />
+                <div className="flex w-[85%] mt-14">
+                    <label htmlFor="iconFile" className="flex border-2  border-[#757575] border-solid w-[20rem] h-[10rem]  cursor-pointer">
+                        <input
+                            type="file"
+                            className="hidden"
+                            id="iconFile"
+                            onChange={e => {
+                                setIconFile(e.target.files)
+                                previewIcon(e)
+                            }}
+                            accept=".jpg,.png"
+                        />
+                        <img src="/assets/UploadPageIcons/VideoUploadIcon.svg" alt="AccountImageButton" className="m-auto w-[7rem] h-[2rem]" />
+                    </label>
 
-                        <div className="flex flex-col w-[10rem]  ml-auto">
-                            <Icon url={ObjectUrl} />
-                        </div>
+                    <div className="flex flex-col w-[10rem]  ml-auto">
+                        <Icon url={ObjectUrl} />
                     </div>
                 </div>
-                <hr color="#656565" className="w-[85%] mt-[4rem]" />
-                <div className="w-[85%]">
-                    <button
-                        className="bg-[#575757] border-none text-white mt-[1.5rem] h-[2.5rem] w-full cursor-pointer hover:bg-[#525252] active:bg-[#2b2b2b]"
-                        onClick={() => {
-                            changeIconSubmit()
-                        }}
-                    >
-                        Change Icon
-                    </button>
-                </div>
+            </div>
+            <hr color="#656565" className="w-[85%] mt-[4rem] self-center" />
+            <div className="w-[85%] self-center">
+                <button
+                    className="bg-[#575757] border-none text-white mt-[1.5rem] h-[2.5rem] w-full cursor-pointer hover:bg-[#525252] active:bg-[#2b2b2b]"
+                    onClick={() => {
+                        changeIconSubmit()
+                    }}
+                >
+                    Change Icon
+                </button>
             </div>
         </div>
     )

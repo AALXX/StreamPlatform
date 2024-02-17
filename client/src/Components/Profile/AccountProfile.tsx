@@ -9,6 +9,7 @@ import ChangeAccountIconPopUp from './utils/ChangeAccountIconPopUp'
 import ProfileCards from './utils/ProfileCards'
 import AboutChanelTab from './AboutChanelTab'
 import AccountLivetemplate from './AccountLiveTempolate'
+import PopupCanvas from '../Util/PopupCanvas'
 
 interface IUserDataProps {
     UserName: string
@@ -164,25 +165,28 @@ const AccountProfile = () => {
                 <h1 className="text-white">Followers: {userData.AccountFolowers}</h1>
             </div>
             {ToggledSettingsPopUp ? (
-                <AccoutSettingsPopup
+                <PopupCanvas
                     closePopup={() => {
                         setToggledSettingsPopUp(!ToggledSettingsPopUp)
                     }}
-                    UserName={userData.UserName}
-                    UserEmail={userData.UserEmail}
-                    UserPrivateToken={userToken}
-                    UserVisibility="public"
-                    UserDescription={userData.UserDescription}
-                />
+                >
+                    <AccoutSettingsPopup
+                        UserName={userData.UserName}
+                        UserEmail={userData.UserEmail}
+                        UserVisibility="public"
+                        UserDescription={userData.UserDescription}
+                    />
+                </PopupCanvas>
             ) : null}
 
             {ToggledIconChangePopUp ? (
-                <ChangeAccountIconPopUp
+                <PopupCanvas
                     closePopup={() => {
                         setToggledIconChangePopUp(!ToggledIconChangePopUp)
                     }}
-                    UserPrivateToken={userToken}
-                />
+                >
+                    <ChangeAccountIconPopUp />
+                </PopupCanvas>
             ) : null}
             <div className="flex h-[6.2vh]  items-center ">
                 <ProfileCards Title="LANDING PAGE" TabName="LandingPage" setComponentToShow={setComponentToShow} />

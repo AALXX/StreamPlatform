@@ -5,10 +5,12 @@ import Message from '../LiveChat/Message'
 import { useEffect } from 'react'
 import { getCookie } from 'cookies-next'
 import { ICommentProps, ILiveChatProps } from '../ILiveChat'
+import PopupCanvas from '../../Util/PopupCanvas'
 
 const LiveChatAdmin = (props: ILiveChatProps) => {
     const [commentInput, setCommentInput] = useState<string>('')
     const [liveMessages, setliveMessages] = useState<Array<ICommentProps>>([])
+    const [ToggleChatModerationPopup, setToggleChatModerationPopup] = useState<boolean>(false)
 
     useEffect(() => {
         if (props.ClientSocket && props.LiveToken) {
@@ -43,6 +45,19 @@ const LiveChatAdmin = (props: ILiveChatProps) => {
                     <input type="submit" className="hidden" id="PostButton" />
                 </label>
             </form>
+            {ToggleChatModerationPopup ? (
+                <PopupCanvas
+                    closePopup={() => {
+                        setToggleChatModerationPopup(!ToggleChatModerationPopup)
+                    }}
+                >
+                    <div className="flex flex-col">
+                        <h1 className="text-white self-center text-xl">Are you sure you want to delete the video</h1>
+
+                        <button className="text-white mt-5 bg-[#961a1a] w-[25rem] cursor-pointer">Yes</button>
+                    </div>
+                </PopupCanvas>
+            ) : null}
         </div>
     )
 }

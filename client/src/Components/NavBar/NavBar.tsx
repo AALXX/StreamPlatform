@@ -37,7 +37,7 @@ const NavBar = () => {
                 </Link>
 
                 <Link href={'/account/live-dashbord'} className="self-center w-[90%] h-[2rem] mt-[1rem]">
-                    <button className="w-full h-full bg-[#3a3a3a] text-white">LIVE</button>
+                    <button className="w-full h-full bg-[#3a3a3a] text-white">LIVE DASHBOARD</button>
                 </Link>
 
                 <Link href={'/account/analytics'} className="self-center w-[90%] h-[2rem] mt-[1rem]">
