@@ -136,6 +136,67 @@ const getUserPublicTokenFromPrivateToken = async (pool: mysql.Pool, userPrivateT
 };
 
 /**
+ * Gets Users rone on a channel
+ * @param {string} userToken
+ * @param {string} chanelPublicToken
+ * @return {Promise<boolean>}
+ */
+const getUserRole = async (pool: mysql.Pool, userToken: string, chanelPublicToken: string): Promise<number | null> => {
+    const NAMESPACE = 'GET_USER_ROLE_FUNCTION';
+    const GetUserRoleQuerryString = `SELECT RoleCategoryId FROM channel_roles_alloc WHERE UserPrivateToken="${userToken}" AND ChannelToken="${chanelPublicToken}";`;
+
+    try {
+        if (userToken === 'undefined') {
+            return null;
+        }
+        const connection = await pool.promise().getConnection();
+        const data = await query(connection, GetUserRoleQuerryString);
+        if (Object.keys(data).length === 0) {
+            return null;
+        }
+        return data[0].RoleCategoryId;
+    } catch (error: any) {
+        logging.error(NAMESPACE, error.message, error);
+        return null;
+    }
+};
+
+/**
+ * check ig user is blocked
+ * @param {string} userToken
+ * @param {string} chanelPublicToken
+ * @return {Promise<boolean>}
+ */
+const checkIfUserIsBlocked = async (pool: mysql.Pool, userPrivateToken: string, chanelPublicToken: string): Promise<{ isBanned: boolean; reason?: string }> => {
+    const NAMESPACE = 'CHECK_USER_BAN_FUNCTION';
+    const GetUserRoleQuerryString = `SELECT * FROM blocked_list WHERE UserToken="${userPrivateToken}" AND CreatorToken="${chanelPublicToken}";`;
+    try {
+        if (userPrivateToken === 'undefined') {
+            return {
+                isBanned: false,
+            };
+        }
+        const connection = await pool.promise().getConnection();
+        const data = await query(connection, GetUserRoleQuerryString);
+        if (Object.keys(data).length === 0) {
+            return {
+                isBanned: false,
+            };
+        }
+
+        return {
+            isBanned: true,
+            reason: data[0].Reason,
+        };
+    } catch (error: any) {
+        logging.error(NAMESPACE, error.message, error);
+        return {
+            isBanned: false,
+        };
+    }
+};
+
+/**
  * Checks if user is following the account
  * @param {string} userToken
  * @param {string} accountPublicToken
@@ -368,6 +429,8 @@ export default {
     GenerateRandomStreamKey,
     UserNameAndEmailExistCheck,
     CreateVideoToken,
+    getUserRole,
+    checkIfUserIsBlocked,
     userFollowAccountCheck,
     getUserLikedOrDislikedVideo,
     getUserPublicTokenFromPrivateToken,

@@ -64,14 +64,18 @@ httpServer.listen(config.server.port, () => {
 });
 
 io.on('connection', (socket) => {
-    socket.on('join-live', async ({ LiveToken, UserPublicToken }) => {
-        return LiveServices.JoinLive(pool, io, LiveToken, UserPublicToken, socket);
+    socket.on('join-live', async ({ LiveToken, UserPrivateToken }) => {
+        return LiveServices.JoinLive(pool, io, LiveToken, UserPrivateToken, socket);
     });
 
     socket.on('send-message', async ({ message, LiveToken, UserPrivateToken, userRole }) => {
-        console.log(userRole);
         return LiveServices.SendMessage(pool, io, socket, message, LiveToken, UserPrivateToken, userRole);
     });
-;
+
+    socket.on('ban-viewer', ({reason}) => {
+        console.log(reason)
+        return socket.emit('viewer-banned', { reason: reason });
+    });
+
     socket.on('disconnect', () => {});
 });

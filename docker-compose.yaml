@@ -1,6 +1,6 @@
 version: '4.15'
 
-
+# !FOR DEPLOYMENT ONLY
 services:
   backend:
     image: backend:latest 

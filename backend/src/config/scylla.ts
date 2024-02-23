@@ -32,9 +32,9 @@ const SCYconnect = async () => {
  */
 async function SCYquery(query: string) {
     try {
-        const result = await client.execute(query);
-        // console.log('Query result:', result.rows);
-        return result;
+        const dbresult = await client.execute(query);
+        let result = JSON.parse(JSON.stringify(dbresult));
+        return result.rows;
     } catch (error) {
         console.error('Query error', error);
     }

@@ -62,29 +62,6 @@ const connect = async (pool: mysql.Pool) => {
     }
 };
 
-const oldquery = async (pool: mysql.Pool, queryString: string, values?: any[]): Promise<any> => {
-    const NAMESPACE = 'MYSQL_QUERY_FUNC';
-    return new Promise((resolve, reject) => {
-        pool.getConnection((err, connection) => {
-            if (err) {
-                reject(err);
-                return;
-            }
-
-            connection.query(queryString, values, (queryErr, result) => {
-                if (queryErr) {
-                    logging.error(NAMESPACE, queryErr.message);
-                    reject(queryErr);
-                    return;
-                }
-
-                connection.release();
-                resolve(result);
-            });
-        });
-    });
-};
-
 /**
  * connects to an sql server
  * @return {Promise<mysql.Connection>}

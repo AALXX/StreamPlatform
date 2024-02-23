@@ -14,6 +14,8 @@ const LivePage = () => {
 
     const [userLoggedIn, setUserLoggedIn] = useState<boolean>(false)
     const [userRole, setUserRole] = useState<string | null>(null)
+    const [channelToken, setChannelToken] = useState<string>('')
+    const [userBanned, setUserBanned] = useState<{ isbanned: boolean; reason: string }>({ isbanned: false, reason: '' })
 
     useEffect(() => {
         const loginAync = async () => {
@@ -34,18 +36,27 @@ const LivePage = () => {
     useEffect(() => {
         // Emit event and manage socket interactions when `socket` changes
         if (socket) {
-            socket.emit('join-live', { LiveToken: urlParams.get('t') as string, UserPublicToken: getCookie('userPublicToken') as string })
+            socket.emit('join-live', { LiveToken: urlParams.get('t') as string, UserPrivateToken: getCookie('userToken') as string })
+            socket.on('viewer-banned', ({ reason }) => {
+                setUserBanned({ isbanned: true, reason: reason })
+            })
         }
     }, [socket, urlParams])
 
     return (
         <div className="flex flex-col">
-            <div className="flex h-[100vh]">
-                <LivePlayer userStreamToken={urlParams.get('t') as string} socket={socket!} setUserRole={setUserRole} />
-                <Suspense fallback={<div>Loading...</div>}>
-                    <LiveChat UserToken={userToken} LiveToken={urlParams.get('t') as string} ClientSocket={socket} userLoggedIn={userLoggedIn} UserRole={userRole} />
-                </Suspense>
-            </div>
+            {!userBanned.isbanned ? (
+                <div className="flex h-[100vh]">
+                    <LivePlayer userStreamToken={urlParams.get('t') as string} socket={socket!} setUserRole={setUserRole} setChannelToken={setChannelToken} />
+                    <Suspense fallback={<div>Loading...</div>}>
+                        <LiveChat UserToken={userToken} LiveToken={urlParams.get('t') as string} ClientSocket={socket} userLoggedIn={userLoggedIn} UserRole={userRole} channelToken={channelToken} />
+                    </Suspense>
+                </div>
+            ) : (
+                <div>
+                    <h1>The streammer has banned you for {userBanned.reason} </h1>
+                </div>
+            )}
         </div>
     )
 }

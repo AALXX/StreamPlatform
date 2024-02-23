@@ -44,6 +44,7 @@ interface ILiveData {
 interface ILivePlayerProps {
     userStreamToken: string
     socket: Socket
+    setChannelToken?: Dispatch<SetStateAction<string>>
     setUserRole?: Dispatch<SetStateAction<string | null>>
 }
 

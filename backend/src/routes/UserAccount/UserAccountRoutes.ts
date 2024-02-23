@@ -34,4 +34,21 @@ router.get('/get-creator-videos/:ownerToken', param('ownerToken').not().isEmpty(
 router.get('/get-creator-analytics-data/:UserPrivateToken', param('UserPrivateToken').not().isEmpty(), UserAccountServices.GetUserAnalytics);
 router.get('/get-stream-analytics-data/:UserPrivateToken/:Date', param('UserPrivateToken').not().isEmpty(), UserAccountServices.GetStreamAnalytics);
 
+router.post(
+    '/block-user-account',
+    body('UserPrivateToken').not().isEmpty(),
+    body('ChannelPublicToken').not().isEmpty(),
+    body('BlockedAccountToken').not().isEmpty(),
+    body('BlockReason').not().isEmpty(),
+    UserAccountServices.BlockAccount,
+);
+
+router.post(
+    '/unblock-user-account',
+    body('UserPrivateToken').not().isEmpty(),
+    body('ChannelPublicToken').not().isEmpty(),
+    body('BlockedAccountToken').not().isEmpty(),
+    UserAccountServices.UnblockAccount,
+);
+
 export = router;

@@ -3,7 +3,6 @@ import { getCookie } from 'cookies-next'
 import ProfileCards from '@/Components/Profile/utils/ProfileCards'
 import axios from 'axios'
 import PopupCanvas from '@/Components/Util/PopupCanvas'
-import formatDateToDDMMYY from '../Util/Date';
 import dynamic from 'next/dynamic'
 import { IGraphType } from './utils/VideoAnalytics/VideoAnalytics'
 const VideoAnalytics = dynamic(() => import('./utils/VideoAnalytics/VideoAnalytics'), { ssr: false })
@@ -32,11 +31,13 @@ const EditVideoComponent = ({ videoToken }: { videoToken: string }) => {
     let component
 
     useEffect(() => {
-        ; (async () => {
+        ;(async () => {
             const res = await axios.get(`${process.env.SERVER_BACKEND}/videos-manager/get-creator-video-data/${getCookie('userToken')}/${videoToken}`)
             setVideoNotFoundScreen(res.data.error)
             setVideoTitle(res.data.VideoTitle)
-            setPublishDate(res.data.PublishDate)
+            const formattedDate = new Date(res.data.PublishDate).toLocaleString('en-US', { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric', hour: 'numeric', minute: 'numeric' })
+
+            setPublishDate(formattedDate)
             setVideoVisibility(res.data.VideoVisibility)
             setVideoLikes(res.data.VideoLikes)
             setVideoDislikes(res.data.VideoDislikes)
@@ -49,7 +50,6 @@ const EditVideoComponent = ({ videoToken }: { videoToken: string }) => {
             const histres = await axios.get(`${process.env.SERVER_BACKEND}/videos-manager/get-video-history-data/${getCookie('userToken')}/${videoToken}`)
             setVideoHistoryData(histres.data.VideoHistoryData)
         })()
-
     }, [])
 
     const updateVideoData = async () => {
@@ -186,11 +186,11 @@ const EditVideoComponent = ({ videoToken }: { videoToken: string }) => {
             }
             break
         case 'Analytics':
-            component =
+            component = (
                 <Suspense fallback={<div>Loading...</div>}>
-                    <VideoAnalytics AvrageTime={avrageWatchTime} VideoViews={videoViews} Dislikes={videoDislikes} Likes={videoLikes}
-                        PublishDateFormated={formatDateToDDMMYY(new Date(publishDate).toISOString())} videoHistoryData={videoHistoryData} />
+                    <VideoAnalytics AvrageTime={avrageWatchTime} VideoViews={videoViews} Dislikes={videoDislikes} Likes={videoLikes} PublishDateFormated={publishDate} videoHistoryData={videoHistoryData} />
                 </Suspense>
+            )
 
             break
         case 'editor':

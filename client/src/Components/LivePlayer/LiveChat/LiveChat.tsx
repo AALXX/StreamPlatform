@@ -6,16 +6,19 @@ import Message from './Message'
 import { getCookie } from 'cookies-next'
 import Link from 'next/link'
 import { ICommentProps, ILiveChatProps } from '../ILiveChat'
+import PopupCanvas from '@/Components/Util/PopupCanvas'
+import StreamViewerModeratePopUpContent from '../utils/StreamViewerModeratePopUpContent'
 
 const LiveChat = (props: ILiveChatProps) => {
     const [commentInput, setCommentInput] = useState<string>('')
     const [liveMessages, setliveMessages] = useState<Array<ICommentProps>>([])
+    const [ToggleChatModerationPopup, setToggleChatModerationPopup] = useState<boolean>(false)
+    const [ownerToken, setOwnerToken] = useState<string>('')
 
     useEffect(() => {
-        console.log(props.UserRole)
         if (props.ClientSocket) {
             props.ClientSocket.on('recived-message', ({ message, ownerName, ownerToken, userRole }) => {
-                setliveMessages(liveMessages => [...liveMessages, { ownerToken, message, ownerName, commentatorRole: userRole }])
+                setliveMessages(liveMessages => [...liveMessages, { ownerToken, message, ownerName, commentatorRole: userRole, viewerRole: props.UserRole, channelToken: props.channelToken }])
             })
         }
     }, [props.ClientSocket])
@@ -31,7 +34,20 @@ const LiveChat = (props: ILiveChatProps) => {
                 {Object.keys(liveMessages).length > 0 ? (
                     <>
                         {liveMessages.map((comment: ICommentProps, index: number) => (
-                            <Message key={index} ownerToken={comment.ownerToken} message={comment.message} ownerName={comment.ownerName} commentatorRole={comment.commentatorRole} viewerRole={props.UserRole} />
+                            <Message
+                                key={index}
+                                ownerToken={comment.ownerToken}
+                                message={comment.message}
+                                ownerName={comment.ownerName}
+                                commentatorRole={comment.commentatorRole}
+                                viewerRole={props.UserRole}
+                                channelToken={props.channelToken}
+                                onSelect={() => {
+                                    console.log('CUM')
+                                    setToggleChatModerationPopup(true)
+                                    setOwnerToken(comment.ownerToken)
+                                }}
+                            />
                         ))}
                     </>
                 ) : (
@@ -53,6 +69,16 @@ const LiveChat = (props: ILiveChatProps) => {
                     </Link>
                 </div>
             )}
+
+            {ToggleChatModerationPopup ? (
+                <PopupCanvas
+                    closePopup={() => {
+                        setToggleChatModerationPopup(!ToggleChatModerationPopup)
+                    }}
+                >
+                    <StreamViewerModeratePopUpContent ownerToken={ownerToken} channelToken={props.channelToken} />
+                </PopupCanvas>
+            ) : null}
         </div>
     )
 }

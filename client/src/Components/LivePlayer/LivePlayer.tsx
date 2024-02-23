@@ -34,7 +34,7 @@ const LivePlayer = (props: ILivePlayerProps) => {
     const [CurrentSeconds, setCurrentSeconds] = useState(0)
     const [DurationMinutes, setDurationMinutes] = useState(0)
     const [DurationSeconds, setDurationSeconds] = useState(0)
-    
+
     const [userFollwsAccount, setUserFollwsAccount] = useState<boolean>(false)
     const [userLikedVideo, setUserLikedVideo] = useState<boolean>(false)
     const [userDisLikedVideo, setUserDisLikedVideo] = useState<boolean>(false)
@@ -43,9 +43,8 @@ const LivePlayer = (props: ILivePlayerProps) => {
     const [LiveViwers, setLiveViewrs] = useState<number>(0)
 
     useEffect(() => {
-        ; (async () => {
+        ;(async () => {
             const LiveDataResp = await getLiveData(getCookie('userToken') as string, props.userStreamToken)
-            console.log(LiveDataResp)
             if (VideoRef.current) {
                 const video = VideoRef.current
 
@@ -89,10 +88,11 @@ const LivePlayer = (props: ILivePlayerProps) => {
             }
 
             setLiveData(LiveDataResp)
-            
-            if (props.setUserRole != undefined){
+            props.setChannelToken(LiveDataResp.OwnerToken)
+
+            if (props.setUserRole != undefined) {
                 props.setUserRole(LiveDataResp.UserRole)
-            } 
+            }
 
             setUserFollwsAccount(LiveDataResp.UserFollwsAccount)
             setUserLikedVideo(LiveDataResp.UserLikedVideo)
@@ -106,7 +106,6 @@ const LivePlayer = (props: ILivePlayerProps) => {
             setLiveDisLikes(LiveDataResp.LiveDislikes)
         })()
 
-
         return () => {
             if (hls.current) {
                 hls.current.destroy()
@@ -115,11 +114,10 @@ const LivePlayer = (props: ILivePlayerProps) => {
     }, [])
 
     useEffect(() => {
-
         if (props.socket) {
             props.socket.on('get-viewers', ({ viewers }) => {
                 setLiveViewrs(viewers)
-            });
+            })
         }
     }, [props.socket])
 
@@ -254,11 +252,7 @@ const LivePlayer = (props: ILivePlayerProps) => {
                             </>
                         )}
                         <h1 className="text-white self-center mr-[4rem]">{liveDisLikes}</h1>
-                        <img
-                            src="/assets/LiveStreamIcons/LiveViwers_icon.svg"
-                            className="cursor-pointer w-[1.6rem] ml-auto mr-[.5rem]"
-                            alt="viwers image"
-                        />
+                        <img src="/assets/LiveStreamIcons/LiveViwers_icon.svg" className="cursor-pointer w-[1.6rem] ml-auto mr-[.5rem]" alt="viwers image" />
                         <h1 className="text-white self-center mr-[4rem]">{LiveViwers}</h1>
                     </div>
                 </div>

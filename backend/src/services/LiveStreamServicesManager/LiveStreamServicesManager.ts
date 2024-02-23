@@ -27,7 +27,6 @@ const CustomRequestValidationResult = validationResult.withDefaults({
  * @return {Response}
  */
 const LiveStreamAuth = async (req: CustomRequest, res: Response) => {
-    console.log(req.body);
     try {
         const connection = await req.pool?.promise().getConnection();
         const GetUserDataQueryString = `SELECT StreamKey FROM users WHERE UserPublicToken="${req.body.name}";`;
@@ -135,7 +134,7 @@ const GetLiveData = async (req: CustomRequest, res: Response) => {
                s.Dislikes, 
                s.Active, 
                u.UserName, 
-               u.AccountFolowers AS UserAccountFolowers, 
+               u.AccountFolowers, 
                u.UserPublicToken,
                cra.RoleCategoryId,  -- RoleCategoryId from channel_roles_alloc
                r.Role               -- RoleName corresponding to RoleCategoryId from Role table
@@ -149,7 +148,6 @@ const GetLiveData = async (req: CustomRequest, res: Response) => {
 
         const itFollows = await utilFunctions.userFollowAccountCheck(req.pool!, req.params.userPrivateToken, data[0].UserPublicToken);
         const getUserLikedOrDisliked = await utilFunctions.getUserLikedOrDislikedStream(req.pool!, String(userPublicToken), req.params.streamToken);
-
         if (Object.keys(data[0]).length === 0) {
             return res.status(200).json({
                 error: false,
@@ -276,6 +274,164 @@ const StartStopLive = async (req: CustomRequest, res: Response) => {
 };
 
 /**
+ * Starts or stops a stream trigered by admin
+ * @param {CustomRequest} req
+ * @param {Response} res
+ * @return {Response}
+ */
+const GetViewrData = async (req: CustomRequest, res: Response) => {
+    const errors = CustomRequestValidationResult(req);
+    if (!errors.isEmpty()) {
+        errors.array().map((error) => {
+            logging.error('GET_VIEWER_DATA_STREAM_FUNC', error.errorMsg);
+        });
+
+        return res.status(200).json({ error: true, errors: errors.array() });
+    }
+
+    try {
+        const connection = await req.pool?.promise().getConnection();
+        const UserPrivateToken = await utilFunctions.getUserPrivateTokenFromPublicToken(req.pool!, req.params.UserPublicToken);
+
+        const LoginQueryString = `
+        SELECT u.UserName, 
+               cra.RoleCategoryId,  -- RoleCategoryId from channel_roles_alloc
+               r.Role               -- RoleName corresponding to RoleCategoryId from Role table
+        FROM users AS s
+        LEFT JOIN users AS u ON s.UserPublicToken = u.UserPublicToken
+        LEFT JOIN channel_roles_alloc AS cra ON cra.UserPrivateToken = "${UserPrivateToken}"
+        LEFT JOIN Roles AS r ON cra.RoleCategoryId = r.Id
+        WHERE s.UserPublicToken = "${req.params.UserPublicToken}";`;
+        const data = await query(connection, LoginQueryString);
+        await SCYconnect();
+
+        const LiveMessagesData = await SCYquery(`SELECT * FROM LiveMessages WHERE ownertoken='${req.params.UserPublicToken}';`);
+        if (Object.keys(data).length === 0) {
+            return res.status(200).json({
+                error: true,
+                UserName: null,
+                UserRole: null,
+                ChatLogs: null,
+                UserBanned: false,
+            });
+        }
+        const UserIsBanned = await utilFunctions.checkIfUserIsBlocked(req.pool!, req.params.UserPublicToken, req.params.CreatorPublicToken);
+        return res.status(200).json({
+            error: false,
+            UserName: data[0].UserName,
+            UserRole: data[0].Role,
+            ChatLogs: LiveMessagesData,
+            UserIsBanned: UserIsBanned.isBanned,
+        });
+    } catch (error: any) {
+        logging.error(NAMESPACE, error.message);
+
+        res.status(202).json({
+            error: true,
+            errmsg: error.message,
+        });
+    }
+};
+
+/**
+ * promotes a viewer account
+ * @param {CustomRequest} req
+ * @param {Response} res
+ * @return {Response}
+ */
+const PromoteViewerAccount = async (req: CustomRequest, res: Response) => {
+    const errors = CustomRequestValidationResult(req);
+    if (!errors.isEmpty()) {
+        errors.array().map((error) => {
+            logging.error('PROMOTE_ACCOUNT_STREAM_FUNC', error.errorMsg);
+        });
+
+        return res.status(200).json({ error: true, errors: errors.array() });
+    }
+
+    try {
+        const connection = await req.pool?.promise().getConnection();
+        const userPromoteRequestRole = await utilFunctions.getUserRole(req.pool!, req.body.UserPrivateToken, req.body.ChannelPublicToken);
+        const PromtedAccountPrivateToken = await utilFunctions.getUserPrivateTokenFromPublicToken(req.pool!, req.body.PromotedAccountToken);
+
+        if (userPromoteRequestRole == 2 || userPromoteRequestRole == 3) {
+            const PromoteQueryString = `INSERT INTO channel_roles_alloc (UserPrivateToken, ChannelToken, RoleCategoryId) VALUES ('${PromtedAccountPrivateToken}', '${req.body.ChannelPublicToken}', '3'); `;
+            const data = await query(connection, PromoteQueryString);
+
+            if (data.affectedRows == 0) {
+                res.status(200).json({
+                    error: true,
+                    errmsg: 'something went wrong',
+                });
+            }
+
+            res.status(200).json({
+                error: false,
+                errmsg: '',
+            });
+        } else {
+            return res.status(200).json({ error: true, errmsg: "You don't have permission to do this action" });
+        }
+    } catch (error: any) {
+        logging.error(NAMESPACE, error.message);
+
+        res.status(202).json({
+            error: true,
+            errmsg: error.message,
+        });
+    }
+};
+
+/**
+ * demote a viewer account
+ * @param {CustomRequest} req
+ * @param {Response} res
+ * @return {Response}
+ */
+const DemoteViewerAccount = async (req: CustomRequest, res: Response) => {
+    const errors = CustomRequestValidationResult(req);
+    if (!errors.isEmpty()) {
+        errors.array().map((error) => {
+            logging.error('PROMOTE_ACCOUNT_STREAM_FUNC', error.errorMsg);
+        });
+
+        return res.status(200).json({ error: true, errors: errors.array() });
+    }
+
+    try {
+        const connection = await req.pool?.promise().getConnection();
+        const userDemoteRequestRole = await utilFunctions.getUserRole(req.pool!, req.body.UserPrivateToken, req.body.ChannelPublicToken);
+        const DemotedAccountPrivateToken = await utilFunctions.getUserPrivateTokenFromPublicToken(req.pool!, req.body.PromotedAccountToken);
+
+        if (userDemoteRequestRole == 2 || userDemoteRequestRole == 3) {
+            const DemoteQueryString = `DELETE FROM channel_roles_alloc WHERE UserPrivateToken="${DemotedAccountPrivateToken}" AND ChannelToken="${req.body.ChannelPublicToken}" `;
+            const data = await query(connection, DemoteQueryString);
+
+            if (data.affectedRows == 0) {
+                res.status(200).json({
+                    error: true,
+                    errmsg: 'something went wrong',
+                });
+            }
+
+            res.status(200).json({
+                error: false,
+                errmsg: '',
+            });
+        } else {
+            return res.status(200).json({ error: true, errmsg: "You don't have permission to do this action" });
+        }
+    } catch (error: any) {
+        logging.error(NAMESPACE, error.message);
+
+        res.status(202).json({
+            error: true,
+            errmsg: error.message,
+        });
+    }
+};
+
+/**
  * Like the Live by token
  * @param {CustomRequest} req
  * @param {Response} res
@@ -356,7 +512,7 @@ const LikeDislikeLiveFunc = async (req: CustomRequest, res: Response) => {
 };
 
 const userPublicTokensMap = new Map<string, Set<string>>(); // Map<LiveToken, Set<UserPublicToken>>
-const JoinLive = async (pool: mysql.Pool, io: Server, LiveToken: string, UserPublicToken: string, socket: Socket) => {
+const JoinLive = async (pool: mysql.Pool, io: Server, LiveToken: string, UserPrivateToken: string, socket: Socket) => {
     socket.join(LiveToken);
     const GetLiveDataQueryString = `SELECT MaxViwers FROM streams WHERE StreamToken="${LiveToken}";`;
     const connection = await pool.promise().getConnection();
@@ -368,23 +524,36 @@ const JoinLive = async (pool: mysql.Pool, io: Server, LiveToken: string, UserPub
             userPublicTokensMap.set(LiveToken, userTokens);
         }
 
-        // Check if the UserPublicToken is already in the room
-        if (userTokens.has(UserPublicToken)) {
-            // UserPublicToken already exists in the room
-            //sends viwers number to front end
-            return socket.emit('get-viewers', { viewers: userTokens.size });
-        } else {
-            // Add the UserPublicToken to the room
-            const results = await query(connection, GetLiveDataQueryString);
-            const live = io.sockets.adapter.rooms.get(LiveToken);
-            const viewers = live ? live.size : 0;
-            if (viewers > results[0].MaxViwers) {
-                const GetLiveDataQueryString = `UPDATE streams SET MaxViwers="${viewers}" WHERE StreamToken="${LiveToken}";`;
+        const UserPublicToken = await utilFunctions.getUserPublicTokenFromPrivateToken(pool, UserPrivateToken);
+        const channelresults = await query(connection, `SELECT UserPublicToken FROM streams WHERE StreamToken="${LiveToken}"`);
 
-                await query(connection, GetLiveDataQueryString);
+        if (UserPublicToken) {
+            const userIsBanned = await utilFunctions.checkIfUserIsBlocked(pool, UserPublicToken, channelresults[0].UserPublicToken);
+            if (userIsBanned.isBanned) {
+                userTokens.delete(UserPublicToken);
+                return socket.emit('viewer-banned', { reason: userIsBanned.reason });
             }
-            socket.emit('get-viewers', { viewers: viewers });
-            return userTokens.add(UserPublicToken);
+
+            if (userTokens.has(UserPublicToken)) {
+                // Check if the UserPublicToken is already in the room
+                // UserPublicToken already exists in the room
+                //sends viwers number to front end
+                return socket.emit('get-viewers', { viewers: userTokens.size });
+            } else {
+                // Add the UserPublicToken to the room
+                const results = await query(connection, GetLiveDataQueryString);
+                const live = io.sockets.adapter.rooms.get(LiveToken);
+                const viewers = live ? live.size : 0;
+                if (viewers > results[0].MaxViwers) {
+                    const GetLiveDataQueryString = `UPDATE streams SET MaxViwers="${viewers}" WHERE StreamToken="${LiveToken}";`;
+
+                    await query(connection, GetLiveDataQueryString);
+                }
+                socket.emit('get-viewers', { viewers: viewers });
+                return userTokens.add(UserPublicToken);
+            }
+        } else {
+            return socket.emit('get-viewers', { viewers: userTokens.size });
         }
     } catch (error) {
         logging.error(NAMESPACE, 'querry error');
@@ -402,25 +571,31 @@ const SendMessage = async (pool: mysql.Pool, io: Server, socket: Socket, Message
             console.log(`Too many CustomRequests, wait ${timeToWait}ms before sending another message`);
             return;
         } else {
-            await SCYconnect();
             const connection = await pool.promise().getConnection();
 
             const UserPublicToken = await utilFunctions.getUserPublicTokenFromPrivateToken(pool, UserPrivateToken);
             if (UserPublicToken === null) {
                 return io.to(LiveToken).emit('undefinedToken');
             }
+
             const GetLiveDataQueryString = `
-            SELECT u.UserName, s.UserPublicToken
+            SELECT u.UserName, s.UserPublicToken as streamChannelToken
             FROM users u
-            LEFT JOIN streams s ON u.UserPublicToken = s.UserPublicToken AND s.StreamToken = "${LiveToken}"
+            LEFT JOIN streams s ON s.StreamToken = "${LiveToken}"
             WHERE u.UserPublicToken = "${UserPublicToken}";`;
 
             const data = await query(connection, GetLiveDataQueryString);
-            lastMessageTimes.set(socket.data.UserPublicToken, currentTime);
-            await SCYquery(`INSERT INTO LiveMessages (Id, livetoken, OwnerToken, Message, SentAt)
+            const UserIsBanned = await utilFunctions.checkIfUserIsBlocked(pool, UserPublicToken, data[0].streamChannelToken);
+
+            if (UserIsBanned.isBanned == false) {
+                await SCYconnect();
+                lastMessageTimes.set(socket.data.UserPublicToken, currentTime);
+                await SCYquery(`INSERT INTO LiveMessages (Id, livetoken, OwnerToken, Message, SentAt)
             VALUES (uuid(), '${LiveToken}','${UserPublicToken}', '${Message}.', toTimestamp(now()));`);
 
-            io.to(LiveToken).emit('recived-message', { message: Message, ownerName: data[0].UserName, ownerToken: UserPublicToken, userRole: userRole });
+                return io.to(LiveToken).emit('recived-message', { message: Message, ownerName: data[0].UserName, ownerToken: UserPublicToken, userRole: userRole });
+            }
+
             return;
         }
     } catch (error) {
@@ -453,7 +628,10 @@ const LeaveLive = (LiveToken: string, io: Server) => {
 export default {
     LiveStreamAuth,
     GetLiveViwes,
+    GetViewrData,
     GetLiveAdminData,
+    PromoteViewerAccount,
+    DemoteViewerAccount,
     StartStopLive,
     GetLiveData,
     LikeDislikeLiveFunc,

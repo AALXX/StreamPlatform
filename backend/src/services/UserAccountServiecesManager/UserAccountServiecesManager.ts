@@ -282,6 +282,101 @@ const FollowAccount = async (req: CustomRequest, res: Response) => {
 };
 
 /**
+ * block an account
+ * @param {CustomRequest} req
+ * @param {Response} res
+ * @return {Response}
+ */
+const BlockAccount = async (req: CustomRequest, res: Response) => {
+    const errors = CustomRequestValidationResult(req);
+    if (!errors.isEmpty()) {
+        errors.array().map((error) => {
+            logging.error('BLOCK_ACCOUNT_FUNC', error.errorMsg);
+        });
+
+        return res.status(200).json({ error: true, errors: errors.array() });
+    }
+
+    try {
+        const connection = await req.pool?.promise().getConnection();
+
+        const userBanRequestRole = await utilFunctions.getUserRole(req.pool!, req.body.UserPrivateToken, req.body.ChannelPublicToken);
+        if (userBanRequestRole == 2 || userBanRequestRole == 3) {
+            const LoginQueryString = `INSERT INTO blocked_list (UserToken, CreatorToken, Reason) VALUES ('${req.body.BlockedAccountToken}', '${req.body.ChannelPublicToken}', '${req.body.BlockReason}'); `;
+            const data = await query(connection, LoginQueryString);
+
+            if (data.affectedRows == 0) {
+                res.status(200).json({
+                    error: true,
+                    errmsg: 'something went wrong',
+                });
+            }
+
+            res.status(200).json({
+                error: false,
+                errmsg: '',
+            });
+        } else {
+            return res.status(200).json({ error: true, errmsg: "You don't have permission to do this action" });
+        }
+    } catch (error: any) {
+        logging.error(NAMESPACE, error.message);
+
+        res.status(202).json({
+            error: true,
+            errmsg: error.message,
+        });
+    }
+};
+
+/**
+ * block an account
+ * @param {CustomRequest} req
+ * @param {Response} res
+ * @return {Response}
+ */
+const UnblockAccount = async (req: CustomRequest, res: Response) => {
+    const errors = CustomRequestValidationResult(req);
+    if (!errors.isEmpty()) {
+        errors.array().map((error) => {
+            logging.error('UNBLOCK_ACCOUNT_FUNC', error.errorMsg);
+        });
+
+        return res.status(200).json({ error: true, errors: errors.array() });
+    }
+
+    try {
+        const connection = await req.pool?.promise().getConnection();
+
+        const userBanRequestRole = await utilFunctions.getUserRole(req.pool!, req.body.UserPrivateToken, req.body.ChannelPublicToken);
+        if (userBanRequestRole == 2 || userBanRequestRole == 3) {
+            const LoginQueryString = `DELETE FROM blocked_list WHERE UserToken="${req.body.BlockedAccountToken}" AND CreatorToken="${req.body.ChannelPublicToken}"; `;
+            const data = await query(connection, LoginQueryString);
+            if (data.affectedRows == 0) {
+                res.status(200).json({
+                    error: true,
+                    errmsg: 'something went wrong',
+                });
+            }
+
+            res.status(200).json({
+                error: false,
+                errmsg: '',
+            });
+        } else {
+            return res.status(200).json({ error: true, errmsg: "You don't have permission to do this action" });
+        }
+    } catch (error: any) {
+        logging.error(NAMESPACE, error.message);
+
+        res.status(202).json({
+            error: true,
+            errmsg: error.message,
+        });
+    }
+};
+
+/**
  * Change  users data
  * @param {CustomRequest} req
  * @param {Response} res
@@ -539,7 +634,6 @@ const LoginUser = async (req: CustomRequest, res: Response) => {
                 userprivateToken: null,
             });
         }
-
         bcrypt.compare(req.body.password, data[0].UserPwd, (err, isMatch) => {
             if (err) {
                 console.log(err);
@@ -855,4 +949,6 @@ export default {
     FollowAccount,
     LoginUser,
     GetCreatorAccountData,
+    BlockAccount,
+    UnblockAccount,
 };

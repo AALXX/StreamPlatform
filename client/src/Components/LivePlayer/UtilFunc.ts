@@ -18,25 +18,25 @@ const getDashbordData = async (userToken: string): Promise<IDasbordLiveDataRespo
         LiveTitle: dashbordData.data.LiveTitle,
         LiveLikes: dashbordData.data.LiveLikes,
         LiveDislikes: dashbordData.data.LiveDislikes,
-        UserRole: dashbordData.data.UserRole,
+        UserRole: dashbordData.data.UserRole
     }
 }
 
 const getLiveData = async (useroken: string, StreamToken: string): Promise<ILiveData> => {
-    const livedData = await axios.get(`${process.env.SERVER_BACKEND}/live-manager/get-live-data/${StreamToken}/${useroken}`)
+    const liveData = await axios.get(`${process.env.SERVER_BACKEND}/live-manager/get-live-data/${StreamToken}/${useroken}`)
     return {
-        error: livedData.data.error,
-        IsLive: livedData.data.IsLive,
-        AccountName: livedData.data.AccountName,
-        AccountFolowers: livedData.data.AccountFolowers,
-        LiveTitle: livedData.data.LiveTitle,
-        LiveLikes: livedData.data.LiveLikes,
-        UserFollwsAccount: livedData.data.UserFollwsAccount,
-        OwnerToken: livedData.data.OwnerToken,
-        LiveDislikes: livedData.data.LiveDislikes,
-        UserLikedVideo: livedData.data.UserLikedVideo,
-        UserLikedOrDislikedLive: livedData.data.UserLikedOrDislikedLive,
-        UserRole: livedData.data.UserRole,
+        error: liveData.data.error,
+        IsLive: liveData.data.IsLive,
+        AccountName: liveData.data.AccountName,
+        AccountFolowers: liveData.data.AccountFolowers,
+        LiveTitle: liveData.data.LiveTitle,
+        LiveLikes: liveData.data.LiveLikes,
+        UserFollwsAccount: liveData.data.UserFollwsAccount,
+        OwnerToken: liveData.data.OwnerToken,
+        LiveDislikes: liveData.data.LiveDislikes,
+        UserLikedVideo: liveData.data.UserLikedVideo,
+        UserLikedOrDislikedLive: liveData.data.UserLikedOrDislikedLive,
+        UserRole: liveData.data.UserRole
     }
 }
 
@@ -52,6 +52,11 @@ const startStopLive = async (LiveTitle: string, UserPrivateToken: string, Accoun
         return ''
     }
     return resp.data.LiveToken
+}
+
+const getViewerData = async (userToken: string, creatorToken: string) => {
+    const resp = await axios.get(`${process.env.SERVER_BACKEND}/live-manager/get-viewer-data/${userToken}/${creatorToken}`)
+    return resp.data
 }
 
 //* /////////////////////////////
@@ -115,4 +120,4 @@ const dislikeVideo = async (usrToken: CookieValueTypes, streamToken: string | nu
     return !userDisLikedVideo
 }
 
-export { getLiveData, playOrPauseVideo, changeVolume, followAccount, likeVideo, dislikeVideo, getDashbordData, startStopLive }
+export { getLiveData, playOrPauseVideo, changeVolume, followAccount, likeVideo, dislikeVideo, getDashbordData, startStopLive, getViewerData }

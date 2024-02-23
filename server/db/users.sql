@@ -11,6 +11,5 @@ CREATE TABLE `users` (
   `UserPrivateToken` varchar(150) NOT NULL,
   `UserPublicToken` varchar(150) NOT NULL,
   `StreamKey` varchar(100) NOT NULL,
-  `StreamToken` varchar(100) NOT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=16 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;

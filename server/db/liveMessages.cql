@@ -8,7 +8,6 @@ CREATE TABLE IF NOT EXISTS LiveMessages (
   OwnerToken TEXT,
   Message TEXT,
   SentAt TIMESTAMP,
-  livetoken TEXT
+  livetoken TEXT,
+  PRIMARY KEY (OwnerToken, Id)
 );
-
-

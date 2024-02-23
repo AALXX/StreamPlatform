@@ -3,7 +3,6 @@ import LivePlayerDashbord from '@/Components/LivePlayer/LivePlayerDashbord'
 import { isLoggedIn } from '@/security/Accounts'
 import { getCookie } from 'cookies-next'
 import Link from 'next/link'
-import { useSearchParams } from 'next/navigation'
 import React, { useEffect, useState } from 'react'
 import { io, Socket } from 'socket.io-client'
 
@@ -32,7 +31,7 @@ const LiveDashbord = () => {
         <>
             {userLoggedIn ? (
                 <div className="flex flex-col">
-                    <LivePlayerDashbord userStreamToken={getCookie('userPublicToken') as string} socket={socket!}/>
+                    <LivePlayerDashbord userStreamToken={getCookie('userToken') as string} socket={socket!}/>
                 </div>
             ) : (
                 <div className="flex flex-col ">

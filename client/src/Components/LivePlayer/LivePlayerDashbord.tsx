@@ -103,7 +103,7 @@ const LivePlayerDashbord = (props: ILivePlayerProps) => {
     useEffect(() => {
         if (props.socket && LiveData.LiveToken) {
             // Emit event and manage socket interactions when `socket` changes
-            props.socket.emit('join-live', { LiveToken: LiveData.LiveToken, UserPublicToken: getCookie('userPublicToken') as string })
+            props.socket.emit('join-live', { LiveToken: LiveData.LiveToken, UserPrivateToken: getCookie('userToken') as string })
 
             props.socket.on('get-viewers', ({ viewers }) => {
                 setLiveViewrs(viewers)
@@ -227,7 +227,7 @@ const LivePlayerDashbord = (props: ILivePlayerProps) => {
             </div>
 
             <Suspense fallback={<div>Loading...</div>}>
-                <LiveChatAdmin UserToken={userToken} LiveToken={LiveData.LiveToken} ClientSocket={props.socket} UserRole={LiveData.UserRole} />
+                <LiveChatAdmin UserToken={userToken} LiveToken={LiveData.LiveToken} ClientSocket={props.socket} UserRole={LiveData.UserRole} channelToken={getCookie('userPublicToken') as string} />
             </Suspense>
         </div>
     )

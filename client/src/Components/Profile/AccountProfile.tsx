@@ -170,12 +170,7 @@ const AccountProfile = () => {
                         setToggledSettingsPopUp(!ToggledSettingsPopUp)
                     }}
                 >
-                    <AccoutSettingsPopup
-                        UserName={userData.UserName}
-                        UserEmail={userData.UserEmail}
-                        UserVisibility="public"
-                        UserDescription={userData.UserDescription}
-                    />
+                    <AccoutSettingsPopup UserName={userData.UserName} UserEmail={userData.UserEmail} UserVisibility="public" UserDescription={userData.UserDescription} />
                 </PopupCanvas>
             ) : null}
 
@@ -190,6 +185,7 @@ const AccountProfile = () => {
             ) : null}
             <div className="flex h-[6.2vh]  items-center ">
                 <ProfileCards Title="LANDING PAGE" TabName="LandingPage" setComponentToShow={setComponentToShow} />
+                <ProfileCards Title="POSTS" TabName="Videos" setComponentToShow={setComponentToShow} />
                 <ProfileCards Title="VIDEOS" TabName="Videos" setComponentToShow={setComponentToShow} />
                 <ProfileCards Title="ABOUT ME" TabName="About" setComponentToShow={setComponentToShow} />
             </div>

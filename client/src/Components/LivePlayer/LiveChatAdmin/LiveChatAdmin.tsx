@@ -5,17 +5,23 @@ import Message from '../LiveChat/Message'
 import { useEffect } from 'react'
 import { getCookie } from 'cookies-next'
 import { ICommentProps, ILiveChatProps } from '../ILiveChat'
-import PopupCanvas from '../../Util/PopupCanvas'
+import StreamViewerModeratePopUpContent from '../utils/StreamViewerModeratePopUpContent'
+import PopupCanvas from '@/Components/Util/PopupCanvas'
 
 const LiveChatAdmin = (props: ILiveChatProps) => {
     const [commentInput, setCommentInput] = useState<string>('')
     const [liveMessages, setliveMessages] = useState<Array<ICommentProps>>([])
+
     const [ToggleChatModerationPopup, setToggleChatModerationPopup] = useState<boolean>(false)
+    const [ownerToken, setOwnerToken] = useState<string>('')
 
     useEffect(() => {
         if (props.ClientSocket && props.LiveToken) {
             props.ClientSocket.on('recived-message', ({ message, ownerName, ownerToken, userRole }) => {
-                setliveMessages(liveMessages => [...liveMessages, { ownerToken: ownerToken, message: message, ownerName: ownerName, commentatorRole: userRole }])
+                setliveMessages(liveMessages => [
+                    ...liveMessages,
+                    { ownerToken: ownerToken, message: message, ownerName: ownerName, commentatorRole: userRole, viewerRole: props.UserRole, channelToken: props.channelToken }
+                ])
             })
         }
     }, [props.LiveToken, props.ClientSocket])
@@ -23,6 +29,7 @@ const LiveChatAdmin = (props: ILiveChatProps) => {
     const postMessage = (e: any) => {
         e.preventDefault()
         props.ClientSocket?.emit('send-message', { message: commentInput, LiveToken: props.LiveToken, UserPrivateToken: getCookie('userToken') as string, userRole: props.UserRole })
+    
     }
 
     return (
@@ -31,12 +38,22 @@ const LiveChatAdmin = (props: ILiveChatProps) => {
                 {Object.keys(liveMessages).length > 0 ? (
                     <>
                         {liveMessages.map((comment: ICommentProps, index: number) => (
-                            <Message key={index} ownerToken={comment.ownerToken} message={comment.message} ownerName={comment.ownerName} commentatorRole={comment.commentatorRole} viewerRole={props.UserRole} />
+                            <Message
+                                key={index}
+                                ownerToken={comment.ownerToken}
+                                message={comment.message}
+                                ownerName={comment.ownerName}
+                                commentatorRole={comment.commentatorRole}
+                                viewerRole={props.UserRole}
+                                channelToken={props.channelToken}
+                                onSelect={() => {
+                                    setToggleChatModerationPopup(true)
+                                    setOwnerToken(comment.ownerToken)
+                                }}
+                            />
                         ))}
                     </>
-                ) : (
-                    <></>
-                )}
+                ) : null}
             </div>
             <form className="flex h-[12%] bg-[#292929]" onSubmit={postMessage}>
                 <input type="text" className="h-9 self-center ml-7 w-[75%] bg-[#373737] text-white indent-3" placeholder="Comment" onChange={e => setCommentInput(e.currentTarget.value)} />
@@ -45,17 +62,14 @@ const LiveChatAdmin = (props: ILiveChatProps) => {
                     <input type="submit" className="hidden" id="PostButton" />
                 </label>
             </form>
+
             {ToggleChatModerationPopup ? (
                 <PopupCanvas
                     closePopup={() => {
                         setToggleChatModerationPopup(!ToggleChatModerationPopup)
                     }}
                 >
-                    <div className="flex flex-col">
-                        <h1 className="text-white self-center text-xl">Are you sure you want to delete the video</h1>
-
-                        <button className="text-white mt-5 bg-[#961a1a] w-[25rem] cursor-pointer">Yes</button>
-                    </div>
+                    <StreamViewerModeratePopUpContent clientSoket={props.ClientSocket} ownerToken={ownerToken} channelToken={props.channelToken} />
                 </PopupCanvas>
             ) : null}
         </div>
